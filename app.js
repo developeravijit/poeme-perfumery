@@ -1,5 +1,6 @@
 const path = require("path");
 const dotenv = require("dotenv");
+dotenv.config();
 
 const envResult = dotenv.config({ path: path.resolve(__dirname, ".env") });
 if (envResult.error) {
