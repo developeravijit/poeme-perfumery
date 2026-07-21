@@ -160,21 +160,32 @@
 
       <% } else { %>
 
-      <div class="bg-white rounded-3xl shadow-lg p-20 text-center">
-        <img src="/assets/empty-cart.png" class="w-56 mx-auto" />
+      <div
+        class="relative bg-white rounded-3xl shadow-lg p-20 text-center overflow-hidden"
+      >
+        <!-- Background Bottle -->
+        <div class="w-full">
+          <img
+            src="/assets/empty-cart.png"
+            class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full object-cover md:w-[430px] opacity-90 pointer-events-none z-0"
+          />
+        </div>
 
-        <h2 class="text-4xl font-bold mt-8">Your Cart is Empty</h2>
+        <!-- Content -->
+        <div class="relative z-10">
+          <h2 class="text-4xl font-bold text-stone-900 tracking-widest uppercase">Your Cart is Empty</h2>
 
-        <p class="text-stone-500 mt-4">
-          Add your favourite fragrances and discover luxury.
-        </p>
+          <p class="text-stone-800 mt-4 tracking-widest capitalize">
+            Add your favourite fragrances and discover luxury.
+          </p>
 
-        <a
-          href="/poeme-perfumery/perfumes"
-          class="inline-block mt-10 bg-[#B68D40] hover:bg-[#9A7737] text-white px-10 py-4 rounded-full"
-        >
-          Shop Now
-        </a>
+          <a
+            href="/poeme-perfumery/perfumes"
+            class="inline-block mt-10 bg-[#B68D40] hover:bg-[#9A7737] text-white px-10 py-4 rounded-full"
+          >
+            Shop Now
+          </a>
+        </div>
       </div>
 
       <% } %>
