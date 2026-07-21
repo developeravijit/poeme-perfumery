@@ -1,11 +1,8 @@
 const path = require("path");
 const dotenv = require("dotenv");
+
 dotenv.config();
 
-const envResult = dotenv.config({ path: path.resolve(__dirname, ".env") });
-if (envResult.error) {
-  throw envResult.error;
-}
 const requiredEnv = [
   "SESSION_SECRET",
   "JWT_SECRET",
@@ -14,6 +11,7 @@ const requiredEnv = [
   "GOOGLE_CLIENT_SECRET",
   "GOOGLE_CALLBACK_URL",
 ];
+
 requiredEnv.forEach((key) => {
   if (!process.env[key]) {
     throw new Error(`Missing required environment variable: ${key}`);
@@ -30,6 +28,7 @@ const cookieParser = require("cookie-parser");
 const flash = require("connect-flash");
 const http = require("http");
 const socket = require("./app/socket/socket");
+
 require("./app/config/passport");
 
 const app = express();
@@ -37,21 +36,22 @@ const app = express();
 // Database Connection
 DbConnect();
 
-// Json Config
+// Body Parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Cookie Parser
 app.use(cookieParser());
 
-//Static Folder
+// Static Folder
 app.use(express.static("public"));
 app.use(express.static(path.join(__dirname, "public")));
 
-// Ejs Define
+// View Engine
 app.set("view engine", "ejs");
 app.set("views", "views");
 
+// Session
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -62,27 +62,36 @@ app.use(
     },
   })
 );
+
+// Flash
 app.use(flash());
 
+// Passport
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Global Authentication
 app.use(pageAuth);
 
-// Router Define
+// Routes
 app.use(router);
 
-// Error handling middleware
+// Error Handler
 app.use((err, req, res, next) => {
   console.error("Error:", err);
+
   res.status(err.status || 500).send("Internal Server Error");
 });
 
+// HTTP Server
 const server = http.createServer(app);
 
+// Socket.IO
 socket(server);
 
+// Port
 const PORT = process.env.PORT || 4500;
 
 server.listen(PORT, () => {
-  console.log(`Port is running on ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
