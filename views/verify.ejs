@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verify OTP | POÈME</title>
+
+    <link rel="stylesheet" href="/css/output.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body class="bg-[#FCFBF8]">
+    <%- include("layout/navbar.ejs") %>
+
+    <section class="min-h-screen flex items-center justify-center px-6 py-24">
+      <div
+        class="w-full max-w-md bg-white rounded-3xl shadow-xl border border-stone-200 p-10"
+      >
+        <h1 class="text-4xl font-bold text-center text-[#B68D40]">
+          Verify OTP
+        </h1>
+
+        <p class="text-center text-stone-500 mt-3">
+          Enter the 6-digit OTP sent to your email.
+        </p>
+
+        <% if(message && message.length){ %>
+        <div
+          class="mt-6 bg-red-100 border border-red-400 text-red-700 p-3 rounded-lg"
+        >
+          <%= message[0] %>
+        </div>
+        <% } %>
+
+        <form action="/poeme-perfumery/verify" method="POST" class="mt-8">
+          <label class="block mb-2 font-medium text-stone-700"> OTP </label>
+
+          <input
+            type="text"
+            name="otp"
+            maxlength="6"
+            minlength="6"
+            required
+            placeholder="Enter OTP"
+            class="w-full border border-stone-300 rounded-xl px-5 py-4 text-center tracking-[10px] text-xl outline-none focus:border-[#B68D40]"
+          />
+
+          <button
+            type="submit"
+            class="w-full mt-6 bg-[#B68D40] hover:bg-[#9D7A37] text-white py-4 rounded-xl font-semibold"
+          >
+            Verify OTP
+          </button>
+        </form>
+
+        <p class="text-center mt-6">
+          <a
+            href="/poeme-perfumery/login"
+            class="text-[#B68D40] hover:underline"
+          >
+            Back to Login
+          </a>
+        </p>
+      </div>
+    </section>
+
+    <%- include("layout/footer.ejs") %>
+  </body>
+</html>

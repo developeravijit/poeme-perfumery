@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Customer Support | POÈME Perfumery</title>
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script>
+      const userId = "<%= user._id %>";
+    </script>
+
+    <link rel="stylesheet" href="/css/output.css" />
+  </head>
+
+  <body class="bg-[#FCFBF8]">
+    <%- include("layout/navbar") %>
+
+    <section class="pt-36 pb-20">
+      <div class="max-w-5xl mx-auto px-6">
+        <div class="text-center mb-12">
+          <p class="uppercase tracking-[8px] text-[#B68D40] font-semibold">
+            Customer Care
+          </p>
+
+          <h1 class="text-6xl font-bold mt-5">Live Chat Support</h1>
+
+          <p class="mt-5 text-stone-500">
+            Chat directly with our customer care team.
+          </p>
+        </div>
+
+        <div
+          class="bg-white rounded-[36px] shadow-xl border border-stone-200 overflow-hidden"
+        >
+          <!-- Header -->
+
+          <div class="bg-[#B68D40] px-8 py-6 flex items-center justify-between">
+            <div>
+              <h2 class="text-2xl font-semibold text-white">
+                Customer Support
+              </h2>
+
+              <p class="text-[#FFF2D5]">
+                <span
+                  class="inline-block w-2 h-2 rounded-full bg-green-400"
+                ></span>
+
+                Online
+              </p>
+            </div>
+          </div>
+
+          <!-- Messages -->
+
+          <div
+            id="chatBox"
+            class="h-[500px] overflow-y-auto p-8 bg-[#FCFBF8] space-y-5"
+          ></div>
+
+          <!-- Input -->
+
+          <div class="border-t border-stone-200 p-6">
+            <div class="flex gap-4">
+              <input
+                id="message"
+                type="text"
+                placeholder="Type your message..."
+                class="flex-1 rounded-full border border-stone-300 px-6 py-4 outline-none focus:border-[#B68D40]"
+              />
+
+              <button
+                id="sendBtn"
+                class="bg-[#B68D40] hover:bg-[#9D7A37] text-white px-8 rounded-full transition"
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <%- include("layout/footer") %>
+
+    <script src="/js/index.js"></script>
+    <script src="/js/contact.js"></script>
+  </body>
+</html>

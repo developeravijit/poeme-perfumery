@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Collections | POÈME Perfumery</title>
+
+    <link rel="stylesheet" href="/css/output.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body class="bg-[#FCFBF8] text-stone-900">
+    <!-- Navbar -->
+
+    <%- include("layout/navbar.ejs") %>
+
+    <!-- ================= Banner ================= -->
+
+    <section
+      class="pt-36 pb-20 bg-gradient-to-b from-[#F8F3EA] to-[#FCFBF8] relative overflow-hidden"
+    >
+      <div
+        class="absolute -top-32 left-0 w-[450px] h-[450px] rounded-full bg-[#F3E7D0] blur-[170px] opacity-70"
+      ></div>
+
+      <div
+        class="absolute -bottom-40 right-0 w-[400px] h-[400px] rounded-full bg-[#EFE2C9] blur-[170px] opacity-70"
+      ></div>
+
+      <div class="relative max-w-7xl mx-auto px-6 lg:px-8 text-center">
+        <p class="uppercase tracking-[8px] text-[#B68D40] font-semibold">
+          Luxury Collection
+        </p>
+
+        <h1 class="mt-4 text-6xl font-bold">Our Fragrances</h1>
+
+        <p class="mt-6 max-w-2xl mx-auto text-stone-600 text-lg leading-8">
+          Discover handcrafted perfumes inspired by timeless elegance, premium
+          ingredients and unforgettable moments.
+        </p>
+
+        <!-- Breadcrumb -->
+
+        <div class="mt-8 flex justify-center items-center gap-3 text-stone-500">
+          <a href="/" class="hover:text-[#B68D40]"> Home </a>
+
+          <span>/</span>
+
+          <span class="text-[#B68D40]"> Collections </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= Search ================= -->
+
+    <section class="py-10">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <form action="/collections" method="GET">
+          <div
+            class="bg-white rounded-2xl border border-stone-200 shadow-lg p-4 flex flex-col lg:flex-row gap-4"
+          >
+            <div class="flex-1">
+              <input
+                type="search"
+                name="search"
+                value="<%= filters?.search || '' %>"
+                placeholder="Search perfumes, brands, fragrance notes..."
+                class="w-full px-5 py-4 rounded-xl outline-none border border-stone-200 focus:border-[#B68D40]"
+              />
+            </div>
+
+            <button
+              class="bg-[#B68D40] hover:bg-[#9C7834] text-white px-10 rounded-xl font-semibold"
+            >
+              Search
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ================= Main ================= -->
+
+    <section class="pb-24">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="grid lg:grid-cols-12 gap-10">
+          <!-- ================= Sidebar ================= -->
+
+          <aside class="lg:col-span-3">
+            <div
+              class="sticky top-28 bg-white rounded-3xl border border-stone-200 shadow-lg p-8"
+            >
+              <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-semibold">Filters</h2>
+
+                <a href="/collections" class="text-sm text-[#B68D40]">
+                  Reset
+                </a>
+              </div>
+
+              <!-- Brand -->
+
+              <div class="mt-10">
+                <h3 class="font-semibold text-lg">Brand</h3>
+
+                <div class="mt-4 space-y-3">
+                  <label class="flex items-center gap-3">
+                    <input type="checkbox" name="brand" value="POÈME" />
+
+                    <span>POÈME</span>
+                  </label>
+
+                  <label class="flex items-center gap-3">
+                    <input type="checkbox" name="brand" value="Dior" />
+
+                    <span>Dior</span>
+                  </label>
+
+                  <label class="flex items-center gap-3">
+                    <input type="checkbox" name="brand" value="Chanel" />
+
+                    <span>Chanel</span>
+                  </label>
+
+                  <label class="flex items-center gap-3">
+                    <input type="checkbox" name="brand" value="Creed" />
+
+                    <span>Creed</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Category -->
+
+              <div class="mt-10">
+                <h3 class="font-semibold text-lg">Category</h3>
+
+                <div class="mt-4 space-y-3">
+                  <label class="flex items-center gap-3">
+                    <input type="checkbox" name="category" value="Floral" />
+
+                    Floral
+                  </label>
+
+                  <label class="flex items-center gap-3">
+                    <input type="checkbox" name="category" value="Woody" />
+
+                    Woody
+                  </label>
+
+                  <label class="flex items-center gap-3">
+                    <input type="checkbox" name="category" value="Fresh" />
+
+                    Fresh
+                  </label>
+
+                  <label class="flex items-center gap-3">
+                    <input type="checkbox" name="category" value="Oriental" />
+
+                    Oriental
+                  </label>
+                </div>
+              </div>
+
+              <!-- Price -->
+
+              <div class="mt-10">
+                <h3 class="font-semibold text-lg">Price</h3>
+
+                <div class="mt-5">
+                  <input
+                    type="range"
+                    min="1000"
+                    max="10000"
+                    class="w-full accent-[#B68D40]"
+                  />
+
+                  <div class="flex justify-between mt-2 text-sm text-stone-500">
+                    <span>₹1000</span>
+
+                    <span>₹10000</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Rating -->
+
+              <div class="mt-10">
+                <h3 class="font-semibold text-lg">Rating</h3>
+
+                <div class="mt-4 space-y-3">
+                  <label class="flex items-center gap-3">
+                    <input type="radio" name="rating" />
+
+                    ★★★★★
+                  </label>
+
+                  <label class="flex items-center gap-3">
+                    <input type="radio" name="rating" />
+
+                    ★★★★☆
+                  </label>
+
+                  <label class="flex items-center gap-3">
+                    <input type="radio" name="rating" />
+
+                    ★★★☆☆
+                  </label>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <!-- ================= Products ================= -->
+
+          <main class="lg:col-span-9">
+            <div
+              class="flex flex-col md:flex-row md:items-center justify-between gap-5 mb-10"
+            >
+              <h2 class="text-2xl font-semibold">
+                Showing
+
+                <span class="text-[#B68D40]"> <%= products.length %> </span>
+
+                Products
+              </h2>
+
+              <form method="GET">
+                <select
+                  name="sort"
+                  class="border border-stone-200 rounded-xl px-5 py-3 outline-none focus:border-[#B68D40]"
+                >
+                  <option>Newest</option>
+
+                  <option value="low">Price : Low to High</option>
+
+                  <option value="high">Price : High to Low</option>
+
+                  <option value="rating">Highest Rated</option>
+                </select>
+              </form>
+            </div>
+
+            <div class="flex flex-wrap gap-3 mb-8">
+              <% if(filters.search){ %>
+
+              <span class="px-4 py-2 rounded-full bg-[#F4E8D1]">
+                Search : <%= filters.search %>
+              </span>
+
+              <% } %>
+
+              <% if(filters.category){ %>
+
+              <span class="px-4 py-2 rounded-full bg-[#F4E8D1]">
+                Category : <%= filters.category %>
+              </span>
+
+              <% } %>
+
+              <% if(filters.brand){ %>
+
+              <span class="px-4 py-2 rounded-full bg-[#F4E8D1]">
+                Brand : <%= filters.brand %>
+              </span>
+
+              <% } %>
+            </div>
+
+            <!-- Product Grid Starts Here -->
+
+            <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
+              <% if(products.length){ %> <% products.forEach(product=>{ %>
+
+              <div
+                class="group relative bg-white rounded-[32px] border border-stone-200 overflow-hidden shadow-md hover:shadow-2xl hover:-translate-y-2 transition-all duration-500"
+              >
+                <!-- Wishlist -->
+
+                <button
+                  class="absolute top-5 right-5 z-30 w-11 h-11 rounded-full bg-white shadow-lg border border-stone-200 flex items-center justify-center hover:bg-[#B68D40] hover:text-white transition"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 20.364 4.318 12.682a4.5 4.5 0 010-6.364z"
+                    />
+                  </svg>
+                </button>
+
+                <!-- Badges -->
+
+                <div class="absolute left-5 top-5 flex flex-col gap-2 z-20">
+                  <% if(product.isNew){ %>
+
+                  <span
+                    class="bg-green-600 text-white text-xs px-3 py-1 rounded-full"
+                  >
+                    NEW
+                  </span>
+
+                  <% } %>
+
+                  <% if(product.bestSeller){ %>
+
+                  <span
+                    class="bg-[#B68D40] text-white text-xs px-3 py-1 rounded-full"
+                  >
+                    BEST SELLER
+                  </span>
+
+                  <% } %>
+                </div>
+
+                <!-- Image -->
+
+                <div
+                  class="relative h-[330px] bg-gradient-to-br from-[#FBFAF8] to-[#F2ECE3] flex items-center justify-center overflow-hidden"
+                >
+                  <div
+                    class="absolute w-56 h-56 rounded-full bg-[#E8D6B3]/50 blur-[90px]"
+                  ></div>
+
+                  <img
+                    src="/assets/<%= product.image %>"
+                    alt="<%= product.name %>"
+                    class="relative z-10 h-[260px] object-contain transition duration-500 group-hover:scale-110"
+                  />
+                </div>
+
+                <!-- Content -->
+
+                <div class="p-7">
+                  <!-- Brand -->
+
+                  <p
+                    class="uppercase tracking-[4px] text-xs text-[#B68D40] font-semibold"
+                  >
+                    <%= product.brand %>
+                  </p>
+
+                  <!-- Name -->
+
+                  <h2 class="mt-2 text-3xl font-semibold text-stone-900">
+                    <%= product.name %>
+                  </h2>
+
+                  <!-- Category -->
+
+                  <p class="mt-2 text-stone-500"><%= product.category %></p>
+
+                  <!-- Rating -->
+
+                  <div class="flex items-center gap-3 mt-5">
+                    <div class="flex text-yellow-500">
+                      <% for(let i=1;i<=5;i++){ %> <%
+                      if(i<=Math.round(product.rating)){ %> ★ <% }else{ %> ☆ <%
+                      } %> <% } %>
+                    </div>
+
+                    <span class="text-sm text-stone-500">
+                      (<%= product.reviewCount %> Reviews)
+                    </span>
+                  </div>
+
+                  <!-- Price -->
+
+                  <div class="flex justify-between items-center mt-7">
+                    <div>
+                      <% if(product.originalPrice){ %>
+
+                      <p class="text-sm line-through text-stone-400">
+                        ₹<%= product.originalPrice %>
+                      </p>
+
+                      <% } %>
+
+                      <h3 class="text-3xl font-bold text-[#B68D40]">
+                        ₹<%= product.price %>
+                      </h3>
+                    </div>
+
+                    <% if(product.stock>0){ %>
+
+                    <span class="text-green-600 font-medium"> In Stock </span>
+
+                    <% }else{ %>
+
+                    <span class="text-red-500 font-medium"> Out of Stock </span>
+
+                    <% } %>
+                  </div>
+
+                  <!-- Buttons -->
+
+                  <div class="grid grid-cols-2 gap-3 mt-8">
+                    <a
+                      href="/products/<%= product.slug %>"
+                      class="text-center bg-[#B68D40] hover:bg-[#9D7A37] text-white rounded-xl py-3 font-semibold transition"
+                    >
+                      View Details
+                    </a>
+
+                    <button
+                      class="border border-stone-300 rounded-xl py-3 hover:bg-stone-100 transition"
+                    >
+                      Add Cart
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <% }) %>
+
+              <% }else{ %>
+
+              <div class="col-span-full">
+                <div
+                  class="bg-white rounded-3xl border border-stone-200 p-20 text-center shadow"
+                >
+                  <div class="text-7xl">🔍</div>
+
+                  <h2 class="text-4xl font-bold mt-8">No Perfumes Found</h2>
+
+                  <p class="text-stone-500 mt-4 text-lg">
+                    We couldn't find any fragrance matching your search.
+                  </p>
+
+                  <a
+                    href="/collections"
+                    class="inline-block mt-10 px-8 py-4 rounded-full bg-[#B68D40] text-white hover:bg-[#9D7A37]"
+                  >
+                    Reset Filters
+                  </a>
+                </div>
+              </div>
+
+              <% } %>
+            </div>
+
+            <!-- Pagination -->
+
+            <% if(totalPages > 1){ %>
+
+            <div class="flex justify-center mt-16">
+              <div class="flex items-center gap-3">
+                <% if(currentPage>1){ %>
+
+                <a
+                  href="?page=<%= currentPage-1 %>"
+                  class="w-12 h-12 rounded-full border border-stone-300 bg-white flex items-center justify-center hover:bg-[#B68D40] hover:text-white transition"
+                >
+                  ←
+                </a>
+
+                <% } %>
+
+                <% for(let i=1;i<=totalPages;i++){ %>
+
+                <a
+                  href="?page=<%= i %>"
+                  class="<%= currentPage===i ? 'bg-[#B68D40] text-white' : 'bg-white border border-stone-300' %> w-12 h-12 rounded-full flex items-center justify-center hover:bg-[#B68D40] hover:text-white transition"
+                >
+                  <%= i %>
+                </a>
+
+                <% } %>
+
+                <% if(currentPage<totalPages){ %>
+
+                <a
+                  href="?page=<%= currentPage+1 %>"
+                  class="w-12 h-12 rounded-full border border-stone-300 bg-white flex items-center justify-center hover:bg-[#B68D40] hover:text-white transition"
+                >
+                  →
+                </a>
+
+                <% } %>
+              </div>
+            </div>
+
+            <% } %>
+          </main>
+        </div>
+      </div>
+    </section>
+
+    <%- include("layout/footer.ejs") %>
+
+    <script src="/js/index.js"></script>
+  </body>
+</html>

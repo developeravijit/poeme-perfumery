@@ -1,0 +1,192 @@
+<nav
+  class="fixed top-0 left-0 w-full z-50 bg-white/75 backdrop-blur-xl border-b border-stone-200/70 shadow-sm"
+>
+  <div class="max-w-7xl mx-auto px-6 lg:px-8">
+    <div class="flex items-center justify-between h-20">
+      <!-- Logo -->
+
+      <a href="/poeme-perfumery/home" class="flex flex-col">
+        <h1 class="text-4xl font-bold tracking-wide text-stone-900">POÈME</h1>
+
+        <span
+          class="uppercase tracking-[6px] text-[11px] text-[#B68D40] font-medium"
+        >
+          Luxury Perfumery
+        </span>
+      </a>
+
+      <!-- Desktop Menu -->
+
+      <div class="hidden lg:flex items-center gap-10">
+        <a
+          href="/poeme-perfumery/home"
+          class="font-medium text-stone-700 hover:text-[#B68D40] transition"
+        >
+          Home
+        </a>
+
+        <a
+          href="/poeme-perfumery/perfumes"
+          class="font-medium text-stone-700 hover:text-[#B68D40] transition"
+        >
+          Perfumes
+        </a>
+      </div>
+
+      <!-- Right Side -->
+
+      <!-- Right Side -->
+
+      <div class="hidden lg:flex items-center gap-4">
+        <!-- Cart -->
+
+        <a
+          href="/poeme-perfumery/cart"
+          class="relative flex items-center justify-center w-11 h-11 rounded-full bg-white shadow-md border border-stone-200 hover:bg-[#B68D40] hover:text-white transition"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 7h13M9 20a1 1 0 100 2 1 1 0 000-2zm8 0a1 1 0 100 2 1 1 0 000-2z"
+            />
+          </svg>
+
+          <span
+            class="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-[#B68D40] text-white text-xs flex items-center justify-center"
+          >
+            <%= typeof cartCount !== "undefined" ? cartCount : 0 %>
+          </span>
+        </a>
+
+        <% if(!user){ %>
+
+        <a
+          href="/poeme-perfumery/login"
+          class="px-5 py-2.5 rounded-full border border-stone-300 text-stone-700 font-medium hover:bg-stone-100 transition"
+        >
+          Login
+        </a>
+
+        <a
+          href="/poeme-perfumery/register"
+          class="px-5 py-2.5 rounded-full bg-[#B68D40] text-white font-medium hover:bg-[#9D7A37] transition shadow-md"
+        >
+          Sign Up
+        </a>
+
+        <% } else { %>
+
+        <div class="relative" id="profileMenuWrapper">
+          <button
+            id="profileBtn"
+            class="w-11 h-11 rounded-full bg-[#B68D40] text-white font-semibold text-lg flex items-center justify-center shadow-md"
+          >
+            <%= user.name.charAt(0).toUpperCase() %>
+          </button>
+
+          <div
+            id="profileDropdown"
+            style="display: none"
+            class="absolute right-0 top-12 w-64 bg-white rounded-2xl shadow-2xl border border-stone-200 z-[9999]"
+          >
+            <div class="px-5 py-4 border-b">
+              <p class="font-semibold text-stone-900"><%= user.name %></p>
+
+              <p class="text-sm text-stone-500"><%= user.email %></p>
+            </div>
+
+            <a
+              href="/poeme-perfumery/orders"
+              class="block px-5 py-3 hover:bg-stone-100"
+            >
+              Orders
+            </a>
+
+            <a
+              href="/poeme-perfumery/settings"
+              class="block px-5 py-3 hover:bg-stone-100"
+            >
+              Settings
+            </a>
+
+            <a
+              href="/poeme-perfumery/chat"
+              class="block px-5 py-3 hover:bg-stone-100"
+            >
+              Contact Us
+            </a>
+
+            <hr />
+
+            <a
+              href="/poeme-perfumery/logout"
+              class="block px-5 py-3 text-red-600 hover:bg-red-50"
+            >
+              Logout
+            </a>
+          </div>
+        </div>
+
+        <% } %>
+      </div>
+
+      <!-- Mobile Menu Button -->
+
+      <button
+        id="menuBtn"
+        class="lg:hidden w-11 h-11 rounded-full bg-white border border-stone-200 flex items-center justify-center shadow"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="w-6 h-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16"
+          />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Menu -->
+
+  <div
+    id="mobileMenu"
+    class="hidden lg:hidden bg-white border-t border-stone-200"
+  >
+    <div class="flex flex-col px-6 py-6 space-y-5">
+      <a href="#hero" class="text-stone-700 hover:text-[#B68D40]"> Home </a>
+
+      <a href="#collections" class="text-stone-700 hover:text-[#B68D40]">
+        Collections
+      </a>
+
+      <a href="#about" class="text-stone-700 hover:text-[#B68D40]"> About </a>
+
+      <a href="#contact" class="text-stone-700 hover:text-[#B68D40]">
+        Contact
+      </a>
+
+      <a
+        href="#collections"
+        class="mt-3 text-center bg-[#B68D40] text-white py-3 rounded-full font-semibold hover:bg-[#9D7A37] transition"
+      >
+        Shop Now
+      </a>
+    </div>
+  </div>
+</nav>

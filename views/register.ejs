@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Account | POÈME Perfumery</title>
+
+    <link rel="stylesheet" href="/css/output.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body class="bg-[#FCFBF8]">
+    <%- include("layout/navbar.ejs") %>
+
+    <section class="min-h-screen flex items-center justify-center px-6 py-24">
+      <!-- Background Glow -->
+      <div
+        class="absolute top-0 left-0 w-80 h-80 bg-[#F4E8D1] rounded-full blur-[120px] opacity-70"
+      ></div>
+      <div
+        class="absolute bottom-0 right-0 w-80 h-80 bg-[#F4E8D1] rounded-full blur-[120px] opacity-70"
+      ></div>
+
+      <div class="relative w-full max-w-lg">
+        <div
+          class="bg-white rounded-[35px] border border-stone-200 shadow-2xl overflow-hidden"
+        >
+          <!-- Header -->
+          <div
+            class="bg-gradient-to-r from-[#B68D40] to-[#D8B86A] text-center py-10 px-8"
+          >
+            <h1 class="text-5xl font-bold text-white tracking-wide">POÈME</h1>
+
+            <p class="uppercase tracking-[6px] text-sm text-[#FFF7E8] mt-2">
+              Luxury Perfumery
+            </p>
+          </div>
+
+          <!-- Body -->
+          <div class="p-10">
+            <h2 class="text-4xl font-bold text-center text-stone-900">
+              Create Your Account
+            </h2>
+
+            <p class="text-center text-stone-500 mt-3">
+              Join POÈME and explore luxury fragrances.
+            </p>
+
+            <% if (message.length > 0) { %>
+            <div
+              class="mb-6 rounded-lg bg-red-100 border border-red-400 text-red-700 px-4 py-3"
+            >
+              <%= message[0] %>
+            </div>
+            <% } %>
+            <form
+              action="/poeme-perfumery/register"
+              method="POST"
+              class="mt-10 space-y-6"
+            >
+              <!-- Name -->
+              <div>
+                <label class="block mb-2 font-medium text-stone-700">
+                  Full Name
+                </label>
+
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Enter your full name"
+                  class="w-full rounded-xl border border-stone-300 px-5 py-4 outline-none focus:border-[#B68D40]"
+                  required
+                />
+              </div>
+
+              <!-- Phone -->
+              <div>
+                <label class="block mb-2 font-medium text-stone-700">
+                  Phone Number
+                </label>
+
+                <input
+                  type="tel"
+                  name="phone"
+                  placeholder="Enter your phone number"
+                  class="w-full rounded-xl border border-stone-300 px-5 py-4 outline-none focus:border-[#B68D40]"
+                  pattern="[6-9]{1}[0-9]{9}"
+                  maxlength="10"
+                  required
+                />
+              </div>
+
+              <!-- Email -->
+              <div>
+                <label class="block mb-2 font-medium text-stone-700">
+                  Email Address
+                </label>
+
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Enter your email"
+                  class="w-full rounded-xl border border-stone-300 px-5 py-4 outline-none focus:border-[#B68D40]"
+                  required
+                />
+              </div>
+
+              <!-- Password -->
+              <div>
+                <label class="block mb-2 font-medium text-stone-700">
+                  Password
+                </label>
+
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Create a password"
+                  class="w-full rounded-xl border border-stone-300 px-5 py-4 outline-none focus:border-[#B68D40]"
+                  required
+                />
+              </div>
+
+              <!-- Confirm Password -->
+              <div>
+                <label class="block mb-2 font-medium text-stone-700">
+                  Confirm Password
+                </label>
+
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  placeholder="Confirm your password"
+                  class="w-full rounded-xl border border-stone-300 px-5 py-4 outline-none focus:border-[#B68D40]"
+                  required
+                />
+              </div>
+
+              <!-- Terms -->
+              <label class="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  name="terms"
+                  required
+                  oninvalid="
+                    this.setCustomValidity(
+                      'Please accept the Terms & Conditions to create your account.'
+                    )
+                  "
+                  oninput="this.setCustomValidity('')"
+                  class="mt-1 accent-[#B68D40]"
+                />
+
+                <span class="text-sm text-stone-600 leading-6">
+                  I agree to the
+                  <a href="/terms" class="text-[#B68D40] hover:underline">
+                    Terms & Conditions
+                  </a>
+                  and
+                  <a href="/privacy" class="text-[#B68D40] hover:underline">
+                    Privacy Policy </a
+                  >.
+                </span>
+              </label>
+
+              <!-- Register -->
+              <button
+                type="submit"
+                class="w-full bg-[#B68D40] hover:bg-[#9D7A37] text-white py-4 rounded-xl text-lg font-semibold transition"
+              >
+                Create Account
+              </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="my-8 flex items-center">
+              <div class="flex-1 border-t border-stone-200"></div>
+
+              <span class="px-4 text-stone-400 text-sm"> OR </span>
+
+              <div class="flex-1 border-t border-stone-200"></div>
+            </div>
+
+            <!-- Google Signup -->
+            <a
+              href="/poeme-perfumery/google"
+              class="flex items-center justify-center gap-3 border border-stone-300 rounded-xl py-4 hover:bg-stone-50 transition"
+            >
+              <img
+                src="https://www.svgrepo.com/show/475656/google-color.svg"
+                class="w-6 h-6"
+                alt="Google"
+              />
+
+              Continue with Google
+            </a>
+
+            <!-- Login -->
+            <p class="mt-8 text-center text-stone-600">
+              Already have an account?
+
+              <a
+                href="/poeme-perfumery/login"
+                class="text-[#B68D40] font-semibold hover:underline"
+              >
+                Login
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <%- include("layout/footer.ejs") %>
+
+    <script src="/js/index.js"></script>
+  </body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>POÈME PERFUMERY | Luxury Fragrances</title>
+
+    <!-- Tailwind -->
+    <link rel="stylesheet" href="/css/output.css" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Swiper -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"
+    />
+  </head>
+
+  <body class="bg-[#FCFBF8] text-stone-900">
+    <!-- ===========================
+            Navbar
+    ============================ -->
+
+    <%- include("layout/navbar.ejs") %>
+
+    <!-- ===========================
+            Hero
+    ============================ -->
+
+    <%- include("partials/hero.ejs") %>
+
+    <!-- ===========================
+            Collections
+    ============================ -->
+
+    <%- include("partials/collections.ejs") %>
+
+    <!-- ===========================
+            About
+    ============================ -->
+
+    <%- include("partials/about.ejs") %>
+
+    <!-- ===========================
+            Contact
+    ============================ -->
+
+    <%- include("partials/contact.ejs") %>
+
+    <!-- ===========================
+            Footer
+    ============================ -->
+
+    <%- include("layout/footer.ejs") %>
+
+    <!-- ===========================
+            Swiper JS
+    ============================ -->
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    <script src="/js/index.js"></script>
+  </body>
+</html>

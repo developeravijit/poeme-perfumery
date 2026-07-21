@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Error | POÈME Perfumery</title>
+
+    <link rel="stylesheet" href="/css/output.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body class="bg-[#FCFBF8] min-h-screen">
+    <%- include("layout/navbar.ejs") %>
+
+    <section class="min-h-screen flex items-center justify-center px-6 py-20">
+      <div
+        class="w-full max-w-lg bg-white rounded-[30px] shadow-2xl border border-stone-200 overflow-hidden"
+      >
+        <div
+          class="bg-gradient-to-r from-red-500 to-red-600 text-white text-center py-8"
+        >
+          <h1 class="text-4xl font-bold">Oops!</h1>
+          <p class="mt-2 text-red-100">Something went wrong</p>
+        </div>
+
+        <div class="p-10 text-center">
+          <div
+            class="w-20 h-20 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto text-5xl"
+          >
+            !
+          </div>
+
+          <h2 class="text-2xl font-semibold text-stone-800 mt-6">Error</h2>
+
+          <p class="mt-4 text-stone-600">
+            <%= message || "An unexpected error occurred." %>
+          </p>
+
+          <div class="mt-8 flex justify-center gap-4">
+            <a
+              href="javascript:history.back()"
+              class="px-6 py-3 rounded-xl border border-stone-300 hover:bg-stone-100 transition"
+            >
+              Go Back
+            </a>
+
+            <a
+              href="/poeme-perfumery/home"
+              class="px-6 py-3 rounded-xl bg-[#B68D40] text-white hover:bg-[#9D7A37] transition"
+            >
+              Home
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <%- include("layout/footer.ejs") %>
+  </body>
+</html>

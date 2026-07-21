@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shopping Cart | POÈME Perfumery</title>
+
+    <link rel="stylesheet" href="/css/output.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body class="bg-[#FCFBF8]">
+    <%- include("layout/navbar.ejs") %>
+
+    <section class="max-w-7xl mx-auto px-6 py-24">
+      <div class="text-center mb-14">
+        <p class="uppercase tracking-[8px] text-[#B68D40] font-semibold">
+          Shopping Cart
+        </p>
+
+        <h1 class="text-5xl font-bold mt-4 text-stone-900">
+          Your Luxury Collection
+        </h1>
+
+        <p class="text-stone-500 mt-4">
+          Review your selected fragrances before checkout.
+        </p>
+      </div>
+
+      <% if(cartItems.length){ %>
+
+      <div class="grid lg:grid-cols-3 gap-10">
+        <!-- Cart Items -->
+        <div class="lg:col-span-2 space-y-8">
+          <% cartItems.forEach(item=>{ %>
+
+          <div
+            class="bg-white rounded-3xl shadow-lg border border-stone-200 p-6 flex flex-col md:flex-row gap-6"
+          >
+            <div
+              class="w-full md:w-52 h-52 bg-[#F8F6F2] rounded-2xl flex items-center justify-center"
+            >
+              <img
+                src="<%= item.product.image %>"
+                class="max-h-44 object-contain"
+              />
+            </div>
+
+            <div class="flex-1 flex flex-col justify-between">
+              <div>
+                <h2 class="text-3xl font-semibold text-stone-900">
+                  <%= item.product.name %>
+                </h2>
+
+                <p class="text-stone-500 mt-3 leading-7">
+                  <%= item.product.description %>
+                </p>
+              </div>
+
+              <div class="flex justify-between items-center mt-8">
+                <div class="flex items-center border rounded-full">
+                  <a
+                    href="/cart/decrease/<%= item.product._id %>"
+                    class="px-5 py-2 text-xl"
+                  >
+                    -
+                  </a>
+
+                  <span class="px-4"> <%= item.quantity %> </span>
+
+                  <a
+                    href="/cart/increase/<%= item.product._id %>"
+                    class="px-5 py-2 text-xl"
+                  >
+                    +
+                  </a>
+                </div>
+
+                <h3 class="text-2xl font-bold text-[#B68D40]">
+                  ₹<%=
+                  (item.product.price*item.quantity).toLocaleString("en-IN") %>
+                </h3>
+              </div>
+            </div>
+
+            <div>
+              <a
+                href="/cart/remove/<%= item.product._id %>"
+                class="text-red-500 hover:text-red-700 font-medium"
+              >
+                Remove
+              </a>
+            </div>
+          </div>
+
+          <% }) %>
+        </div>
+
+        <!-- Summary -->
+
+        <div>
+          <div
+            class="bg-white rounded-3xl border border-stone-200 shadow-lg p-8 sticky top-24"
+          >
+            <h2 class="text-3xl font-bold mb-8">Order Summary</h2>
+
+            <div class="space-y-5">
+              <div class="flex justify-between">
+                <span>Subtotal</span>
+
+                <span> ₹<%= subtotal.toLocaleString("en-IN") %> </span>
+              </div>
+
+              <div class="flex justify-between">
+                <span>Shipping</span>
+
+                <span> ₹<%= shipping.toLocaleString("en-IN") %> </span>
+              </div>
+
+              <div class="flex justify-between">
+                <span>Tax</span>
+
+                <span> ₹<%= tax.toLocaleString("en-IN") %> </span>
+              </div>
+
+              <hr />
+
+              <div class="flex justify-between text-2xl font-bold">
+                <span>Total</span>
+
+                <span class="text-[#B68D40]">
+                  ₹<%= total.toLocaleString("en-IN") %>
+                </span>
+              </div>
+            </div>
+
+            <a
+              href="/checkout"
+              class="block mt-10 bg-[#B68D40] hover:bg-[#9A7737] text-white text-center py-4 rounded-full font-semibold"
+            >
+              Proceed To Checkout
+            </a>
+
+            <a
+              href="/poeme-perfumery/perfumes"
+              class="block mt-4 text-center border border-[#B68D40] py-4 rounded-full text-[#B68D40]"
+            >
+              Continue Shopping
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <% } else { %>
+
+      <div class="bg-white rounded-3xl shadow-lg p-20 text-center">
+        <img src="/assets/empty-cart.png" class="w-56 mx-auto" />
+
+        <h2 class="text-4xl font-bold mt-8">Your Cart is Empty</h2>
+
+        <p class="text-stone-500 mt-4">
+          Add your favourite fragrances and discover luxury.
+        </p>
+
+        <a
+          href="/poeme-perfumery/perfumes"
+          class="inline-block mt-10 bg-[#B68D40] hover:bg-[#9A7737] text-white px-10 py-4 rounded-full"
+        >
+          Shop Now
+        </a>
+      </div>
+
+      <% } %>
+    </section>
+
+    <%- include("layout/footer.ejs") %>
+
+    <script src="/js/index.js"></script>
+  </body>
+</html>

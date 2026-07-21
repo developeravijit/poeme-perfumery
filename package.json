@@ -1,0 +1,42 @@
+{
+  "name": "poeme_perfume_project",
+  "version": "1.0.0",
+  "description": "Poeme perfume Brand full stack final year project",
+  "license": "ISC",
+  "author": "Avijit Roy",
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "concurrently -n \"server,css\" -c \"cyan,magenta\" \"nodemon app.js --ext js,ejs,css --ignore public/css/output.css\" \"npm run watch:css\"",
+    "start": "node app.js",
+    "build:css": "tailwindcss -i ./public/css/input.css -o ./public/css/output.css",
+    "watch:css": "tailwindcss -i ./public/css/input.css -o ./public/css/output.css --watch"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "connect-flash": "^0.1.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "joi": "^18.2.3",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.7.4",
+    "nodemailer": "^9.0.3",
+    "nodemon": "^3.1.14",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.5.2",
+    "concurrently": "^9.0.1",
+    "postcss": "^8.5.16",
+    "prettier": "^3.9.5",
+    "prettier-plugin-ejs": "^1.0.3",
+    "tailwindcss": "^3.4.19"
+  }
+}
