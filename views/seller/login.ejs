@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seller Login</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+  </head>
+
+  <body
+    class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 overflow-hidden"
+  >
+    <!-- Background -->
+
+    <div
+      class="absolute top-0 left-0 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl"
+    ></div>
+
+    <div
+      class="absolute bottom-0 right-0 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl"
+    ></div>
+
+    <div
+      class="relative min-h-screen flex items-center justify-center px-5 py-10"
+    >
+      <div
+        class="max-w-6xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl grid lg:grid-cols-2"
+      >
+        <!-- Left Side -->
+
+        <div
+          class="hidden lg:flex flex-col justify-between bg-gradient-to-br from-indigo-700 via-indigo-600 to-purple-700 text-white p-12"
+        >
+          <div>
+            <h1 class="text-4xl font-bold">Welcome Back</h1>
+
+            <p class="mt-5 text-indigo-100 leading-7">
+              Access your seller dashboard, manage products, fulfill orders,
+              track sales and grow your business with confidence.
+            </p>
+          </div>
+
+          <div class="space-y-5">
+            <div class="flex items-center gap-4">
+              <div
+                class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-box"></i>
+              </div>
+
+              <span>Manage Unlimited Products</span>
+            </div>
+
+            <div class="flex items-center gap-4">
+              <div
+                class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-cart-shopping"></i>
+              </div>
+
+              <span>Track Orders Instantly</span>
+            </div>
+
+            <div class="flex items-center gap-4">
+              <div
+                class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-chart-line"></i>
+              </div>
+
+              <span>Sales Analytics</span>
+            </div>
+
+            <div class="flex items-center gap-4">
+              <div
+                class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-shield-halved"></i>
+              </div>
+
+              <span>Secure Seller Platform</span>
+            </div>
+          </div>
+
+          <div class="text-indigo-100 text-sm">
+            Trusted by thousands of sellers.
+          </div>
+        </div>
+
+        <!-- Right Side -->
+
+        <div class="p-8 lg:p-12">
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="text-3xl font-bold text-slate-800">Seller Login</h2>
+
+              <p class="text-slate-500 mt-2">Sign in to continue.</p>
+            </div>
+
+            <a
+              href="/poeme-perfumery/seller/register"
+              class="text-indigo-600 font-semibold hover:text-indigo-700"
+            >
+              Register
+            </a>
+          </div>
+
+          <!-- Flash Messages -->
+
+          <% if(success.length){ %>
+
+          <div
+            class="mt-6 rounded-xl bg-green-100 border border-green-300 text-green-700 px-4 py-3"
+          >
+            <%= success[0] %>
+          </div>
+
+          <% } %>
+
+          <% if(error.length){ %>
+
+          <div
+            class="mt-6 rounded-xl bg-red-100 border border-red-300 text-red-700 px-4 py-3"
+          >
+            <%= error[0] %>
+          </div>
+
+          <% } %>
+
+          <!-- Login Tabs -->
+
+          <div class="grid grid-cols-2 gap-2 bg-slate-100 rounded-xl p-1 mt-8">
+            <button
+              id="passwordTab"
+              class="bg-indigo-600 text-white py-3 rounded-lg font-semibold"
+            >
+              Password
+            </button>
+
+            <button
+              id="otpTab"
+              class="text-slate-600 py-3 rounded-lg font-semibold"
+            >
+              Login with OTP
+            </button>
+          </div>
+
+          <!-- Password Login -->
+
+          <div id="passwordForm" class="mt-8">
+            <form
+              action="/poeme-perfumery/seller/login"
+              method="POST"
+              class="space-y-6"
+            >
+              <!-- Email -->
+
+              <div>
+                <label class="text-sm font-medium text-slate-700">
+                  Email Address
+                </label>
+
+                <div class="relative mt-2">
+                  <i
+                    class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  ></i>
+
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    placeholder="seller@example.com"
+                    class="w-full h-12 pl-11 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none"
+                  />
+                </div>
+              </div>
+
+              <!-- Password -->
+
+              <div>
+                <label class="text-sm font-medium text-slate-700">
+                  Password
+                </label>
+
+                <div class="relative mt-2">
+                  <i
+                    class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  ></i>
+
+                  <input
+                    id="password"
+                    type="password"
+                    name="password"
+                    required
+                    placeholder="Enter Password"
+                    class="w-full h-12 pl-11 pr-12 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none"
+                  />
+
+                  <button
+                    type="button"
+                    id="togglePassword"
+                    class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600"
+                  >
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center">
+                <label class="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    name="remember"
+                    class="rounded text-indigo-600"
+                  />
+
+                  Remember Me
+                </label>
+
+                <a href="#" class="text-sm text-indigo-600 hover:underline">
+                  Forgot Password?
+                </a>
+              </div>
+
+              <button
+                class="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition"
+              >
+                Login
+              </button>
+            </form>
+          </div>
+
+          <!-- OTP Login -->
+
+          <div id="otpForm" class="mt-8 hidden">
+            <form
+              action="/poeme-perfumery/seller/login/otp"
+              method="POST"
+              class="space-y-6"
+            >
+              <div>
+                <label class="text-sm font-medium text-slate-700">
+                  Email Address
+                </label>
+
+                <div class="relative mt-2">
+                  <i
+                    class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  ></i>
+
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    placeholder="seller@example.com"
+                    class="w-full h-12 pl-11 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div
+                class="rounded-xl bg-indigo-50 border border-indigo-100 p-4 text-sm text-slate-600"
+              >
+                <div class="flex items-center gap-3">
+                  <i class="fa-solid fa-circle-info text-indigo-600"></i>
+
+                  <p>
+                    A one-time password will be sent to your registered email.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                class="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition duration-300 hover:scale-[1.02]"
+              >
+                Send OTP
+              </button>
+            </form>
+          </div>
+
+          <div class="text-center mt-8 text-slate-600">
+            Don't have a seller account?
+
+            <a
+              href="/poeme-perfumery/seller/register"
+              class="text-indigo-600 font-semibold hover:underline"
+            >
+              Register
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/seller.js"></script>
+  </body>
+</html>

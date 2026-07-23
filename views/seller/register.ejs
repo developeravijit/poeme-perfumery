@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seller Registration</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+  </head>
+
+  <body
+    class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 overflow-hidden"
+  >
+    <!-- Background Blur -->
+    <div
+      class="absolute top-0 left-0 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl"
+    ></div>
+    <div
+      class="absolute bottom-0 right-0 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl"
+    ></div>
+
+    <div
+      class="relative min-h-screen flex items-center justify-center px-5 py-10"
+    >
+      <div
+        class="max-w-6xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl grid lg:grid-cols-2"
+      >
+        <!-- Left Side -->
+        <div
+          class="hidden lg:flex flex-col justify-between bg-gradient-to-br from-indigo-700 via-indigo-600 to-purple-700 text-white p-12"
+        >
+          <div>
+            <h1 class="text-4xl font-bold leading-tight">Grow Your Business</h1>
+
+            <p class="mt-5 text-indigo-100 leading-7">
+              Create your seller account and start managing products, orders and
+              customers from one powerful dashboard.
+            </p>
+          </div>
+
+          <div class="space-y-5">
+            <div class="flex items-center gap-4">
+              <div
+                class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-box"></i>
+              </div>
+              <span>Easy Product Management</span>
+            </div>
+
+            <div class="flex items-center gap-4">
+              <div
+                class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-cart-shopping"></i>
+              </div>
+              <span>Track Orders in Real Time</span>
+            </div>
+
+            <div class="flex items-center gap-4">
+              <div
+                class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-chart-line"></i>
+              </div>
+              <span>Sales Analytics Dashboard</span>
+            </div>
+
+            <div class="flex items-center gap-4">
+              <div
+                class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-shield-halved"></i>
+              </div>
+              <span>Secure Seller Platform</span>
+            </div>
+          </div>
+
+          <div class="text-indigo-100 text-sm">
+            Trusted by thousands of sellers.
+          </div>
+        </div>
+
+        <!-- Right Side -->
+        <div class="p-8 lg:p-12">
+          <div class="flex justify-between items-center mb-10">
+            <h2 class="text-3xl font-bold text-slate-800">Create Account</h2>
+
+            <a
+              href="/poeme-perfumery/seller/login"
+              class="text-indigo-600 font-semibold hover:text-indigo-700"
+            >
+              Login
+            </a>
+          </div>
+
+          <% if(success && success.length){ %>
+          <div
+            class="mb-5 rounded-xl bg-green-100 border border-green-300 text-green-700 px-4 py-3"
+          >
+            <%= success %>
+          </div>
+          <% } %>
+
+          <% if(error && error.length){ %>
+          <div
+            class="mb-5 rounded-xl bg-red-100 border border-red-300 text-red-600 px-4 py-3"
+          >
+            <%= error %>
+          </div>
+          <% } %>
+
+          <form
+            action="/poeme-perfumery/seller/register"
+            method="POST"
+            class="space-y-6"
+          >
+            <!-- Name -->
+
+            <div>
+              <label class="text-sm font-medium text-slate-700">
+                Full Name
+              </label>
+
+              <div class="relative mt-2">
+                <i
+                  class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                ></i>
+
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="John Doe"
+                  required
+                  class="w-full h-12 pl-11 pr-4 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition"
+                />
+              </div>
+            </div>
+
+            <!-- Phone -->
+
+            <div>
+              <label class="text-sm font-medium text-slate-700">
+                Phone Number
+              </label>
+
+              <div class="relative mt-2">
+                <i
+                  class="fa-solid fa-phone absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                ></i>
+
+                <input
+                  type="text"
+                  name="phone"
+                  placeholder="+91 9876543210"
+                  required
+                  class="w-full h-12 pl-11 pr-4 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition"
+                />
+              </div>
+            </div>
+
+            <!-- Email -->
+
+            <div>
+              <label class="text-sm font-medium text-slate-700">
+                Email Address
+              </label>
+
+              <div class="relative mt-2">
+                <i
+                  class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                ></i>
+
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="seller@example.com"
+                  required
+                  class="w-full h-12 pl-11 pr-4 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition"
+                />
+              </div>
+            </div>
+
+            <!-- Password -->
+
+            <div>
+              <label class="text-sm font-medium text-slate-700">
+                Password
+              </label>
+
+              <div class="relative mt-2">
+                <i
+                  class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                ></i>
+
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Enter Password"
+                  required
+                  class="w-full h-12 pl-11 pr-12 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition"
+                />
+
+                <button
+                  type="button"
+                  class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600"
+                >
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Terms -->
+
+            <label class="flex items-center gap-1 text-sm text-slate-600">
+              <input
+                type="checkbox"
+                required
+                class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              />
+
+              I agree to the
+              <a href="#" class="text-indigo-600 hover:underline"> Terms </a>
+              &
+              <a href="#" class="text-indigo-600 hover:underline">
+                Privacy Policy
+              </a>
+            </label>
+
+            <!-- Submit -->
+
+            <button
+              class="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-lg transition duration-300 hover:scale-[1.02]"
+            >
+              Create Seller Account
+            </button>
+          </form>
+
+          <div class="text-center mt-8 text-slate-600">
+            Already have an account?
+
+            <a
+              href="/poeme-perfumery/seller/login"
+              class="text-indigo-600 font-semibold hover:underline"
+            >
+              Login
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
