@@ -4,9 +4,14 @@ const User = require("../../model/user");
 const httpCodes = require("../../utils/httpCodes");
 const { otpEmail } = require("../../utils/sendEmail");
 const {
+  generateAccessToken,
+  generateRefreshToken,
+} = require("../../utils/token");
+const {
   registerValidation,
   loginSchema,
 } = require("../../validation/authValidation");
+const bcrypt = require("bcrypt");
 
 class sellerPageController {
   // Register Page
@@ -17,11 +22,23 @@ class sellerPageController {
     });
   }
 
+  // Verify Page
+  async verifyPage(req, res) {
+    return res.render("seller/verify", {
+      error: req.flash("error"),
+      success: req.flash("success"),
+    });
+  }
+
   // Login Page
   async loginPage(req, res) {
+    const showOtp = req.session.showOtp || false;
+
     return res.render("seller/login", {
       error: req.flash("error"),
       success: req.flash("success"),
+      email: req.session.email || "",
+      showOtp,
     });
   }
 
@@ -31,34 +48,60 @@ class sellerPageController {
       const { error, value } = registerValidation.validate(req.body);
 
       if (error) {
-        return res.status(httpCodes.bad_request).render("error", {
-          success: false,
-          message: error.details[0].message,
-        });
+        req.flash("error", error.details[0].message);
+        return res.redirect("/poeme-perfumery/seller/register");
       }
 
       const { name, phone, email, password } = value;
 
+      // Check existing seller
       const existingSeller = await User.findOne({ email });
 
       if (existingSeller) {
-        req.flash("error", "Email already exists");
-        return res.redirect("/poeme-perfumery/seller/register");
-      }
+        if (existingSeller.isVerified) {
+          req.flash("error", "Account already exists. Please login.");
+          return res.redirect("/poeme-perfumery/seller/login");
+        }
 
-      const roleData = await Role.findOne({ role: "seller" });
+        await Otp.deleteMany({
+          userID: existingSeller._id,
+        });
+
+        await otpEmail(existingSeller);
+
+        req.session.email = existingSeller.email;
+
+        req.flash(
+          "success",
+          "Your account already exists but is not verified. A new OTP has been sent."
+        );
+
+        return req.session.save((err) => {
+          if (err) {
+            console.error(err);
+            req.flash("error", "Session error");
+            return res.redirect("/poeme-perfumery/seller/register");
+          }
+
+          return res.redirect("/poeme-perfumery/seller/verify");
+        });
+      }
+      console.log("All Roles:", await Role.find());
+
+      let roleData = await Role.findOne({
+        role: "seller",
+      });
 
       if (!roleData) {
-        return res.status(httpCodes.bad_request).render("error", {
-          success: false,
-          message: "Invalid role",
+        roleData = await Role.create({
+          role: "seller",
         });
       }
 
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
-      const data = new User({
+      const seller = new User({
         name,
         phone,
         email,
@@ -66,13 +109,26 @@ class sellerPageController {
         role: roleData._id,
       });
 
-      await data.save();
+      await seller.save();
 
-      await otpEmail(data);
+      await otpEmail(seller);
 
-      req.session.email = email;
+      req.session.email = seller.email;
 
-      return res.redirect("/poeme-perfumery/seller/verify");
+      req.flash(
+        "success",
+        "Registration successful. Please verify your email."
+      );
+
+      return req.session.save((err) => {
+        if (err) {
+          console.error(err);
+          req.flash("error", "Session error");
+          return res.redirect("/poeme-perfumery/seller/register");
+        }
+
+        return res.redirect("/poeme-perfumery/seller/verify");
+      });
     } catch (error) {
       return res.status(httpCodes.server_error).render("error", {
         success: false,
@@ -88,7 +144,7 @@ class sellerPageController {
 
       if (!otp) {
         req.flash("error", "OTP is required");
-        return res.redirect("/poeme-perfumery/verify");
+        return res.redirect("/poeme-perfumery/seller/verify");
       }
 
       // Get email from session
@@ -96,7 +152,7 @@ class sellerPageController {
 
       if (!email) {
         req.flash("error", "Session expired. Please register again.");
-        return res.redirect("/poeme-perfumery/register");
+        return res.redirect("/poeme-perfumery/seller/register");
       }
 
       const seller = await User.findOne({ email });
@@ -120,7 +176,7 @@ class sellerPageController {
 
       if (otpData.otp !== otp) {
         req.flash("error", "Invalid OTP");
-        return res.redirect("/poeme-perfumery/verify");
+        return res.redirect("/poeme-perfumery/seller/verify");
       }
 
       seller.isVerified = true;
@@ -209,6 +265,7 @@ class sellerPageController {
     }
   }
 
+  // Send Login OTP
   async loginWithOtp(req, res) {
     try {
       const { email } = req.body;
@@ -221,7 +278,7 @@ class sellerPageController {
       }
 
       if (!seller.isVerified) {
-        req.flash("error", "Seller is not verified");
+        req.flash("error", "Please verify your account first");
         return res.redirect("/poeme-perfumery/seller/verify");
       }
 
@@ -232,9 +289,17 @@ class sellerPageController {
       await otpEmail(seller);
 
       req.session.email = email;
-      req.flash("success", "OTP sent successfully");
+      req.session.showOtp = true;
 
-      return res.redirect("/poeme-perfumery/seller/otpLogin");
+      return req.session.save((err) => {
+        if (err) {
+          console.error(err);
+          req.flash("error", "Something went wrong");
+          return res.redirect("/poeme-perfumery/seller/login");
+        }
+
+        return res.redirect("/poeme-perfumery/seller/login");
+      });
     } catch (error) {
       return res.status(httpCodes.server_error).render("error", {
         success: false,
@@ -243,16 +308,29 @@ class sellerPageController {
     }
   }
 
+  // Verify Login
   async verifyLogin(req, res) {
     try {
       const { otp } = req.body;
+
+      if (!otp) {
+        req.session.showOtp = true;
+
+        req.flash("error", "OTP is required");
+
+        return res.redirect("/poeme-perfumery/seller/login");
+      }
 
       const seller = await User.findOne({
         email: req.session.email,
       });
 
       if (!seller) {
+        delete req.session.showOtp;
+        delete req.session.email;
+
         req.flash("error", "Seller not found");
+
         return res.redirect("/poeme-perfumery/seller/login");
       }
 
@@ -261,13 +339,19 @@ class sellerPageController {
       });
 
       if (!otpData) {
+        req.session.showOtp = true;
+
         req.flash("error", "OTP expired");
+
         return res.redirect("/poeme-perfumery/seller/login");
       }
 
       if (otpData.otp !== otp) {
+        req.session.showOtp = true;
+
         req.flash("error", "Invalid OTP");
-        return res.redirect("/poeme-perfumery/seller/login/verify");
+
+        return res.redirect("/poeme-perfumery/seller/login");
       }
 
       await Otp.deleteOne({
@@ -292,6 +376,9 @@ class sellerPageController {
         secure: process.env.NODE_ENV === "production",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
+
+      delete req.session.showOtp;
+      delete req.session.email;
 
       return res.redirect("/poeme-perfumery/seller/home");
     } catch (error) {

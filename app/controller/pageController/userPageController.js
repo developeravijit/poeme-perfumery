@@ -116,7 +116,7 @@ class userPageController {
         });
       }
 
-      const { name, phone, email, password } = value;
+      const { name, phone, email, password, confirmPassword, terms } = value;
 
       const existingUser = await User.findOne({ email });
 

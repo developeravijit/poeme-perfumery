@@ -1,5 +1,6 @@
 const transporter = require("../config/transporter");
 const Otp = require("../model/otp");
+const { otpTemplate } = require("./html");
 
 const otpEmail = async (user) => {
   try {
