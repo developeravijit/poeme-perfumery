@@ -10,8 +10,8 @@ const Role = require("../model/role");
     }
   }
 );
-console.log("NODE_ENV:", process.env.NODE_ENV);
-console.log("GOOGLE_CALLBACK_URL:", process.env.GOOGLE_CALLBACK_URL);
+// console.log("NODE_ENV:", process.env.NODE_ENV);
+// console.log("GOOGLE_CALLBACK_URL:", process.env.GOOGLE_CALLBACK_URL);
 
 passport.use(
   new GoogleStrategy(
