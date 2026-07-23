@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
+// ENV Define
 const requiredEnv = [
   "SESSION_SECRET",
   "JWT_SECRET",
