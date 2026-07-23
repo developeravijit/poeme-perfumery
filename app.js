@@ -31,6 +31,7 @@ const http = require("http");
 const socket = require("./app/socket/socket");
 
 require("./app/config/passport");
+require("./app/cron/deleteUser");
 
 const app = express();
 

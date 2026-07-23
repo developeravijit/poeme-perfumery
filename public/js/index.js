@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("index.js loaded");
   /* ===========================
       Profile Dropdown
   =========================== */
@@ -10,8 +9,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (profileBtn && profileDropdown) {
     profileBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-
-      console.log("Profile button clicked");
 
       profileDropdown.style.display =
         profileDropdown.style.display === "block" ? "none" : "block";
