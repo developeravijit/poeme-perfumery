@@ -24,7 +24,7 @@ const otpEmail = async (user) => {
 
     return otp;
   } catch (error) {
-    console.log(error.message);
+    console.log(error);
   }
 };
 

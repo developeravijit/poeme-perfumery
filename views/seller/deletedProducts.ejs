@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Deleted Products</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+  </head>
+
+  <body class="bg-slate-100">
+    <%- include("partials/sidebar") %>
+
+    <main class="ml-72 min-h-screen">
+      <%- include("partials/navbar") %>
+
+      <section class="p-8">
+        <!-- ================= HEADER ================= -->
+
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-3xl font-bold text-slate-800">Deleted Products</h1>
+
+            <p class="text-slate-500 mt-2">
+              View and restore your deleted products.
+            </p>
+          </div>
+
+          <a
+            href="/poeme-perfumery/seller/products"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-xl font-semibold"
+          >
+            <i class="fa-solid fa-arrow-left mr-2"></i>
+
+            Back to Products
+          </a>
+        </div>
+
+        <!-- ================= SUCCESS MESSAGE ================= -->
+
+        <% if (success && success.length > 0) { %>
+
+        <div
+          class="mt-6 bg-green-100 border border-green-300 text-green-700 rounded-xl p-4"
+        >
+          <i class="fa-solid fa-circle-check mr-2"></i>
+
+          <%= success[0] %>
+        </div>
+
+        <% } %>
+
+        <!-- ================= ERROR MESSAGE ================= -->
+
+        <% if (error && error.length > 0) { %>
+
+        <div
+          class="mt-6 bg-red-100 border border-red-300 text-red-700 rounded-xl p-4"
+        >
+          <i class="fa-solid fa-circle-exclamation mr-2"></i>
+
+          <%= error[0] %>
+        </div>
+
+        <% } %>
+
+        <!-- ================= DELETED PRODUCT COUNT ================= -->
+
+        <div class="mt-8">
+          <div class="bg-white rounded-2xl shadow p-6 max-w-sm">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-slate-500">Deleted Products</p>
+
+                <h2 class="text-4xl font-bold text-red-600 mt-2">
+                  <%= products.length %>
+                </h2>
+              </div>
+
+              <div
+                class="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-trash-can text-red-600 text-xl"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= PRODUCTS ================= -->
+
+        <% if (products && products.length > 0) { %>
+
+        <div class="grid lg:grid-cols-3 md:grid-cols-2 gap-6 mt-8">
+          <% products.forEach((product) => { %>
+
+          <!-- PRODUCT CARD -->
+
+          <div
+            class="bg-white rounded-3xl shadow hover:shadow-lg transition overflow-hidden"
+          >
+            <!-- ================= PRODUCT IMAGE ================= -->
+
+            <div class="h-60 bg-slate-100 relative">
+              <% if (product.images && product.images.length > 0) { %>
+
+              <img
+                src="<%= product.images[0].url %>"
+                alt="<%= product.productName %>"
+                class="w-full h-full object-cover opacity-70"
+              />
+
+              <% } else { %>
+
+              <div class="w-full h-full flex items-center justify-center">
+                <i class="fa-solid fa-image text-6xl text-slate-300"></i>
+              </div>
+
+              <% } %>
+
+              <!-- Deleted Badge -->
+
+              <span
+                class="absolute top-4 right-4 bg-red-600 text-white text-xs px-3 py-2 rounded-full font-semibold"
+              >
+                <i class="fa-solid fa-trash mr-1"></i>
+
+                Deleted
+              </span>
+            </div>
+
+            <!-- ================= PRODUCT CONTENT ================= -->
+
+            <div class="p-6">
+              <!-- Product Name -->
+
+              <h2 class="text-xl font-bold text-slate-800">
+                <%= product.productName %>
+              </h2>
+
+              <!-- Brand -->
+
+              <p class="text-slate-500 mt-1">
+                <%= product.brand || "No Brand" %>
+              </p>
+
+              <div class="mt-6 space-y-4">
+                <!-- ================= CATEGORY ================= -->
+
+                <div class="flex justify-between">
+                  <span class="text-slate-500"> Category </span>
+
+                  <span class="font-semibold">
+                    <%= product.category?.categoryName || "No Category" %>
+                  </span>
+                </div>
+
+                <!-- ================= SKU ================= -->
+
+                <div class="flex justify-between">
+                  <span class="text-slate-500"> SKU </span>
+
+                  <span class="font-semibold">
+                    <%= product.sku || "N/A" %>
+                  </span>
+                </div>
+
+                <!-- ================= PRICE ================= -->
+
+                <div class="flex justify-between">
+                  <span class="text-slate-500"> Price </span>
+
+                  <span class="font-bold text-indigo-600">
+                    $<%= product.price %>
+                  </span>
+                </div>
+
+                <!-- ================= STOCK ================= -->
+
+                <div class="flex justify-between">
+                  <span class="text-slate-500"> Stock </span>
+
+                  <span class="font-semibold"> <%= product.stock %> </span>
+                </div>
+
+                <!-- ================= STOCK STATUS ================= -->
+
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-500"> Stock Status </span>
+
+                  <% if (product.stock > 0) { %>
+
+                  <span
+                    class="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full"
+                  >
+                    <i class="fa-solid fa-circle-check mr-1"></i>
+
+                    In Stock
+                  </span>
+
+                  <% } else { %>
+
+                  <span
+                    class="bg-red-100 text-red-700 text-xs px-3 py-1 rounded-full"
+                  >
+                    <i class="fa-solid fa-circle-xmark mr-1"></i>
+
+                    Out Of Stock
+                  </span>
+
+                  <% } %>
+                </div>
+
+                <!-- ================= APPROVAL STATUS ================= -->
+
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-500"> Approval </span>
+
+                  <% if (product.approvalStatus === "approved") { %>
+
+                  <span
+                    class="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full"
+                  >
+                    Approved
+                  </span>
+
+                  <% } else if (product.approvalStatus === "rejected") { %>
+
+                  <span
+                    class="bg-red-100 text-red-700 text-xs px-3 py-1 rounded-full"
+                  >
+                    Rejected
+                  </span>
+
+                  <% } else { %>
+
+                  <span
+                    class="bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full"
+                  >
+                    Pending
+                  </span>
+
+                  <% } %>
+                </div>
+
+                <!-- ================= RESTORE BUTTON ================= -->
+
+                <div class="pt-4">
+                  <form
+                    action="/poeme-perfumery/seller/restore-product/<%= product._id %>"
+                    method="POST"
+                  >
+                    <button
+                      type="submit"
+                      class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition"
+                      onclick="
+                        return confirm(
+                          'Are you sure you want to restore this product?'
+                        );
+                      "
+                    >
+                      <i class="fa-solid fa-rotate-left mr-2"></i>
+
+                      Restore Product
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <% }) %>
+        </div>
+
+        <% } else { %>
+
+        <!-- ================= EMPTY STATE ================= -->
+
+        <div class="mt-12 bg-white rounded-3xl shadow py-24 text-center">
+          <div
+            class="w-28 h-28 rounded-full bg-slate-100 mx-auto flex items-center justify-center"
+          >
+            <i class="fa-solid fa-trash-can text-5xl text-slate-300"></i>
+          </div>
+
+          <h2 class="text-3xl font-bold text-slate-800 mt-8">
+            No Deleted Products
+          </h2>
+
+          <p class="text-slate-500 mt-3">
+            Products you delete will appear here.
+          </p>
+
+          <a
+            href="/poeme-perfumery/seller/products"
+            class="inline-block mt-8 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-semibold"
+          >
+            <i class="fa-solid fa-arrow-left mr-2"></i>
+
+            Back to Products
+          </a>
+        </div>
+
+        <% } %>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,101 @@
+<!-- SEARCH BAR -->
+
+<section class="-mt-6 relative z-20 pb-16">
+  <div class="max-w-7xl mx-auto px-6 lg:px-8">
+    <form
+      method="GET"
+      action="/poeme-perfumery/perfumes"
+      class="bg-white rounded-[30px] shadow-xl border border-stone-200 p-6"
+    >
+      <div class="flex flex-col lg:flex-row gap-5 items-center">
+        <!-- Search -->
+
+        <div class="relative flex-1 w-full">
+          <i
+            class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-stone-400"
+          >
+          </i>
+
+          <input
+            type="search"
+            name="search"
+            value="<%= filters.search || '' %>"
+            placeholder="Search perfumes, brands..."
+            class="w-full h-14 rounded-2xl border border-stone-200 bg-stone-50 pl-14 pr-5 text-stone-700 outline-none focus:border-[#B68D40] focus:ring-4 focus:ring-[#B68D40]/10 transition"
+          />
+        </div>
+
+        <!-- Search Button -->
+
+        <button
+          type="submit"
+          class="w-full lg:w-auto h-14 px-10 rounded-2xl bg-[#B68D40] hover:bg-[#9E7A35] text-white font-semibold transition"
+        >
+          Search
+        </button>
+      </div>
+
+      <!-- Active Filters -->
+
+      <% if(filters.search || filters.brand || filters.category || filters.price){ %>
+
+      <div class="flex flex-wrap gap-3 mt-6 pt-6 border-t border-stone-200">
+        <span class="text-sm text-stone-500 font-medium">
+          Active Filters:
+        </span>
+
+        <% if(filters.search){ %>
+
+        <span
+          class="px-4 py-2 rounded-full bg-[#FFF8EA] text-[#B68D40] text-sm"
+        >
+          Search :
+          <strong><%= filters.search %></strong>
+        </span>
+
+        <% } %>
+
+        <% if(filters.brand){ %>
+
+        <span
+          class="px-4 py-2 rounded-full bg-[#FFF8EA] text-[#B68D40] text-sm"
+        >
+          Brand :
+          <strong><%= filters.brand %></strong>
+        </span>
+
+        <% } %>
+
+        <% if(filters.price){ %>
+
+        <span
+          class="px-4 py-2 rounded-full bg-[#FFF8EA] text-[#B68D40] text-sm"
+        >
+          Max Price :
+          <strong>$<%= filters.price %></strong>
+        </span>
+
+        <% } %>
+
+        <% if(filters.category){ %>
+
+        <span
+          class="px-4 py-2 rounded-full bg-[#FFF8EA] text-[#B68D40] text-sm"
+        >
+          Category Selected
+        </span>
+
+        <% } %>
+
+        <a
+          href="/poeme-perfumery/perfumes"
+          class="px-4 py-2 rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition text-sm"
+        >
+          Clear All
+        </a>
+      </div>
+
+      <% } %>
+    </form>
+  </div>
+</section>

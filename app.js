@@ -24,7 +24,6 @@ const DbConnect = require("./app/config/db");
 const router = require("./app/routes");
 const session = require("express-session");
 const passport = require("passport");
-const pageAuth = require("./app/middleware/pageAuth/pageAuthMiddleware");
 const cookieParser = require("cookie-parser");
 const flash = require("connect-flash");
 const http = require("http");
@@ -71,9 +70,6 @@ app.use(flash());
 // Passport
 app.use(passport.initialize());
 app.use(passport.session());
-
-// Global Authentication
-app.use(pageAuth);
 
 // Routes
 app.use(router);

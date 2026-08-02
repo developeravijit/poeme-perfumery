@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Image Library</title>
+
+    <link rel="stylesheet" href="/css/output.css" />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+  </head>
+
+  <body class="bg-stone-100">
+    <!-- Sidebar -->
+
+    <%- include("partials/sidebar") %>
+
+    <main class="ml-72 min-h-screen">
+      <!-- Navbar -->
+
+      <%- include("partials/navbar") %>
+
+      <section class="p-8">
+        <!-- Header -->
+
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-4xl font-bold text-slate-800">Image Library</h1>
+
+            <p class="text-slate-500 mt-2">
+              Manage all uploaded product images from one place.
+            </p>
+          </div>
+
+          <a
+            href="/poeme-perfumery/seller/upload-image"
+            class="btn-primary flex items-center gap-2"
+          >
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+
+            Upload Images
+          </a>
+        </div>
+
+        <!-- Flash Messages -->
+
+        <% if(success && success.length){ %>
+
+        <div
+          class="mt-8 rounded-xl border border-green-300 bg-green-50 px-6 py-4 text-green-700"
+        >
+          <i class="fa-solid fa-circle-check mr-2"></i>
+
+          <%= success[0] %>
+        </div>
+
+        <% } %>
+
+        <% if(error && error.length){ %>
+
+        <div
+          class="mt-8 rounded-xl border border-red-300 bg-red-50 px-6 py-4 text-red-700"
+        >
+          <i class="fa-solid fa-circle-exclamation mr-2"></i>
+
+          <%= error[0] %>
+        </div>
+
+        <% } %>
+
+        <!-- Statistics -->
+
+        <div class="grid md:grid-cols-3 gap-6 mt-10">
+          <!-- Total Images -->
+
+          <div class="glass rounded-3xl shadow-premium p-6">
+            <div
+              class="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center"
+            >
+              <i class="fa-solid fa-images text-[#B68D40] text-xl"></i>
+            </div>
+
+            <p class="text-slate-500 mt-5">Total Images</p>
+
+            <h2 class="text-4xl font-bold text-slate-800 mt-2">
+              <%= images.length %>
+            </h2>
+          </div>
+
+          <!-- Storage -->
+
+          <div class="glass rounded-3xl shadow-premium p-6">
+            <div
+              class="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center"
+            >
+              <i class="fa-solid fa-hard-drive text-blue-600 text-xl"></i>
+            </div>
+
+            <p class="text-slate-500 mt-5">Storage Used</p>
+
+            <h2 class="text-4xl font-bold text-slate-800 mt-2" id="storageUsed">
+              --
+            </h2>
+          </div>
+
+          <!-- Latest Upload -->
+
+          <div class="glass rounded-3xl shadow-premium p-6">
+            <div
+              class="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center"
+            >
+              <i class="fa-solid fa-clock text-green-600 text-xl"></i>
+            </div>
+
+            <p class="text-slate-500 mt-5">Latest Upload</p>
+
+            <h2 class="text-2xl font-semibold text-slate-800 mt-3">
+              <% if(images.length){ %> <%= new
+              Date(images[0].createdAt).toLocaleDateString() %> <% }else{ %> No
+              Images <% } %>
+            </h2>
+          </div>
+        </div>
+
+        <!-- Search & Filters -->
+
+        <div class="glass rounded-3xl shadow-premium p-6 mt-10">
+          <div class="grid lg:grid-cols-3 gap-5">
+            <!-- Search -->
+
+            <div class="relative">
+              <i
+                class="fa-solid fa-magnifying-glass absolute left-5 top-4 text-slate-400"
+              ></i>
+
+              <input
+                type="text"
+                id="searchInput"
+                placeholder="Search by image code or filename..."
+                class="w-full pl-12 pr-4 py-4 rounded-2xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-[#B68D40]"
+              />
+            </div>
+
+            <!-- Sort -->
+
+            <select
+              id="sortSelect"
+              class="px-5 py-4 rounded-2xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-[#B68D40]"
+            >
+              <option value="newest">Newest First</option>
+
+              <option value="oldest">Oldest First</option>
+
+              <option value="name">File Name</option>
+
+              <option value="code">Image Code</option>
+            </select>
+
+            <!-- View Toggle -->
+
+            <div class="flex justify-end gap-3">
+              <button
+                type="button"
+                id="gridView"
+                class="w-14 h-14 rounded-2xl bg-[#B68D40] text-white"
+              >
+                <i class="fa-solid fa-table-cells-large"></i>
+              </button>
+
+              <button
+                type="button"
+                id="listView"
+                class="w-14 h-14 rounded-2xl border border-stone-300 bg-white"
+              >
+                <i class="fa-solid fa-list"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Image Gallery -->
+
+        <div
+          id="galleryContainer"
+          class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-10"
+        >
+          <% if(images && images.length){ %> <% images.forEach((image)=>{ %>
+
+          <div
+            class="image-card group glass rounded-3xl overflow-hidden shadow-premium"
+          >
+            <!-- Image -->
+
+            <div class="relative overflow-hidden">
+              <img
+                src="<%= image.url %>"
+                alt="<%= image.imageCode %>"
+                class="w-full h-72 object-cover transition duration-500 group-hover:scale-110"
+              />
+
+              <!-- Hover Overlay -->
+
+              <div
+                class="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center gap-3"
+              >
+                <!-- Preview -->
+
+                <button
+                  type="button"
+                  class="previewBtn w-12 h-12 rounded-full bg-white text-slate-800 hover:bg-[#B68D40] hover:text-white transition"
+                  data-url="<%= image.url %>"
+                  data-code="<%= image.imageCode %>"
+                  data-name="<%= image.originalName %>"
+                  data-size="<%= image.size %>"
+                  data-width="<%= image.width %>"
+                  data-height="<%= image.height %>"
+                  data-date="<%= image.createdAt %>"
+                >
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+
+                <!-- Download -->
+
+                <a
+                  href="<%= image.url %>"
+                  download
+                  class="w-12 h-12 rounded-full bg-white text-slate-800 hover:bg-green-600 hover:text-white transition flex items-center justify-center"
+                >
+                  <i class="fa-solid fa-download"></i>
+                </a>
+
+                <!-- Delete -->
+
+                <form
+                  action="/poeme-perfumery/seller/image/<%= image._id %>?_method=DELETE"
+                  method="POST"
+                >
+                  <button
+                    class="w-12 h-12 rounded-full bg-white text-slate-800 hover:bg-red-600 hover:text-white transition"
+                  >
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Card Body -->
+
+            <div class="p-5">
+              <!-- Image Code -->
+
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold text-lg text-slate-800 truncate">
+                  <%= image.imageCode %>
+                </h3>
+
+                <button
+                  type="button"
+                  class="copyCode text-[#B68D40] hover:text-amber-700 transition"
+                  data-code="<%= image.imageCode %>"
+                >
+                  <i class="fa-regular fa-copy"></i>
+                </button>
+              </div>
+
+              <!-- File Name -->
+
+              <p class="text-slate-500 text-sm truncate mt-2">
+                <%= image.originalName %>
+              </p>
+
+              <!-- Meta -->
+
+              <div class="grid grid-cols-2 gap-3 mt-5 text-sm">
+                <div class="bg-stone-100 rounded-xl p-3">
+                  <p class="text-slate-400">Size</p>
+
+                  <h4 class="font-semibold text-slate-700 mt-1">
+                    <%= (image.size/1024).toFixed(2) %> KB
+                  </h4>
+                </div>
+
+                <div class="bg-stone-100 rounded-xl p-3">
+                  <p class="text-slate-400">Resolution</p>
+
+                  <h4 class="font-semibold text-slate-700 mt-1">
+                    <%= image.width %> × <%= image.height %>
+                  </h4>
+                </div>
+              </div>
+
+              <!-- Uploaded -->
+
+              <div class="flex items-center justify-between mt-5">
+                <span class="text-xs text-slate-500">
+                  <i class="fa-regular fa-calendar mr-1"></i>
+
+                  <%= new Date(image.createdAt).toLocaleDateString() %>
+                </span>
+
+                <span
+                  class="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold"
+                >
+                  Active
+                </span>
+              </div>
+
+              <!-- Footer Buttons -->
+
+              <div class="grid grid-cols-2 gap-3 mt-6">
+                <button
+                  type="button"
+                  class="copyCode py-3 rounded-xl bg-[#B68D40] text-white hover:bg-[#9d7a37] transition"
+                  data-code="<%= image.imageCode %>"
+                >
+                  <i class="fa-regular fa-copy mr-2"></i>
+
+                  Copy Code
+                </button>
+
+                <a
+                  href="<%= image.url %>"
+                  download
+                  class="py-3 rounded-xl border border-stone-300 hover:bg-stone-100 transition text-center"
+                >
+                  <i class="fa-solid fa-download mr-2"></i>
+
+                  Download
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <% }) %>
+
+          <% }else{ %>
+
+          <!-- Empty State -->
+
+          <div class="col-span-full">
+            <div class="glass rounded-3xl shadow-premium py-24 text-center">
+              <div
+                class="w-28 h-28 rounded-full bg-amber-100 mx-auto flex items-center justify-center"
+              >
+                <i class="fa-solid fa-images text-5xl text-[#B68D40]"></i>
+              </div>
+
+              <h2 class="text-3xl font-bold text-slate-800 mt-8">
+                No Images Found
+              </h2>
+
+              <p class="text-slate-500 mt-4">
+                Upload your first product image to build your image library.
+              </p>
+
+              <a
+                href="/poeme-perfumery/seller/upload-image"
+                class="btn-primary inline-flex items-center gap-2 mt-8"
+              >
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+
+                Upload Images
+              </a>
+            </div>
+          </div>
+
+          <% } %>
+        </div>
+
+        <!-- Preview Modal -->
+
+        <div
+          id="previewModal"
+          class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-6"
+        >
+          <div
+            class="bg-white rounded-3xl w-full max-w-6xl overflow-hidden shadow-2xl relative"
+          >
+            <!-- Close -->
+
+            <button
+              type="button"
+              id="closeModal"
+              class="absolute top-6 right-6 w-12 h-12 rounded-full bg-red-500 hover:bg-red-600 text-white z-10"
+            >
+              <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <div class="grid lg:grid-cols-2">
+              <!-- Preview Image -->
+
+              <div class="bg-stone-100 flex items-center justify-center p-10">
+                <img
+                  id="modalImage"
+                  src=""
+                  class="max-h-[650px] rounded-2xl shadow-lg object-contain"
+                />
+              </div>
+
+              <!-- Details -->
+
+              <div class="p-10">
+                <h2 class="text-3xl font-bold text-slate-800 mb-8">
+                  Image Details
+                </h2>
+
+                <div class="space-y-6">
+                  <div>
+                    <p class="text-slate-400 text-sm">Image Code</p>
+
+                    <div class="flex items-center justify-between mt-2">
+                      <h3 id="modalCode" class="font-semibold text-xl"></h3>
+
+                      <button
+                        type="button"
+                        id="copyModalCode"
+                        class="text-[#B68D40] hover:text-amber-700"
+                      >
+                        <i class="fa-regular fa-copy text-lg"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p class="text-slate-400 text-sm">File Name</p>
+
+                    <h3 id="modalName" class="font-semibold mt-2"></h3>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-5">
+                    <div class="bg-stone-100 rounded-2xl p-5">
+                      <p class="text-slate-400 text-sm">Size</p>
+
+                      <h4 id="modalSize" class="font-semibold mt-2"></h4>
+                    </div>
+
+                    <div class="bg-stone-100 rounded-2xl p-5">
+                      <p class="text-slate-400 text-sm">Resolution</p>
+
+                      <h4 id="modalResolution" class="font-semibold mt-2"></h4>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p class="text-slate-400 text-sm">Uploaded On</p>
+
+                    <h3 id="modalDate" class="font-semibold mt-2"></h3>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+
+                <div class="grid grid-cols-2 gap-4 mt-10">
+                  <button type="button" id="copyCodeBtn" class="btn-primary">
+                    <i class="fa-regular fa-copy mr-2"></i>
+
+                    Copy Code
+                  </button>
+
+                  <a
+                    href="#"
+                    id="downloadImage"
+                    download
+                    class="btn-secondary text-center"
+                  >
+                    <i class="fa-solid fa-download mr-2"></i>
+
+                    Download
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toast -->
+
+        <div
+          id="toast"
+          class="fixed bottom-8 right-8 bg-green-600 text-white px-6 py-4 rounded-2xl shadow-xl hidden z-50"
+        >
+          <i class="fa-solid fa-circle-check mr-2"></i>
+
+          Image code copied successfully.
+        </div>
+
+        <!-- Pagination -->
+
+        <% if(totalPages && totalPages > 1){ %>
+
+        <div class="flex justify-center items-center gap-3 mt-12">
+          <% if(currentPage > 1){ %>
+
+          <a
+            href="?page=<%= currentPage-1 %>"
+            class="w-12 h-12 rounded-xl border border-stone-300 bg-white hover:bg-stone-100 flex items-center justify-center"
+          >
+            <i class="fa-solid fa-chevron-left"></i>
+          </a>
+
+          <% } %>
+
+          <% for(let i=1;i<=totalPages;i++){ %>
+
+          <a
+            href="?page=<%= i %>"
+            class="w-12 h-12 rounded-xl flex items-center justify-center font-semibold <%= currentPage===i ? 'bg-[#B68D40] text-white' : 'bg-white border border-stone-300 hover:bg-stone-100' %>"
+          >
+            <%= i %>
+          </a>
+
+          <% } %>
+
+          <% if(currentPage < totalPages){ %>
+
+          <a
+            href="?page=<%= currentPage+1 %>"
+            class="w-12 h-12 rounded-xl border border-stone-300 bg-white hover:bg-stone-100 flex items-center justify-center"
+          >
+            <i class="fa-solid fa-chevron-right"></i>
+          </a>
+
+          <% } %>
+        </div>
+
+        <% } %>
+      </section>
+    </main>
+
+    <script src="/js/imageLibrary.js"></script>
+  </body>
+</html>

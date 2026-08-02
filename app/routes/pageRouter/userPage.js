@@ -5,10 +5,6 @@ const pageAuth = require("../../middleware/pageAuth/pageAuthMiddleware");
 
 const User = express.Router();
 
-// Navbar Pages
-User.get("/home", userPageController.landingPage);
-User.get("/perfumes", userPageController.perfumes);
-
 // Auth Page and API
 User.get("/register", userPageController.registerpage);
 User.post("/register", userPageController.register);
@@ -35,19 +31,49 @@ User.get(
 );
 
 // Logout
-User.get("/logout", pageAuth, userPageController.logout);
+User.get(
+  "/logout",
+  pageAuth("/poeme-perfumery/login"),
+  userPageController.logout
+);
 
 /* ====================================================================================== */
+// Landing Page
+User.get("/home", userPageController.landingPage);
+
+// Perfumes Page
+User.get(
+  "/perfumes",
+  pageAuth("/poeme-perfumery/login"),
+  userPageController.perfumes
+);
+
 // Add To Cart
-User.get("/cart", pageAuth, userPageController.addToCart);
+User.get(
+  "/cart",
+  pageAuth("/poeme-perfumery/login"),
+  userPageController.addToCart
+);
 
 // Orders
-User.get("/orders", pageAuth, userPageController.orders);
+User.get(
+  "/orders",
+  pageAuth("/poeme-perfumery/login"),
+  userPageController.orders
+);
 
 // Settings
-User.get("/settings", pageAuth, userPageController.settings);
+User.get(
+  "/settings",
+  pageAuth("/poeme-perfumery/login"),
+  userPageController.settings
+);
 
 // Contact Us Chat Support
-User.get("/chat", pageAuth, userPageController.chatSupport);
+User.get(
+  "/chat",
+  pageAuth("/poeme-perfumery/login"),
+  userPageController.chatSupport
+);
 
 module.exports = User;

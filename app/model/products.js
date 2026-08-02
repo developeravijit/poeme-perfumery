@@ -52,8 +52,18 @@ const productSchema = new mongoose.Schema(
 
     images: [
       {
-        url: String,
-        publicId: String,
+        imageId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "ImageLibrary",
+        },
+        url: {
+          type: String,
+          required: true,
+        },
+        publicId: {
+          type: String,
+          required: true,
+        },
       },
     ],
 
@@ -69,10 +79,20 @@ const productSchema = new mongoose.Schema(
       },
     ],
 
-    status: {
+    approvalStatus: {
       type: String,
-      enum: ["draft", "published", "out_of_stock"],
-      default: "draft",
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
+
+    stockStatus: {
+      type: String,
+      enum: ["in_stock", "out_of_stock"],
+      default: "in_stock",
+    },
+    isApproved: {
+      type: Boolean,
+      default: false,
     },
 
     isActive: {
@@ -90,6 +110,20 @@ productSchema.index({
   sellerId: 1,
   categoryId: 1,
 });
+
+productSchema.index(
+  {
+    sellerId: 1,
+    productName: 1,
+  },
+  {
+    unique: true,
+    collation: {
+      locale: "en",
+      strength: 2,
+    },
+  }
+);
 
 productSchema.index({
   productName: "text",

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bulk Product Upload</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+  </head>
+
+  <body class="bg-slate-100">
+    <%- include("partials/sidebar") %>
+
+    <main class="ml-72 min-h-screen">
+      <%- include("partials/navbar") %>
+
+      <section class="p-8">
+        <div class="max-w-6xl mx-auto">
+          <!-- Header -->
+
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-3xl font-bold text-slate-800">
+                Bulk Product Upload
+              </h1>
+
+              <p class="text-slate-500 mt-2">
+                Upload multiple products quickly using a CSV template.
+              </p>
+            </div>
+
+            <div class="flex gap-3">
+              <a
+                href="/poeme-perfumery/seller/download-template"
+                class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl font-semibold"
+              >
+                <i class="fa-solid fa-download mr-2"></i>
+                Download Template
+              </a>
+
+              <a
+                href="/poeme-perfumery/seller/products"
+                class="bg-slate-200 hover:bg-slate-300 px-5 py-3 rounded-xl"
+              >
+                <i class="fa-solid fa-arrow-left mr-2"></i>
+                Back
+              </a>
+            </div>
+          </div>
+
+          <!-- Success -->
+
+          <% if(success.length){ %>
+
+          <div
+            class="mt-6 bg-green-100 border border-green-300 text-green-700 rounded-xl p-4"
+          >
+            <%= success[0] %>
+          </div>
+
+          <% } %>
+
+          <!-- Error -->
+
+          <% if(error.length){ %>
+
+          <div
+            class="mt-6 bg-red-100 border border-red-300 text-red-700 rounded-xl p-4"
+          >
+            <%= error[0] %>
+          </div>
+
+          <% } %>
+
+          <!-- Upload Section -->
+
+          <div class="mt-8 bg-white rounded-3xl shadow p-10">
+            <form
+              action="/poeme-perfumery/seller/bulk-upload"
+              method="POST"
+              enctype="multipart/form-data"
+            >
+              <label
+                id="uploadBox"
+                class="block border-2 border-dashed border-slate-300 rounded-3xl hover:border-indigo-500 transition-all duration-300 cursor-pointer"
+              >
+                <div class="py-20 text-center">
+                  <div
+                    id="uploadIcon"
+                    class="w-24 h-24 bg-indigo-100 rounded-full mx-auto flex items-center justify-center"
+                  >
+                    <i
+                      class="fa-solid fa-file-arrow-up text-5xl text-indigo-600"
+                    ></i>
+                  </div>
+
+                  <h2
+                    id="uploadTitle"
+                    class="text-3xl font-bold mt-8 text-slate-800"
+                  >
+                    Upload CSV File
+                  </h2>
+
+                  <p
+                    id="uploadDescription"
+                    class="text-slate-500 mt-3 max-w-xl mx-auto"
+                  >
+                    Choose your completed CSV template containing all product
+                    details. Only CSV files are accepted.
+                  </p>
+
+                  <div
+                    id="browseButton"
+                    class="inline-flex mt-8 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition"
+                  >
+                    <i class="fa-solid fa-folder-open mr-2"></i>
+                    Browse File
+                  </div>
+
+                  <input
+                    id="csvFile"
+                    type="file"
+                    name="csv"
+                    accept=".csv"
+                    required
+                    class="hidden"
+                  />
+                </div>
+              </label>
+
+              <button
+                id="uploadBtn"
+                disabled
+                class="mt-8 w-full bg-slate-300 text-slate-600 cursor-not-allowed px-8 py-4 rounded-xl font-semibold transition"
+              >
+                <i class="fa-solid fa-upload mr-2"></i>
+                Upload Products
+              </button>
+            </form>
+          </div>
+
+          <!-- Steps -->
+
+          <div class="grid md:grid-cols-4 gap-6 mt-8">
+            <div class="bg-white rounded-3xl shadow p-6">
+              <div
+                class="w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-download text-xl"></i>
+              </div>
+
+              <h3 class="font-bold text-lg mt-6">Download</h3>
+
+              <p class="text-slate-500 mt-2">
+                Download the official CSV template.
+              </p>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow p-6">
+              <div
+                class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-pen text-xl"></i>
+              </div>
+
+              <h3 class="font-bold text-lg mt-6">Edit</h3>
+
+              <p class="text-slate-500 mt-2">
+                Fill all product information carefully.
+              </p>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow p-6">
+              <div
+                class="w-14 h-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-cloud-arrow-up text-xl"></i>
+              </div>
+
+              <h3 class="font-bold text-lg mt-6">Upload</h3>
+
+              <p class="text-slate-500 mt-2">
+                Upload the completed CSV to your dashboard.
+              </p>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow p-6">
+              <div
+                class="w-14 h-14 rounded-2xl bg-green-100 text-green-600 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-shield-check text-xl"></i>
+              </div>
+
+              <h3 class="font-bold text-lg mt-6">Review</h3>
+
+              <p class="text-slate-500 mt-2">
+                Admin reviews and approves your products.
+              </p>
+            </div>
+          </div>
+
+          <!-- Guidelines -->
+
+          <div class="mt-8 bg-white rounded-3xl shadow p-8">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">
+              Upload Guidelines
+            </h2>
+
+            <div class="grid md:grid-cols-2 gap-5">
+              <div class="flex gap-3">
+                <i class="fa-solid fa-circle-check text-green-600 mt-1"></i>
+                <p>Download the template before editing.</p>
+              </div>
+
+              <div class="flex gap-3">
+                <i class="fa-solid fa-circle-check text-green-600 mt-1"></i>
+                <p>Do not rename or remove any columns.</p>
+              </div>
+
+              <div class="flex gap-3">
+                <i class="fa-solid fa-circle-check text-green-600 mt-1"></i>
+                <p>Categories must already exist.</p>
+              </div>
+
+              <div class="flex gap-3">
+                <i class="fa-solid fa-circle-check text-green-600 mt-1"></i>
+                <p>Each SKU must be unique.</p>
+              </div>
+
+              <div class="flex gap-3">
+                <i class="fa-solid fa-circle-check text-green-600 mt-1"></i>
+                <p>Maximum 1000 products per upload.</p>
+              </div>
+
+              <div class="flex gap-3">
+                <i class="fa-solid fa-circle-check text-green-600 mt-1"></i>
+                <p>Products will remain pending until approved by admin.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Approval Status -->
+
+          <div class="grid md:grid-cols-3 gap-6 mt-8">
+            <div class="bg-yellow-50 border border-yellow-200 rounded-3xl p-6">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-12 h-12 rounded-xl bg-yellow-100 flex items-center justify-center"
+                >
+                  <i class="fa-solid fa-clock text-yellow-600"></i>
+                </div>
+
+                <div>
+                  <h3 class="font-bold text-yellow-800">Pending Review</h3>
+
+                  <p class="text-sm text-yellow-700">
+                    Waiting for admin approval.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-green-50 border border-green-200 rounded-3xl p-6">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center"
+                >
+                  <i class="fa-solid fa-circle-check text-green-600"></i>
+                </div>
+
+                <div>
+                  <h3 class="font-bold text-green-800">Approved</h3>
+
+                  <p class="text-sm text-green-700">
+                    Product is live on the store.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-red-50 border border-red-200 rounded-3xl p-6">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center"
+                >
+                  <i class="fa-solid fa-circle-xmark text-red-600"></i>
+                </div>
+
+                <div>
+                  <h3 class="font-bold text-red-800">Rejected</h3>
+
+                  <p class="text-sm text-red-700">
+                    Correct the issues and upload again.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/js/product.js"></script>
+  </body>
+</html>

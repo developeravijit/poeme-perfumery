@@ -1,4 +1,6 @@
+const Category = require("../../model/category");
 const Otp = require("../../model/otp");
+const Product = require("../../model/products");
 const Role = require("../../model/role");
 const User = require("../../model/user");
 const httpCodes = require("../../utils/httpCodes");
@@ -17,26 +19,240 @@ const bcrypt = require("bcrypt");
 class userPageController {
   // Home Page
   async landingPage(req, res) {
-    const products = [];
-    res.render("landingPage", {
-      user: req.user || null,
-      products,
-      cartCount: 0,
-    });
+    try {
+      const products = await Product.aggregate([
+        {
+          $match: {
+            status: "draft",
+            isActive: true,
+            stock: { $gt: 0 },
+          },
+        },
+
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categoryId",
+            foreignField: "_id",
+            as: "category",
+          },
+        },
+
+        {
+          $unwind: "$category",
+        },
+
+        {
+          $project: {
+            _id: 1,
+            productName: 1,
+            slug: 1,
+            description: 1,
+            price: 1,
+            stock: 1,
+            brand: 1,
+            images: 1,
+            category: {
+              _id: "$category._id",
+              categoryName: "$category.categoryName",
+            },
+            createdAt: 1,
+          },
+        },
+
+        {
+          $sort: {
+            createdAt: -1,
+          },
+        },
+
+        {
+          $limit: 8,
+        },
+      ]);
+
+      return res.render("landingPage", {
+        user: req.user || null,
+        products,
+        cartCount: 0,
+      });
+    } catch (error) {
+      console.log(error);
+
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
   }
 
   // Perfume Page
   async perfumes(req, res) {
-    const products = [];
+    try {
+      const page = Number(req.query.page) || 1;
+      const limit = 9;
+      const skip = (page - 1) * limit;
 
-    res.render("perfumes", {
-      user: req.user || null,
-      products,
-      filters: {},
-      currentPage: 1,
-      totalPages: 1,
-      cartCount: 0,
-    });
+      const {
+        search = "",
+        category = "",
+        brand = "",
+        price = "",
+        stock = "",
+        sort = "latest",
+      } = req.query;
+
+      // Sidebar Categories
+      const categories = await Category.find({
+        isActive: true,
+      }).sort({
+        categoryName: 1,
+      });
+
+      const matchStage = {
+        status: "draft",
+        isActive: true,
+      };
+
+      // Search
+      if (search) {
+        matchStage.productName = {
+          $regex: search,
+          $options: "i",
+        };
+      }
+
+      // Category
+      if (category) {
+        matchStage.categoryId = new mongoose.Types.ObjectId(category);
+      }
+
+      // Brand
+      if (brand) {
+        matchStage.brand = {
+          $regex: brand,
+          $options: "i",
+        };
+      }
+
+      // Price
+      if (price) {
+        matchStage.price = {
+          $lte: Number(price),
+        };
+      }
+
+      // Availability
+      if (stock === "instock") {
+        matchStage.stock = {
+          $gt: 0,
+        };
+      }
+
+      if (stock === "outofstock") {
+        matchStage.stock = 0;
+      }
+
+      let sortStage = {
+        createdAt: -1,
+      };
+
+      switch (sort) {
+        case "priceLow":
+          sortStage = {
+            price: 1,
+          };
+          break;
+
+        case "priceHigh":
+          sortStage = {
+            price: -1,
+          };
+          break;
+
+        case "name":
+          sortStage = {
+            productName: 1,
+          };
+          break;
+
+        default:
+          sortStage = {
+            createdAt: -1,
+          };
+      }
+
+      const aggregate = [
+        {
+          $match: matchStage,
+        },
+
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categoryId",
+            foreignField: "_id",
+            as: "category",
+          },
+        },
+
+        {
+          $unwind: "$category",
+        },
+
+        {
+          $sort: sortStage,
+        },
+      ];
+
+      const totalProducts = await Product.aggregate([
+        ...aggregate,
+        {
+          $count: "count",
+        },
+      ]);
+
+      const products = await Product.aggregate([
+        ...aggregate,
+
+        {
+          $skip: skip,
+        },
+
+        {
+          $limit: limit,
+        },
+      ]);
+
+      const total = totalProducts.length > 0 ? totalProducts[0].count : 0;
+
+      return res.render("perfumes", {
+        user: req.user || null,
+        products,
+        categories,
+        filters: {
+          search,
+          category,
+          brand,
+          price,
+          stock,
+          sort,
+        },
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalProducts: total,
+        cartCount: 0,
+        success: req.flash("success"),
+        error: req.flash("error"),
+      });
+    } catch (error) {
+      console.log(error);
+
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
   }
 
   // Register Page

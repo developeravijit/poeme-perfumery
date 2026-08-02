@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upload Images</title>
+
+    <link rel="stylesheet" href="/css/output.css" />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+  </head>
+
+  <body class="bg-stone-100">
+    <!-- Sidebar -->
+    <%- include("partials/sidebar.ejs") %>
+
+    <main class="ml-72 min-h-screen">
+      <!-- Navbar -->
+      <%- include("partials/navbar.ejs") %>
+
+      <section class="p-8">
+        <!-- Page Header -->
+
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-4xl font-bold text-slate-800">Upload Images</h1>
+
+            <p class="mt-2 text-slate-500">
+              Upload and manage your product gallery with reusable images.
+            </p>
+          </div>
+
+          <a
+            href="/poeme-perfumery/seller/image-library"
+            class="btn-secondary flex items-center gap-2"
+          >
+            <i class="fa-solid fa-images"></i>
+
+            Image Library
+          </a>
+        </div>
+
+        <!-- Flash Message -->
+
+        <% if(success && success.length){ %>
+
+        <div
+          class="mt-8 rounded-xl border border-green-300 bg-green-50 px-6 py-4 text-green-700"
+        >
+          <i class="fa-solid fa-circle-check mr-2"></i>
+
+          <%= success[0] %>
+        </div>
+
+        <% } %>
+
+        <% if(error && error.length){ %>
+
+        <div
+          class="mt-8 rounded-xl border border-red-300 bg-red-50 px-6 py-4 text-red-700"
+        >
+          <i class="fa-solid fa-circle-exclamation mr-2"></i>
+
+          <%= error[0] %>
+        </div>
+
+        <% } %>
+
+        <!-- Stats -->
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
+          <!-- Selected -->
+
+          <div class="glass rounded-3xl shadow-premium p-6">
+            <div
+              class="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center"
+            >
+              <i class="fa-solid fa-image text-amber-600 text-xl"></i>
+            </div>
+
+            <p class="text-slate-500 mt-5">Selected Images</p>
+
+            <h2 id="totalImages" class="text-4xl font-bold text-slate-800 mt-2">
+              0
+            </h2>
+          </div>
+
+          <!-- Size -->
+
+          <div class="glass rounded-3xl shadow-premium p-6">
+            <div
+              class="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center"
+            >
+              <i class="fa-solid fa-database text-blue-600 text-xl"></i>
+            </div>
+
+            <p class="text-slate-500 mt-5">Maximum Size</p>
+
+            <h2 class="text-4xl font-bold text-slate-800 mt-2">5 MB</h2>
+          </div>
+
+          <!-- Supported -->
+
+          <div class="glass rounded-3xl shadow-premium p-6">
+            <div
+              class="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center"
+            >
+              <i class="fa-solid fa-file-image text-green-600 text-xl"></i>
+            </div>
+
+            <p class="text-slate-500 mt-5">Supported</p>
+
+            <h2 class="text-xl font-semibold text-slate-800 mt-3">
+              JPG • PNG • WEBP
+            </h2>
+          </div>
+        </div>
+
+        <!-- Upload Form -->
+
+        <form
+          action="/poeme-perfumery/seller/upload-image"
+          method="POST"
+          enctype="multipart/form-data"
+          class="mt-10"
+        >
+          <input
+            type="file"
+            id="images"
+            name="images"
+            accept="image/*"
+            multiple
+            hidden
+          />
+
+          <!-- Upload Area -->
+
+          <div
+            id="uploadBox"
+            class="upload-box glass shadow-premium rounded-[35px] p-16 text-center cursor-pointer transition duration-300"
+          >
+            <div
+              id="uploadIcon"
+              class="w-28 h-28 mx-auto rounded-full bg-amber-100 flex items-center justify-center"
+            >
+              <i class="fa-solid fa-cloud-arrow-up text-5xl text-[#B68D40]"></i>
+            </div>
+
+            <h2 id="uploadTitle" class="text-4xl font-bold mt-8 text-slate-800">
+              Drag & Drop Images
+            </h2>
+
+            <p id="uploadDescription" class="text-slate-500 mt-4 text-lg">
+              Drop your product images here or browse from your device.
+            </p>
+
+            <button type="button" id="browseButton" class="btn-primary mt-8">
+              <i class="fa-solid fa-folder-open mr-2"></i>
+
+              Browse Images
+            </button>
+          </div>
+          <!-- Selected Images Preview -->
+
+          <div class="mt-10">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h2 class="text-2xl font-bold text-slate-800">
+                  Selected Images
+                </h2>
+
+                <p class="text-slate-500 mt-1">
+                  Preview images before uploading.
+                </p>
+              </div>
+
+              <span
+                id="imageCountBadge"
+                class="hidden bg-[#B68D40] text-white px-5 py-2 rounded-full text-sm font-semibold"
+              >
+                0 Images
+              </span>
+            </div>
+
+            <div
+              id="previewContainer"
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            >
+              <!-- Preview cards generated by uploadImage.js -->
+            </div>
+          </div>
+
+          <!-- Upload Guidelines -->
+
+          <div class="glass shadow-premium rounded-3xl p-8 mt-12">
+            <div class="flex items-center gap-3 mb-6">
+              <div
+                class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-circle-info text-[#B68D40]"></i>
+              </div>
+
+              <h2 class="text-2xl font-bold text-slate-800">
+                Upload Guidelines
+              </h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+              <ul class="space-y-4 text-slate-600">
+                <li class="flex gap-3">
+                  <i class="fa-solid fa-check text-green-600 mt-1"></i>
+
+                  <span> Upload only JPG, PNG or WEBP images. </span>
+                </li>
+
+                <li class="flex gap-3">
+                  <i class="fa-solid fa-check text-green-600 mt-1"></i>
+
+                  <span> Maximum file size is <strong>5 MB</strong>. </span>
+                </li>
+
+                <li class="flex gap-3">
+                  <i class="fa-solid fa-check text-green-600 mt-1"></i>
+
+                  <span> Multiple image upload is supported. </span>
+                </li>
+              </ul>
+
+              <ul class="space-y-4 text-slate-600">
+                <li class="flex gap-3">
+                  <i class="fa-solid fa-check text-green-600 mt-1"></i>
+
+                  <span> Images are stored in your Image Library. </span>
+                </li>
+
+                <li class="flex gap-3">
+                  <i class="fa-solid fa-check text-green-600 mt-1"></i>
+
+                  <span> Images can be reused for multiple products. </span>
+                </li>
+
+                <li class="flex gap-3">
+                  <i class="fa-solid fa-check text-green-600 mt-1"></i>
+
+                  <span> Large high-quality images are recommended. </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+
+          <div class="flex justify-end gap-4 mt-10">
+            <a
+              href="/poeme-perfumery/seller/image-library"
+              class="btn-secondary"
+            >
+              Cancel
+            </a>
+
+            <button
+              type="submit"
+              id="uploadBtn"
+              class="btn-primary flex items-center gap-2"
+            >
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+
+              Upload Images
+            </button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script src="/js/uploadImage.js"></script>
+  </body>
+</html>

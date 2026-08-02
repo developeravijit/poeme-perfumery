@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Categories</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+  </head>
+
+  <body class="bg-slate-100">
+    <%- include("partials/sidebar") %>
+
+    <main class="ml-72 min-h-screen">
+      <%- include("partials/navbar") %>
+
+      <section class="p-8">
+        <div class="flex justify-between items-center">
+          <div>
+            <h1 class="text-3xl font-bold text-slate-800">Categories</h1>
+
+            <p class="text-slate-500 mt-2">Manage your product categories.</p>
+          </div>
+
+          <a
+            href="/poeme-perfumery/seller/create/category"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-xl font-semibold"
+          >
+            <i class="fa-solid fa-plus mr-2"></i>
+            Add Category
+          </a>
+        </div>
+
+        <% if(success.length){ %>
+
+        <div
+          class="mt-6 bg-green-100 border border-green-300 text-green-700 rounded-xl p-4"
+        >
+          <%= success[0] %>
+        </div>
+
+        <% } %>
+
+        <% if(error.length){ %>
+
+        <div
+          class="mt-6 bg-red-100 border border-red-300 text-red-700 rounded-xl p-4"
+        >
+          <%= error[0] %>
+        </div>
+
+        <% } %>
+
+        <!-- Stats -->
+
+        <div class="grid md:grid-cols-3 gap-6 mt-8">
+          <div class="bg-white rounded-2xl shadow p-6">
+            <p class="text-slate-500">Total Categories</p>
+
+            <h2 class="text-4xl font-bold mt-2"><%= categories.length %></h2>
+          </div>
+
+          <div class="bg-white rounded-2xl shadow p-6">
+            <p class="text-slate-500">Active</p>
+
+            <h2 class="text-4xl font-bold mt-2"><%= categories.length %></h2>
+          </div>
+
+          <div class="bg-white rounded-2xl shadow p-6">
+            <p class="text-slate-500">Products</p>
+
+            <h2 class="text-4xl font-bold mt-2">--</h2>
+          </div>
+        </div>
+
+        <!-- Search -->
+
+        <div class="mt-8">
+          <input
+            type="text"
+            placeholder="Search Category..."
+            class="w-full md:w-96 h-12 rounded-xl border border-slate-300 px-4 focus:ring-4 focus:ring-indigo-100 outline-none"
+          />
+        </div>
+
+        <!-- Table -->
+
+        <div class="mt-8 bg-white rounded-2xl shadow overflow-hidden">
+          <table class="w-full">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="p-4 text-left">#</th>
+
+                <th class="p-4 text-left">Category</th>
+
+                <th class="p-4 text-left">Slug</th>
+
+                <th class="p-4 text-left">Created</th>
+
+                <th class="p-4 text-center">Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <% if(categories.length){ %>
+
+              <% categories.forEach((category,index)=>{ %>
+
+              <tr class="border-t">
+                <td class="p-4"><%= index+1 %></td>
+
+                <td class="p-4 font-semibold"><%= category.categoryName %></td>
+
+                <td class="p-4"><%= category.slug %></td>
+
+                <td class="p-4"><%= category.createdAt.toDateString() %></td>
+
+                <td class="p-4 text-center space-x-2">
+                  <button
+                    class="bg-blue-100 text-blue-700 px-3 py-2 rounded-lg"
+                  >
+                    <i class="fa-solid fa-pen"></i>
+                  </button>
+
+                  <button class="bg-red-100 text-red-700 px-3 py-2 rounded-lg">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+
+              <% }) %>
+
+              <% } else { %>
+
+              <tr>
+                <td colspan="5">
+                  <div class="py-20 text-center">
+                    <i
+                      class="fa-solid fa-folder-open text-6xl text-slate-300"
+                    ></i>
+
+                    <h2 class="text-2xl font-bold mt-6">No Categories Found</h2>
+
+                    <p class="text-slate-500 mt-2">
+                      Create your first category.
+                    </p>
+
+                    <a
+                      href="/poeme-perfumery/seller/create/category"
+                      class="inline-block mt-6 bg-indigo-600 text-white px-6 py-3 rounded-xl"
+                    >
+                      Create Category
+                    </a>
+                  </div>
+                </td>
+              </tr>
+
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

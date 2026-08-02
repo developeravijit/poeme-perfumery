@@ -1,0 +1,124 @@
+<aside
+  class="fixed left-0 top-0 h-screen w-72 bg-slate-900 text-white flex flex-col"
+>
+  <!-- Logo -->
+  <div class="h-20 flex items-center justify-center border-b border-slate-700">
+    <div class="flex items-center gap-3">
+      <div
+        class="w-11 h-11 rounded-xl bg-indigo-600 flex items-center justify-center"
+      >
+        <i class="fa-solid fa-store text-xl"></i>
+      </div>
+
+      <div>
+        <h2 class="font-bold text-lg">Poeme</h2>
+        <p class="text-xs text-slate-400">Seller Panel</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seller -->
+  <div class="px-6 py-6 border-b border-slate-700">
+    <div class="flex items-center gap-4">
+      <div
+        class="w-14 h-14 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-lg"
+      >
+        <%= seller.name.charAt(0).toUpperCase() %>
+      </div>
+
+      <div>
+        <h3 class="font-semibold"><%= seller.name %></h3>
+
+        <p class="text-sm text-slate-400">Verified Seller</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu -->
+  <nav class="flex-1 py-6">
+    <a
+      href="/poeme-perfumery/seller/dashboard"
+      class="flex items-center gap-4 px-6 py-4 transition <%= currentPage === 'dashboard' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300' %>"
+    >
+      <i class="fa-solid fa-house"></i>
+      Dashboard
+    </a>
+
+    <a
+      href="/poeme-perfumery/seller/categories"
+      class="flex items-center gap-4 px-6 py-4 transition <%= ["categories","createCategory"].includes(currentPage) ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300' %>"
+    >
+      <i class="fa-solid fa-layer-group"></i>
+      Categories
+    </a>
+
+    <a
+      href="/poeme-perfumery/seller/products"
+      class="flex items-center gap-4 px-6 py-4 transition <%= ["product", "createProduct", "bulkUpload"].includes( currentPage) ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300' %>"
+    >
+      <i class="fa-solid fa-box"></i>
+      Products
+    </a>
+   
+    <a
+      href="/poeme-perfumery/seller/upload-image"
+      class="flex items-center gap-4 px-6 py-4 transition <%= ["imageLibrary", "uploadImage"].includes( currentPage) ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300' %>"
+    >
+      <i class="fa-solid fa-box"></i>
+      Image Library
+    </a>
+
+    <a
+      href="/seller/orders"
+      class="flex items-center gap-4 px-6 py-4 transition <%= currentPage === 'orders' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300' %>"
+    >
+      <i class="fa-solid fa-cart-shopping"></i>
+      Orders
+    </a>
+
+    <a
+      href="/seller/customers"
+      class="flex items-center gap-4 px-6 py-4 transition <%= currentPage === 'customers' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300' %>"
+    >
+      <i class="fa-solid fa-users"></i>
+      Customers
+    </a>
+
+    <a
+      href="/seller/reviews"
+      class="flex items-center gap-4 px-6 py-4 transition <%= currentPage === 'reviews' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300' %>"
+    >
+      <i class="fa-solid fa-star"></i>
+      Reviews
+    </a>
+
+    <a
+      href="/seller/analytics"
+      class="flex items-center gap-4 px-6 py-4 transition <%= currentPage === 'analytics' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300' %>"
+    >
+      <i class="fa-solid fa-chart-line"></i>
+      Analytics
+    </a>
+
+    <a
+      href="/seller/settings"
+      class="flex items-center gap-4 px-6 py-4 transition <%= currentPage === 'settings' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300' %>"
+    >
+      <i class="fa-solid fa-gear"></i>
+      Settings
+    </a>
+  </nav>
+
+  <!-- Logout -->
+
+  <div class="p-6">
+    <a
+      href="/poeme-perfumery/seller/logout"
+      class="flex items-center justify-center gap-3 bg-red-600 hover:bg-red-700 rounded-xl py-3 transition"
+    >
+      <i class="fa-solid fa-right-from-bracket"></i>
+
+      Logout
+    </a>
+  </div>
+</aside>

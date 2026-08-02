@@ -12,6 +12,20 @@ const {
   loginSchema,
 } = require("../../validation/authValidation");
 const bcrypt = require("bcrypt");
+const {
+  categoryValidation,
+  productValidation,
+} = require("../../validation/productValidation");
+const slugify = require("slugify");
+const Category = require("../../model/category");
+const Product = require("../../model/products");
+const mongoose = require("mongoose");
+const csv = require("csvtojson");
+const { Parser } = require("json2csv");
+const generateProductTemplate = require("../../utils/csvTemplate");
+const { csvCleaner, imageCleaner } = require("../../utils/fileCleaner");
+const ImageLibrary = require("../../model/imageLibrary");
+const cloudinary = require("../../config/cloudinary");
 
 class sellerPageController {
   // Register Page
@@ -19,26 +33,6 @@ class sellerPageController {
     return res.render("seller/register", {
       error: req.flash("error"),
       success: req.flash("success"),
-    });
-  }
-
-  // Verify Page
-  async verifyPage(req, res) {
-    return res.render("seller/verify", {
-      error: req.flash("error"),
-      success: req.flash("success"),
-    });
-  }
-
-  // Login Page
-  async loginPage(req, res) {
-    const showOtp = req.session.showOtp || false;
-
-    return res.render("seller/login", {
-      error: req.flash("error"),
-      success: req.flash("success"),
-      email: req.session.email || "",
-      showOtp,
     });
   }
 
@@ -137,6 +131,16 @@ class sellerPageController {
     }
   }
 
+  /*======================================================*/
+
+  // Verify Page
+  async verifyPage(req, res) {
+    return res.render("seller/verify", {
+      error: req.flash("error"),
+      success: req.flash("success"),
+    });
+  }
+
   // Verify User
   async verify(req, res) {
     try {
@@ -194,6 +198,20 @@ class sellerPageController {
         message: error.message,
       });
     }
+  }
+
+  /*======================================================*/
+
+  // Login Page
+  async loginPage(req, res) {
+    const showOtp = req.session.showOtp || false;
+
+    return res.render("seller/login", {
+      error: req.flash("error"),
+      success: req.flash("success"),
+      email: req.session.email || "",
+      showOtp,
+    });
   }
 
   // Seller Login
@@ -256,50 +274,7 @@ class sellerPageController {
         maxAge: refreshMaxAge,
       });
 
-      return res.redirect("/poeme-perfumery/seller/home");
-    } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
-        success: false,
-        message: error.message,
-      });
-    }
-  }
-
-  // Send Login OTP
-  async loginWithOtp(req, res) {
-    try {
-      const { email } = req.body;
-
-      const seller = await User.findOne({ email });
-
-      if (!seller) {
-        req.flash("error", "Invalid email id");
-        return res.redirect("/poeme-perfumery/seller/login");
-      }
-
-      if (!seller.isVerified) {
-        req.flash("error", "Please verify your account first");
-        return res.redirect("/poeme-perfumery/seller/verify");
-      }
-
-      await Otp.deleteMany({
-        userID: seller._id,
-      });
-
-      await otpEmail(seller);
-
-      req.session.email = email;
-      req.session.showOtp = true;
-
-      return req.session.save((err) => {
-        if (err) {
-          console.error(err);
-          req.flash("error", "Something went wrong");
-          return res.redirect("/poeme-perfumery/seller/login");
-        }
-
-        return res.redirect("/poeme-perfumery/seller/login");
-      });
+      return res.redirect("/poeme-perfumery/seller/dashboard");
     } catch (error) {
       return res.status(httpCodes.server_error).render("error", {
         success: false,
@@ -380,7 +355,1205 @@ class sellerPageController {
       delete req.session.showOtp;
       delete req.session.email;
 
-      return res.redirect("/poeme-perfumery/seller/home");
+      return res.redirect("/poeme-perfumery/seller/dashboard");
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Send Login OTP
+  async loginWithOtp(req, res) {
+    try {
+      const { email } = req.body;
+
+      const seller = await User.findOne({ email });
+
+      if (!seller) {
+        req.flash("error", "Invalid email id");
+        return res.redirect("/poeme-perfumery/seller/login");
+      }
+
+      if (!seller.isVerified) {
+        req.flash("error", "Please verify your account first");
+        return res.redirect("/poeme-perfumery/seller/verify");
+      }
+
+      await Otp.deleteMany({
+        userID: seller._id,
+      });
+
+      await otpEmail(seller);
+
+      req.session.email = email;
+      req.session.showOtp = true;
+
+      return req.session.save((err) => {
+        if (err) {
+          console.error(err);
+          req.flash("error", "Something went wrong");
+          return res.redirect("/poeme-perfumery/seller/login");
+        }
+
+        return res.redirect("/poeme-perfumery/seller/login");
+      });
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Logout
+  async logout(req, res) {
+    try {
+      if (req.user) {
+        await User.findByIdAndUpdate(req.user._id, {
+          refreshToken: "",
+        });
+      }
+
+      res.clearCookie("accessToken");
+      res.clearCookie("refreshToken");
+
+      return res.redirect("/poeme-perfumery/seller/login");
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  /*======================================================*/
+  /*======================================================*/
+
+  // Seller Dashboard
+  async dashboard(req, res) {
+    try {
+      const seller = await User.findById(req.user.id);
+
+      const stats = {
+        totalProducts: [],
+        totalOrders: [],
+        revenue: [],
+        customers: [],
+        pendingOrders: [],
+        lowStock: [],
+      };
+      res.render("seller/dashboard", {
+        seller,
+        stats,
+        currentPage: "dashboard",
+      });
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  /*======================================================*/
+
+  // Categories Page
+  async categories(req, res) {
+    try {
+      const seller = await User.findById(req.user.id);
+
+      const categories = await Category.find({
+        sellerId: req.user.id,
+      }).sort({ createdAt: -1 });
+
+      res.render("seller/categories", {
+        seller,
+        categories,
+        success: req.flash("success"),
+        error: req.flash("error"),
+        currentPage: "categories",
+      });
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Create Category Page
+  async createCategoryPage(req, res) {
+    try {
+      const seller = await User.findById(req.user.id);
+
+      return res.render("seller/createCategory", {
+        seller,
+        error: req.flash("error"),
+        success: req.flash("success"),
+        currentPage: "categories",
+      });
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Create Category
+  async createCategory(req, res) {
+    try {
+      const { error, value } = categoryValidation.validate(req.body);
+
+      if (error) {
+        req.flash("error", error.details[0].message);
+        return res.redirect("/poeme-perfumery/seller/create/category");
+      }
+
+      const { categoryName } = value;
+
+      const sellerId = req.user.id;
+
+      const slug = slugify(categoryName, {
+        lower: true,
+        strict: true,
+      });
+
+      const existingCategory = await Category.findOne({
+        sellerId,
+        slug,
+      });
+
+      if (existingCategory) {
+        req.flash("error", "Category is already exist");
+        return res.redirect("/poeme-perfumery/seller/create/category");
+      }
+
+      const data = new Category({
+        sellerId,
+        categoryName,
+        slug,
+      });
+
+      await data.save();
+
+      req.flash("success", "Category created successfully");
+      return res.redirect("/poeme-perfumery/seller/categories");
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  /*======================================================*/
+
+  // Product Page
+  async products(req, res) {
+    try {
+      const seller = await User.findById(req.user.id);
+
+      const products = await Product.aggregate([
+        {
+          $match: {
+            sellerId: new mongoose.Types.ObjectId(req.user.id),
+            isActive: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categoryId",
+            foreignField: "_id",
+            as: "category",
+          },
+        },
+        { $unwind: "$category" },
+      ]);
+
+      res.render("seller/product", {
+        seller,
+        products,
+        success: req.flash("success"),
+        error: req.flash("error"),
+        currentPage: "product",
+      });
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Create Product Page
+  async createProductPage(req, res) {
+    try {
+      const seller = await User.findById(req.user.id);
+
+      const categories = await Category.find({
+        sellerId: req.user.id,
+      }).sort({ categoryName: 1 });
+
+      return res.render("seller/createProduct", {
+        seller,
+        categories,
+        error: req.flash("error"),
+        success: req.flash("success"),
+        currentPage: "product",
+      });
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Create Product
+  async createProduct(req, res) {
+    try {
+      const { error, value } = productValidation.validate(req.body);
+
+      if (error) {
+        req.flash("error", error.details[0].message);
+        return res.redirect("/poeme-perfumery/seller/create/product");
+      }
+
+      const {
+        categoryId,
+        productName,
+        description,
+        price,
+        stock,
+        sku,
+        brand,
+        tags,
+      } = value;
+
+      const sellerId = req.user.id;
+
+      const slug = slugify(productName, {
+        lower: true,
+        strict: true,
+      });
+
+      const existingProduct = await Product.findOne({
+        sellerId,
+        $or: [{ slug }, { sku }],
+      });
+
+      if (existingProduct) {
+        await cleanupImages(req.files);
+        req.flash("error", "Product is already exist");
+        return res.redirect("/poeme-perfumery/seller/create/product");
+      }
+
+      const cleanupImages = async (files) => {
+        if (Array.isArray(files) && files.length > 0) {
+          await Promise.all(files.map(imageCleaner));
+        }
+      };
+
+      const images = [];
+
+      if (req.files?.length) {
+        for (const file of req.files) {
+          const image = await ImageLibrary.create({
+            sellerId,
+            imageCode: `IMG${Date.now()}${Math.floor(Math.random() * 1000)}`,
+            originalName: file.originalname,
+            url: file.path,
+            publicId: file.filename,
+            size: file.size,
+            format: file.mimetype.split("/")[1],
+          });
+
+          images.push({
+            imageId: image._id,
+            url: image.url,
+            publicId: image.publicId,
+          });
+        }
+      }
+
+      const data = new Product({
+        sellerId,
+        categoryId,
+        productName,
+        slug,
+        description,
+        price,
+        stock,
+        sku,
+        brand,
+        tags,
+        stockStatus: stock > 0 ? "in_stock" : "out_of_stock",
+        images,
+      });
+
+      await data.save();
+
+      req.flash("success", "Product created successfully");
+
+      return res.redirect("/poeme-perfumery/seller/products");
+    } catch (error) {
+      await cleanupImages(req.files);
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Increased Stock
+  async increaseStock(req, res) {
+    try {
+      await Product.findOneAndUpdate(
+        {
+          _id: req.params.id,
+          sellerId: req.user.id,
+        },
+        {
+          $inc: { stock: 1 },
+        }
+      );
+
+      return res.redirect("/poeme-perfumery/seller/products");
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Decrease Stock
+  async decreaseStock(req, res) {
+    try {
+      const product = await Product.findOne({
+        _id: req.params.id,
+        sellerId: req.user.id,
+      });
+
+      if (!product) {
+        req.flash("error", "Product not found");
+        return res.redirect("/poeme-perfumery/seller/products");
+      }
+
+      if (product.stock > 0) {
+        product.stock--;
+      }
+
+      if (product.stock === 0) {
+        product.status = "out_of_stock";
+      }
+
+      await product.save();
+
+      return res.redirect("/poeme-perfumery/seller/products");
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Out of stock
+  async outOfStock(req, res) {
+    try {
+      await Product.findOneAndUpdate(
+        {
+          _id: req.params.id,
+          sellerId: req.user.id,
+        },
+        {
+          stock: 0,
+          status: "out_of_stock",
+        }
+      );
+
+      return res.redirect("/poeme-perfumery/seller/products");
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Bulk Upload Page
+  async bulkUploadPage(req, res) {
+    const seller = await User.findById(req.user.id);
+
+    res.render("seller/bulkUpload", {
+      seller,
+      error: req.flash("error"),
+      success: req.flash("success"),
+      currentPage: "product",
+    });
+  }
+
+  // Bulk CSV Upload
+  async bulkUpload(req, res) {
+    try {
+      if (!req.file) {
+        req.flash("error", "Please upload a CSV file.");
+        return res.redirect("/poeme-perfumery/seller/bulk-upload");
+      }
+
+      const products = await csv().fromFile(req.file.path);
+
+      if (!products.length) {
+        await csvCleaner(req.file);
+
+        req.flash("error", "CSV file is empty.");
+        return res.redirect("/poeme-perfumery/seller/bulk-upload");
+      }
+
+      const sellerId = req.user.id;
+
+      let successCount = 0;
+      let duplicateCount = 0;
+      let categoryFailed = 0;
+      let validationFailed = 0;
+      let failedCount = 0;
+
+      const uploadedSKUs = new Set();
+      const uploadedProducts = new Set();
+
+      const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      for (const item of products) {
+        try {
+          const productName = (item["Product Name"] || "").trim();
+          const categoryName = (item.Category || "").trim();
+          const sku = (item.SKU || "").trim().toUpperCase();
+          const description = (item.Description || "").trim();
+          const brand = (item.Brand || "").trim();
+
+          const price = Number(item.Price);
+          const stock = Number(item.Stock);
+
+          // Required fields
+          if (
+            !productName ||
+            !categoryName ||
+            !sku ||
+            Number.isNaN(price) ||
+            Number.isNaN(stock)
+          ) {
+            validationFailed++;
+            failedCount++;
+            continue;
+          }
+
+          // Duplicate inside uploaded CSV
+          if (
+            uploadedSKUs.has(sku) ||
+            uploadedProducts.has(productName.toLowerCase())
+          ) {
+            duplicateCount++;
+            failedCount++;
+            continue;
+          }
+
+          uploadedSKUs.add(sku);
+          uploadedProducts.add(productName.toLowerCase());
+
+          // Find Category (case-insensitive)
+          const category = await Category.findOne({
+            sellerId,
+            categoryName: {
+              $regex: new RegExp(`^${escapeRegex(categoryName)}$`, "i"),
+            },
+          });
+
+          if (!category) {
+            categoryFailed++;
+            failedCount++;
+            continue;
+          }
+
+          // Check existing product
+          const existingProduct = await Product.findOne({
+            sellerId,
+            $or: [
+              { sku },
+              {
+                productName: {
+                  $regex: new RegExp(`^${escapeRegex(productName)}$`, "i"),
+                },
+              },
+            ],
+          });
+
+          if (existingProduct) {
+            duplicateCount++;
+            failedCount++;
+            continue;
+          }
+
+          const slug = slugify(productName, {
+            lower: true,
+            strict: true,
+          });
+
+          let images = [];
+
+          const imageCodes = [
+            item.Image1,
+            item.Image2,
+            item.Image3,
+            item.Image4,
+            item.Image5,
+          ]
+            .map((code) => (code || "").trim().toUpperCase())
+            .filter(Boolean);
+
+          const uniqueCodes = [...new Set(imageCodes)];
+
+          if (uniqueCodes.length !== imageCodes.length) {
+            failedCount++;
+            validationFailed++;
+            continue;
+          }
+
+          if (imageCodes.length > 5) {
+            failedCount++;
+            validationFailed++;
+            continue;
+          }
+
+          if (imageCodes.length) {
+            const libraryImages = await ImageLibrary.find({
+              sellerId,
+              imageCode: { $in: uniqueCodes },
+              isActive: true,
+            });
+
+            if (libraryImages.length !== uniqueCodes.length) {
+              failedCount++;
+              validationFailed++;
+              continue;
+            }
+
+            images = imageCodes.map((code) => {
+              const image = libraryImages.find((img) => img.imageCode === code);
+
+              return {
+                imageId: image._id,
+                url: image.url,
+                publicId: image.publicId,
+              };
+            });
+          }
+
+          await Product.create({
+            sellerId,
+            categoryId: category._id,
+            productName,
+            slug,
+            description,
+            price,
+            stock,
+            sku,
+            brand,
+            tags: item.Tags
+              ? item.Tags.split(",")
+                  .map((tag) => tag.trim())
+                  .filter(Boolean)
+              : [],
+            images,
+            status: "draft",
+          });
+
+          successCount++;
+        } catch (err) {
+          console.error(
+            `Bulk Upload Error (${item["Product Name"] || "Unknown Product"}):`,
+            err.message
+          );
+
+          failedCount++;
+        }
+      }
+
+      await csvCleaner(req.file);
+
+      req.flash(
+        "success",
+        `${successCount} product(s) uploaded successfully. ${duplicateCount} duplicate(s) skipped. ${categoryFailed} category not found. ${validationFailed} invalid row(s).`
+      );
+
+      return res.redirect("/poeme-perfumery/seller/bulk-upload");
+    } catch (error) {
+      if (req.file) {
+        await csvCleaner(req.file);
+      }
+
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Download Template
+  async downloadTemplate(req, res) {
+    try {
+      const categories = await Category.find({
+        sellerId: req.user.id,
+      });
+
+      const category = categories.length > 0 ? categories[0].categoryName : "";
+
+      const csv = generateProductTemplate(category);
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        'attachment; filename="product-template.csv"'
+      );
+
+      return res.send(csv);
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Upload Image Page
+  async uploadImagePage(req, res) {
+    try {
+      const seller = await User.findById(req.user.id);
+
+      return res.render("seller/uploadImage", {
+        seller,
+        error: req.flash("error"),
+        success: req.flash("success"),
+        currentPage: "image-library",
+      });
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Upload Images
+  async uploadImage(req, res) {
+    try {
+      if (!req.files || req.files.length === 0) {
+        req.flash("error", "Please select at least one image.");
+        return res.redirect("/poeme-perfumery/seller/upload-image");
+      }
+
+      const sellerId = req.user.id;
+
+      let uploaded = 0;
+
+      for (const file of req.files) {
+        // Generate next Image Code
+        const lastImage = await ImageLibrary.findOne({
+          sellerId,
+        }).sort({ createdAt: -1 });
+
+        let nextNumber = 1;
+
+        if (lastImage) {
+          const match = lastImage.imageCode.match(/\d+/);
+
+          if (match) {
+            nextNumber = Number(match[0]) + 1;
+          }
+        }
+
+        const imageCode = `IMG${String(nextNumber).padStart(4, "0")}`;
+
+        const exists = await ImageLibrary.findOne({
+          sellerId,
+          imageCode,
+        });
+
+        if (exists) {
+          req.flash("error", "Image code already exists. Please upload again.");
+
+          return res.redirect("/poeme-perfumery/seller/upload-image");
+        }
+
+        await ImageLibrary.create({
+          sellerId,
+          imageCode,
+          originalName: file.originalname,
+          url: file.path,
+          publicId: file.filename,
+          size: file.size,
+          format: file.mimetype.split("/")[1],
+        });
+
+        uploaded++;
+      }
+
+      req.flash("success", `${uploaded} image(s) uploaded successfully.`);
+
+      return res.redirect("/poeme-perfumery/seller/image-library");
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Image Library
+  async imageLibrary(req, res) {
+    try {
+      const seller = await User.findById(req.user.id);
+
+      const page = Number(req.query.page) || 1;
+      const limit = 12;
+      const skip = (page - 1) * limit;
+
+      const search = (req.query.search || "").trim();
+
+      const query = {
+        sellerId: req.user.id,
+        isActive: true,
+      };
+
+      const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      if (search) {
+        query.$or = [
+          {
+            imageCode: {
+              $regex: escapeRegex(search),
+              $options: "i",
+            },
+          },
+          {
+            originalName: {
+              $regex: escapeRegex(search),
+              $options: "i",
+            },
+          },
+        ];
+      }
+
+      const totalImages = await ImageLibrary.countDocuments(query);
+
+      const totalPages = Math.ceil(totalImages / limit);
+
+      const images = await ImageLibrary.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+      return res.render("seller/imageLibrary", {
+        seller,
+        images,
+        search,
+        currentPage: "image-library",
+        success: req.flash("success"),
+        error: req.flash("error"),
+        totalPages: 1,
+        currentPageNumber: 1,
+
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalImages,
+          hasPrev: page > 1,
+          hasNext: page < totalPages,
+        },
+      });
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Delete Image
+  async deleteImage(req, res) {
+    try {
+      const image = await ImageLibrary.findOne({
+        _id: req.params.id,
+        sellerId: req.user.id,
+      });
+
+      if (!image) {
+        req.flash("error", "Image not found.");
+
+        return res.redirect("/poeme-perfumery/seller/image-library");
+      }
+
+      const product = await Product.findOne({
+        "images.imageId": image._id,
+      });
+
+      if (product) {
+        req.flash("error", "This image is already assigned to a product.");
+        return res.redirect("/poeme-perfumery/seller/image-library");
+      }
+
+      const result = await cloudinary.uploader.destroy(image.publicId);
+
+      if (result.result !== "ok" && result.result !== "not found") {
+        throw new Error("Unable to delete image from Cloudinary");
+      }
+
+      await ImageLibrary.findByIdAndUpdate(image._id, {
+        isActive: false,
+      });
+
+      req.flash("success", "Image deleted successfully.");
+
+      return res.redirect("/poeme-perfumery/seller/image-library");
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Edit Product Page
+  async editPorductPage(req, res) {
+    try {
+      const sellerId = req.user.id;
+      const productId = req.params.id;
+      const seller = await User.findById(sellerId);
+      const product = await Product.findOne({ _id: productId, sellerId });
+
+      if (!product) {
+        req.flash("error", "Product not found");
+        return res.redirect("/poeme-perfumery/seller/products");
+      }
+
+      const categories = await Category.find({ sellerId }).sort({
+        categoryName: 1,
+      });
+
+      return res.render("seller/editProduct", {
+        seller,
+        product,
+        categories,
+        error: req.flash("error"),
+        success: req.flash("success"),
+        currentPage: "product",
+      });
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Edit Product
+  async editProduct(req, res) {
+    try {
+      const sellerId = req.user.id;
+      const productId = req.params.id;
+
+      // Get form data
+      const {
+        categoryId,
+        productName,
+        description,
+        price,
+        stock,
+        sku,
+        brand,
+        tags,
+      } = req.body;
+
+      // Check product exists and belongs to logged-in seller
+      const product = await Product.findOne({
+        _id: productId,
+        sellerId,
+      });
+
+      if (!product) {
+        req.flash("error", "Product not found");
+        return res.redirect("/poeme-perfumery/seller/products");
+      }
+
+      // Check category exists and belongs to logged-in seller
+      const category = await Category.findOne({
+        _id: categoryId,
+        sellerId,
+      });
+
+      if (!category) {
+        req.flash("error", "Invalid category");
+
+        return res.redirect(
+          `/poeme-perfumery/seller/edit/product/${productId}`
+        );
+      }
+
+      // Generate slug from product name
+      const slug = slugify(productName, {
+        lower: true,
+        strict: true,
+      });
+
+      // Check if another product has same slug or SKU
+      const existingProduct = await Product.findOne({
+        sellerId,
+
+        _id: {
+          $ne: productId,
+        },
+
+        $or: [{ slug }, { sku }],
+      });
+
+      if (existingProduct) {
+        req.flash(
+          "error",
+          "Another product with this name or SKU already exists"
+        );
+
+        return res.redirect(
+          `/poeme-perfumery/seller/edit/product/${productId}`
+        );
+      }
+
+      // Convert price and stock to numbers
+      const priceNumber = Number(price);
+      const stockNumber = Number(stock);
+
+      // Validate price
+      if (Number.isNaN(priceNumber) || priceNumber < 0) {
+        req.flash("error", "Please enter a valid price");
+
+        return res.redirect(
+          `/poeme-perfumery/seller/edit/product/${productId}`
+        );
+      }
+
+      // Validate stock
+      if (Number.isNaN(stockNumber) || stockNumber < 0) {
+        req.flash("error", "Please enter a valid stock quantity");
+
+        return res.redirect(
+          `/poeme-perfumery/seller/edit/product/${productId}`
+        );
+      }
+
+      // Format tags
+      let formattedTags = [];
+
+      if (typeof tags === "string") {
+        formattedTags = tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+      }
+
+      // Product data to update
+      const productData = {
+        categoryId,
+        productName,
+        slug,
+        description,
+        price: priceNumber,
+        stock: stockNumber,
+        sku,
+        brand: brand || "",
+        tags: formattedTags,
+
+        stockStatus: stockNumber > 0 ? "in_stock" : "out_of_stock",
+      };
+
+      // Update product
+      const updatedProduct = await Product.findOneAndUpdate(
+        {
+          _id: productId,
+          sellerId,
+        },
+        {
+          $set: productData,
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+
+      if (!updatedProduct) {
+        req.flash("error", "Unable to update product");
+
+        return res.redirect(
+          `/poeme-perfumery/seller/edit/product/${productId}`
+        );
+      }
+
+      req.flash("success", "Product updated successfully");
+
+      return res.redirect("/poeme-perfumery/seller/products");
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Deleted Products Page
+  async deletedProductsPage(req, res) {
+    try {
+      const sellerId = req.user.id;
+
+      const seller = await User.findById(sellerId);
+
+      const products = await Product.aggregate([
+        {
+          $match: {
+            sellerId: new mongoose.Types.ObjectId(sellerId),
+            isActive: false,
+          },
+        },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categoryId",
+            foreignField: "_id",
+            as: "category",
+          },
+        },
+        {
+          $unwind: {
+            path: "$category",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $sort: {
+            updatedAt: -1,
+          },
+        },
+      ]);
+
+      return res.render("seller/deletedProducts", {
+        seller,
+        products,
+        success: req.flash("success"),
+        error: req.flash("error"),
+        currentPage: "product",
+      });
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Delete Product - Soft Delete
+  async deleteProduct(req, res) {
+    try {
+      const { id } = req.params;
+      const sellerId = req.user.id;
+
+      const product = await Product.findOne({
+        _id: id,
+        sellerId,
+      });
+
+      if (!product) {
+        req.flash("error", "Product not found");
+        return res.redirect("/poeme-perfumery/seller/products");
+      }
+
+      // Soft delete product
+      const deletedProduct = await Product.findOneAndUpdate(
+        {
+          _id: id,
+          sellerId,
+        },
+        {
+          $set: {
+            isActive: false,
+          },
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+
+      if (!deletedProduct) {
+        req.flash("error", "Unable to delete product");
+
+        return res.redirect("/poeme-perfumery/seller/products");
+      }
+
+      req.flash("success", "Product deleted successfully");
+
+      return res.redirect("/poeme-perfumery/seller/products");
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Delete Product - Soft Delete
+  async restoreProduct(req, res) {
+    try {
+      const { id } = req.params;
+      const sellerId = req.user.id;
+
+      const product = await Product.findOne({
+        _id: id,
+        sellerId,
+      });
+
+      if (!product) {
+        req.flash("error", "Product not found");
+        return res.redirect("/poeme-perfumery/seller/products");
+      }
+
+      // Soft delete product
+      const restoreProduct = await Product.findOneAndUpdate(
+        {
+          _id: id,
+          sellerId,
+        },
+        {
+          $set: {
+            isActive: true,
+          },
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+
+      if (!restoreProduct) {
+        req.flash("error", "Unable to delete product");
+
+        return res.redirect("/poeme-perfumery/seller/products");
+      }
+
+      req.flash("success", "Product deleted successfully");
+
+      return res.redirect("/poeme-perfumery/seller/products");
     } catch (error) {
       return res.status(httpCodes.server_error).render("error", {
         success: false,

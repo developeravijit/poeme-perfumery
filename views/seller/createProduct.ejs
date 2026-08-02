@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Product</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+  </head>
+
+  <body class="bg-slate-100">
+    <%- include("partials/sidebar") %>
+
+    <main class="ml-72 min-h-screen">
+      <%- include("partials/navbar") %>
+
+      <section class="p-8">
+        <div class="max-w-5xl mx-auto">
+          <!-- Header -->
+          <div class="flex justify-between items-center mb-8">
+            <div>
+              <h1 class="text-3xl font-bold text-slate-800">Create Product</h1>
+              <p class="text-slate-500 mt-2">
+                Add a new product to your store.
+              </p>
+            </div>
+
+            <a
+              href="/poeme-perfumery/seller/products"
+              class="bg-slate-200 hover:bg-slate-300 px-5 py-3 rounded-xl"
+            >
+              <i class="fa-solid fa-arrow-left mr-2"></i>
+              Back
+            </a>
+          </div>
+
+          <!-- Success -->
+          <% if(success.length){ %>
+
+          <div
+            class="mb-6 bg-green-100 border border-green-300 text-green-700 rounded-xl p-4"
+          >
+            <%= success[0] %>
+          </div>
+
+          <% } %>
+
+          <!-- Error -->
+
+          <% if(error.length){ %>
+
+          <div
+            class="mb-6 bg-red-100 border border-red-300 text-red-700 rounded-xl p-4"
+          >
+            <%= error[0] %>
+          </div>
+
+          <% } %>
+
+          <div class="bg-white rounded-3xl shadow p-10">
+            <form
+              action="/poeme-perfumery/seller/create/product"
+              method="POST"
+              enctype="multipart/form-data"
+              class="space-y-8"
+            >
+              <!-- Product Name -->
+
+              <div>
+                <label class="block mb-2 font-semibold"> Product Name </label>
+
+                <input
+                  type="text"
+                  name="productName"
+                  placeholder="Example : Dior Sauvage Eau De Parfum"
+                  class="w-full h-14 border border-slate-300 rounded-xl px-4 focus:ring-4 focus:ring-indigo-100 outline-none"
+                  required
+                />
+              </div>
+
+              <!-- Category -->
+
+              <div>
+                <label class="block mb-2 font-semibold"> Category </label>
+
+                <select
+                  name="categoryId"
+                  class="w-full h-14 border border-slate-300 rounded-xl px-4 focus:ring-4 focus:ring-indigo-100 outline-none"
+                  required
+                >
+                  <option value="">Select Category</option>
+
+                  <% categories.forEach(category=>{ %>
+
+                  <option value="<%= category._id %>">
+                    <%= category.categoryName %>
+                  </option>
+
+                  <% }) %>
+                </select>
+              </div>
+
+              <!-- Description -->
+
+              <div>
+                <label class="block mb-2 font-semibold"> Description </label>
+
+                <textarea
+                  name="description"
+                  rows="5"
+                  placeholder="Write product description..."
+                  class="w-full border border-slate-300 rounded-xl px-4 py-4 focus:ring-4 focus:ring-indigo-100 outline-none resize-none"
+                ></textarea>
+              </div>
+
+              <!-- Price & Stock -->
+
+              <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block mb-2 font-semibold"> Price </label>
+
+                  <input
+                    type="number"
+                    name="price"
+                    min="0"
+                    placeholder="0"
+                    class="w-full h-14 border border-slate-300 rounded-xl px-4 focus:ring-4 focus:ring-indigo-100 outline-none"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label class="block mb-2 font-semibold"> Stock </label>
+
+                  <input
+                    type="number"
+                    name="stock"
+                    min="0"
+                    placeholder="0"
+                    class="w-full h-14 border border-slate-300 rounded-xl px-4 focus:ring-4 focus:ring-indigo-100 outline-none"
+                  />
+                </div>
+              </div>
+
+              <!-- Brand & SKU -->
+
+              <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block mb-2 font-semibold"> Brand </label>
+
+                  <input
+                    type="text"
+                    name="brand"
+                    placeholder="Example : Dior"
+                    class="w-full h-14 border border-slate-300 rounded-xl px-4 focus:ring-4 focus:ring-indigo-100 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label class="block mb-2 font-semibold"> SKU </label>
+
+                  <input
+                    type="text"
+                    name="sku"
+                    placeholder="Example : PERF12345"
+                    class="w-full h-14 border border-slate-300 rounded-xl px-4 focus:ring-4 focus:ring-indigo-100 outline-none"
+                  />
+                </div>
+              </div>
+
+              <!-- Tags -->
+
+              <div>
+                <label class="block mb-2 font-semibold"> Tags </label>
+
+                <input
+                  type="text"
+                  name="tags"
+                  placeholder="Luxury, Long Lasting, Men (comma separated)"
+                  class="w-full h-14 border border-slate-300 rounded-xl px-4 focus:ring-4 focus:ring-indigo-100 outline-none"
+                />
+              </div>
+
+              <!-- Images -->
+
+              <div>
+                <label class="block mb-2 font-semibold"> Product Images </label>
+
+                <input
+                  type="file"
+                  name="images"
+                  multiple
+                  accept="image/*"
+                  class="block w-full border border-slate-300 rounded-xl p-4 file:bg-indigo-600 file:text-white file:border-0 file:px-5 file:py-2 file:rounded-lg file:mr-4 cursor-pointer"
+                />
+
+                <p class="text-sm text-slate-500 mt-2">
+                  You can upload multiple images.
+                </p>
+              </div>
+
+              <!-- Buttons -->
+
+              <div class="flex gap-4">
+                <button
+                  class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-semibold"
+                >
+                  <i class="fa-solid fa-plus mr-2"></i>
+                  Create Product
+                </button>
+
+                <a
+                  href="/poeme-perfumery/seller/products"
+                  class="bg-slate-200 hover:bg-slate-300 px-8 py-3 rounded-xl"
+                >
+                  Cancel
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,50 @@
+<div
+  class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 p-10 text-white"
+>
+  <!-- Background -->
+  <div
+    class="absolute -right-10 -top-10 h-52 w-52 rounded-full bg-white/10"
+  ></div>
+  <div
+    class="absolute right-24 bottom-0 h-36 w-36 rounded-full bg-white/5"
+  ></div>
+
+  <div class="relative flex items-center justify-between">
+    <div>
+      <p class="text-indigo-100 text-lg">Welcome Back 👋</p>
+
+      <h1 class="mt-2 text-4xl font-bold"><%= seller.name %></h1>
+
+      <p class="mt-4 max-w-xl text-indigo-100 leading-7">
+        Manage your products, fulfill customer orders, monitor sales, and grow
+        your perfume business from one dashboard.
+      </p>
+
+      <div class="mt-8 flex gap-4">
+        <a
+          href="/seller/product/create"
+          class="rounded-xl bg-white px-6 py-3 font-semibold text-indigo-700 transition hover:bg-slate-100"
+        >
+          <i class="fa-solid fa-plus mr-2"></i>
+
+          Add Product
+        </a>
+
+        <a
+          href="/seller/products"
+          class="rounded-xl border border-white/30 px-6 py-3 font-semibold transition hover:bg-white/10"
+        >
+          View Products
+        </a>
+      </div>
+    </div>
+
+    <div class="hidden lg:block">
+      <div
+        class="flex h-40 w-40 items-center justify-center rounded-full bg-white/10"
+      >
+        <i class="fa-solid fa-store text-6xl text-white"></i>
+      </div>
+    </div>
+  </div>
+</div>
