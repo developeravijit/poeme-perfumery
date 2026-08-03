@@ -459,6 +459,23 @@ class sellerPageController {
 
   /*======================================================*/
 
+  // Seller Chat Support
+  async chatSupport(req, res) {
+    try {
+      const seller = await User.findById(req.user.id);
+
+      return res.render("seller/chat", {
+        seller,
+        currentPage: "chat",
+      });
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
   // Categories Page
   async categories(req, res) {
     try {
@@ -571,7 +588,12 @@ class sellerPageController {
             as: "category",
           },
         },
-        { $unwind: "$category" },
+        {
+          $unwind: {
+            path: "$category",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
       ]);
 
       res.render("seller/product", {
@@ -1061,7 +1083,6 @@ class sellerPageController {
       let uploaded = 0;
 
       for (const file of req.files) {
-        // Generate next Image Code
         const lastImage = await ImageLibrary.findOne({
           sellerId,
         }).sort({ createdAt: -1 });
@@ -1183,47 +1204,55 @@ class sellerPageController {
     }
   }
 
-  // Delete Image
+  // Delete Image - Hard Delete
   async deleteImage(req, res) {
     try {
+      const sellerId = req.user.id;
+      const imageId = req.params.id;
+
+      // Find image
       const image = await ImageLibrary.findOne({
-        _id: req.params.id,
-        sellerId: req.user.id,
+        _id: imageId,
+        sellerId,
       });
 
       if (!image) {
         req.flash("error", "Image not found.");
-
         return res.redirect("/poeme-perfumery/seller/image-library");
       }
 
+      // Check if image is assigned to any product
       const product = await Product.findOne({
+        sellerId,
+        isActive: true,
         "images.imageId": image._id,
       });
 
       if (product) {
-        req.flash("error", "This image is already assigned to a product.");
+        req.flash(
+          "error",
+          "This image is already assigned to a product and cannot be deleted."
+        );
         return res.redirect("/poeme-perfumery/seller/image-library");
       }
 
+      // Delete from Cloudinary
       const result = await cloudinary.uploader.destroy(image.publicId);
 
       if (result.result !== "ok" && result.result !== "not found") {
-        throw new Error("Unable to delete image from Cloudinary");
+        throw new Error("Failed to delete image from Cloudinary.");
       }
 
-      await ImageLibrary.findByIdAndUpdate(image._id, {
-        isActive: false,
-      });
+      // Hard delete from MongoDB
+      await ImageLibrary.findByIdAndDelete(image._id);
 
       req.flash("success", "Image deleted successfully.");
-
       return res.redirect("/poeme-perfumery/seller/image-library");
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
-        success: false,
-        message: error.message,
-      });
+      console.error("Delete Image Error:", error);
+
+      req.flash("error", "Unable to delete image.");
+      return res.redirect("/poeme-perfumery/seller/image-library");
     }
   }
 

@@ -48,8 +48,8 @@ function addFiles(files) {
   files.forEach((file) => {
     if (!file.type.startsWith("image/")) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert(`${file.name} exceeds 5MB.`);
+    if (file.size > 20 * 1024 * 1024) {
+      alert(`${file.name} exceeds 20 MB.`);
       return;
     }
 

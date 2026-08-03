@@ -84,4 +84,25 @@ fileInput.addEventListener("change", function () {
     "mt-8 w-full bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-xl font-semibold transition";
 });
 
+document.addEventListener("DOMContentLoaded", () => {
+  const buttons = document.querySelectorAll(".add-to-cart-btn");
 
+  buttons.forEach((btn) => {
+    const productId = btn.dataset.id;
+
+    // If already added
+    if (localStorage.getItem(`cart_${productId}`)) {
+      btn.href = "/poeme-perfumery/cart";
+      btn.querySelector("span").textContent = "Go To Cart";
+      btn.querySelector("i").className = "fa-solid fa-cart-shopping mr-2";
+    }
+
+    btn.addEventListener("click", () => {
+      localStorage.setItem(`cart_${productId}`, "true");
+
+      btn.href = "/poeme-perfumery/cart";
+      btn.querySelector("span").textContent = "Go To Cart";
+      btn.querySelector("i").className = "fa-solid fa-cart-shopping mr-2";
+    });
+  });
+});

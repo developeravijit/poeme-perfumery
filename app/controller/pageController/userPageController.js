@@ -1,3 +1,4 @@
+const Cart = require("../../model/cart");
 const Category = require("../../model/category");
 const Otp = require("../../model/otp");
 const Product = require("../../model/products");
@@ -15,6 +16,12 @@ const {
   verifySchema,
 } = require("../../validation/authValidation");
 const bcrypt = require("bcrypt");
+const mongoose = require("mongoose");
+
+const getCartCount = async (userId) => {
+  if (!userId) return 0;
+  return await Cart.countDocuments({ userId });
+};
 
 class userPageController {
   // Home Page
@@ -23,7 +30,8 @@ class userPageController {
       const products = await Product.aggregate([
         {
           $match: {
-            status: "draft",
+            approvalStatus: "pending",
+            isApproved: false,
             isActive: true,
             stock: { $gt: 0 },
           },
@@ -71,10 +79,12 @@ class userPageController {
         },
       ]);
 
+      const cartCount = await getCartCount(req.user ? req.user._id : null);
+
       return res.render("landingPage", {
         user: req.user || null,
         products,
-        cartCount: 0,
+        cartCount,
       });
     } catch (error) {
       console.log(error);
@@ -110,8 +120,10 @@ class userPageController {
       });
 
       const matchStage = {
-        status: "draft",
+        approvalStatus: "pending",
+        isApproved: false,
         isActive: true,
+        stock: { $gt: 0 },
       };
 
       // Search
@@ -226,6 +238,8 @@ class userPageController {
 
       const total = totalProducts.length > 0 ? totalProducts[0].count : 0;
 
+      const cartCount = await getCartCount(req.user ? req.user._id : null);
+
       return res.render("perfumes", {
         user: req.user || null,
         products,
@@ -241,7 +255,7 @@ class userPageController {
         currentPage: page,
         totalPages: Math.ceil(total / limit),
         totalProducts: total,
-        cartCount: 0,
+        cartCount,
         success: req.flash("success"),
         error: req.flash("error"),
       });
@@ -529,25 +543,141 @@ class userPageController {
   }
 
   // Add To Cart Page
-  async addToCart(req, res) {
+  async addToCartPage(req, res) {
     try {
-      const cartItems = [];
+      const cartItems = await Cart.aggregate([
+        {
+          $match: {
+            userId: req.user._id,
+          },
+        },
 
-      const subtotal = 0;
-      const shipping = 0;
-      const tax = 0;
-      const total = 0;
+        {
+          $lookup: {
+            from: "products",
+            localField: "productId",
+            foreignField: "_id",
+            as: "product",
+          },
+        },
 
-      res.render("cart", {
-        user: req.user || null,
+        {
+          $unwind: "$product",
+        },
+
+        {
+          $match: {
+            "product.isActive": true,
+          },
+        },
+
+        {
+          $lookup: {
+            from: "categories",
+            localField: "product.categoryId",
+            foreignField: "_id",
+            as: "category",
+          },
+        },
+
+        {
+          $unwind: {
+            path: "$category",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+
+        {
+          $project: {
+            _id: 1,
+            quantity: 1,
+
+            product: {
+              _id: "$product._id",
+              productName: "$product.productName",
+              slug: "$product.slug",
+              price: "$product.price",
+              stock: "$product.stock",
+              images: "$product.images",
+              brand: "$product.brand",
+            },
+
+            category: {
+              _id: "$category._id",
+              categoryName: "$category.categoryName",
+            },
+
+            totalPrice: {
+              $multiply: ["$quantity", "$product.price"],
+            },
+          },
+        },
+      ]);
+
+      const subtotal = cartItems.reduce(
+        (sum, item) => sum + item.totalPrice,
+        0
+      );
+
+      const shipping = subtotal > 0 ? 100 : 0;
+      const tax = subtotal * 0.18;
+      const total = subtotal + shipping + tax;
+
+      return res.render("cart", {
+        user: req.user,
         cartItems,
         subtotal,
         shipping,
         tax,
         total,
-        cartCount: 0,
+        cartCount: cartItems.length,
       });
     } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Add To Cart
+  async addToCart(req, res) {
+    try {
+      const { id } = req.params;
+
+      const product = await Product.findById(id);
+
+      if (!product || !product.isActive) {
+        req.flash("error", "Product not found");
+        return res.redirect("/poeme-perfumery/perfumes");
+      }
+
+      if (product.stock <= 0) {
+        req.flash("error", "Product is out of stock");
+        return res.redirect("/poeme-perfumery/perfumes");
+      }
+
+      const existingItem = await Cart.findOne({
+        userId: req.user._id,
+        productId: id,
+      });
+
+      if (existingItem) {
+        existingItem.quantity += 1;
+        await existingItem.save();
+      } else {
+        await Cart.create({
+          userId: req.user._id,
+          productId: id,
+          quantity: 1,
+        });
+      }
+
+      req.flash("success", "Product added to cart");
+      return res.redirect("/poeme-perfumery/cart");
+    } catch (error) {
+      console.log(error);
+
       return res.status(httpCodes.server_error).render("error", {
         success: false,
         message: error.message,
@@ -594,9 +724,11 @@ class userPageController {
   // Contact Page
   async chatSupport(req, res) {
     try {
+      const cartCount = await getCartCount(req.user ? req.user._id : null);
+
       return res.render("contactUs", {
         user: req.user,
-        cartCount: 0,
+        cartCount,
       });
     } catch (error) {
       return res.status(httpCodes.server_error).render("error", {

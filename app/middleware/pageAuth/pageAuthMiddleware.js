@@ -2,11 +2,16 @@ const jwt = require("jsonwebtoken");
 const User = require("../../model/user");
 const { generateAccessToken } = require("../../utils/token");
 
-const pageAuth = (loginRoute) => {
+const pageAuth = (loginRoute, allowedRoles = []) => {
   return async (req, res, next) => {
     try {
       const accessToken = req.cookies.accessToken;
       const refreshToken = req.cookies.refreshToken;
+
+      const verifyRole = (user) => {
+        if (!allowedRoles.length) return true;
+        return user && user.role && allowedRoles.includes(user.role.role);
+      };
 
       // 1. Access Token Exists
       if (accessToken) {
@@ -15,11 +20,15 @@ const pageAuth = (loginRoute) => {
 
           const user = await User.findById(decoded.id).populate("role");
 
-          if (user) {
+          if (user && verifyRole(user)) {
             req.user = user;
             res.locals.user = user;
             return next();
           }
+
+          res.clearCookie("accessToken");
+          res.clearCookie("refreshToken");
+          return res.redirect(loginRoute);
         } catch (err) {
           // Access token expired
         }
@@ -46,7 +55,7 @@ const pageAuth = (loginRoute) => {
       // 4. Find User
       const user = await User.findById(decoded.id).populate("role");
 
-      if (!user || user.refreshToken !== refreshToken) {
+      if (!user || user.refreshToken !== refreshToken || !verifyRole(user)) {
         res.clearCookie("accessToken");
         res.clearCookie("refreshToken");
         return res.redirect(loginRoute);

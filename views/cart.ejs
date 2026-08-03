@@ -19,13 +19,13 @@
   <body class="bg-[#FCFBF8]">
     <%- include("layout/navbar.ejs") %>
 
-    <section class="max-w-7xl mx-auto px-6 py-24">
+    <section class="max-w-7xl mx-auto px-6 py-20">
       <div class="text-center mb-14">
         <p class="uppercase tracking-[8px] text-[#B68D40] font-semibold">
           Shopping Cart
         </p>
 
-        <h1 class="text-5xl font-bold mt-4 text-stone-900">
+        <h1 class="text-5xl font-bold text-stone-900 mt-4">
           Your Luxury Collection
         </h1>
 
@@ -42,60 +42,96 @@
           <% cartItems.forEach(item=>{ %>
 
           <div
-            class="bg-white rounded-3xl shadow-lg border border-stone-200 p-6 flex flex-col md:flex-row gap-6"
+            class="bg-white rounded-3xl border border-stone-200 shadow-lg p-6 flex flex-col md:flex-row gap-6"
           >
+            <!-- Image -->
             <div
-              class="w-full md:w-52 h-52 bg-[#F8F6F2] rounded-2xl flex items-center justify-center"
+              class="w-full md:w-52 h-52 rounded-2xl bg-[#F8F6F2] overflow-hidden"
             >
+              <% if(item.product.images && item.product.images.length){ %>
+
               <img
-                src="<%= item.product.image %>"
-                class="max-h-44 object-contain"
+                src="<%= item.product.images[0].url %>"
+                alt="<%= item.product.productName %>"
+                class="w-full h-full object-cover"
               />
-            </div>
 
-            <div class="flex-1 flex flex-col justify-between">
-              <div>
-                <h2 class="text-3xl font-semibold text-stone-900">
-                  <%= item.product.name %>
-                </h2>
+              <% } else { %>
 
-                <p class="text-stone-500 mt-3 leading-7">
-                  <%= item.product.description %>
-                </p>
+              <div
+                class="w-full h-full flex items-center justify-center text-5xl text-stone-300"
+              >
+                <i class="fa-solid fa-image"></i>
               </div>
 
-              <div class="flex justify-between items-center mt-8">
+              <% } %>
+            </div>
+
+            <!-- Details -->
+            <div class="flex-1">
+              <h2 class="text-3xl font-bold text-stone-900">
+                <%= item.product.productName %>
+              </h2>
+
+              <p class="text-stone-500 mt-2">
+                <%= item.category.categoryName %>
+              </p>
+
+              <p class="text-stone-500 mt-1">
+                Brand :
+                <span class="font-medium">
+                  <%= item.product.brand || "POÈME" %>
+                </span>
+              </p>
+
+              <p class="text-stone-500 mt-1">
+                Stock :
+                <span class="font-medium"> <%= item.product.stock %> </span>
+              </p>
+
+              <div
+                class="flex flex-col md:flex-row md:justify-between md:items-center mt-8 gap-6"
+              >
+                <!-- Quantity -->
                 <div class="flex items-center border rounded-full">
                   <a
-                    href="/cart/decrease/<%= item.product._id %>"
+                    href="/poeme-perfumery/cart/decrease/<%= item.product._id %>"
                     class="px-5 py-2 text-xl"
                   >
                     -
                   </a>
 
-                  <span class="px-4"> <%= item.quantity %> </span>
+                  <span class="px-6 font-semibold"> <%= item.quantity %> </span>
 
                   <a
-                    href="/cart/increase/<%= item.product._id %>"
+                    href="/poeme-perfumery/cart/increase/<%= item.product._id %>"
                     class="px-5 py-2 text-xl"
                   >
                     +
                   </a>
                 </div>
 
-                <h3 class="text-2xl font-bold text-[#B68D40]">
-                  ₹<%=
-                  (item.product.price*item.quantity).toLocaleString("en-IN") %>
-                </h3>
+                <!-- Price -->
+                <div class="text-right">
+                  <p class="text-stone-500">
+                    ₹ <%= item.product.price.toLocaleString("en-IN") %> × <%=
+                    item.quantity %>
+                  </p>
+
+                  <h3 class="text-3xl font-bold text-[#B68D40]">
+                    ₹ <%= item.totalPrice.toLocaleString("en-IN") %>
+                  </h3>
+                </div>
               </div>
             </div>
 
+            <!-- Remove -->
             <div>
               <a
-                href="/cart/remove/<%= item.product._id %>"
-                class="text-red-500 hover:text-red-700 font-medium"
+                href="/poeme-perfumery/cart/remove/<%= item.product._id %>"
+                class="text-red-600 hover:text-red-700"
               >
-                Remove
+                <i class="fa-solid fa-trash"></i>
               </a>
             </div>
           </div>
@@ -114,20 +150,26 @@
             <div class="space-y-5">
               <div class="flex justify-between">
                 <span>Subtotal</span>
-
-                <span> ₹<%= subtotal.toLocaleString("en-IN") %> </span>
+                <span
+                  >₹
+                  <%= subtotal.toLocaleString("en-IN") %></span
+                >
               </div>
 
               <div class="flex justify-between">
                 <span>Shipping</span>
-
-                <span> ₹<%= shipping.toLocaleString("en-IN") %> </span>
+                <span
+                  >₹
+                  <%= shipping.toLocaleString("en-IN") %></span
+                >
               </div>
 
               <div class="flex justify-between">
-                <span>Tax</span>
-
-                <span> ₹<%= tax.toLocaleString("en-IN") %> </span>
+                <span>Tax (18%)</span>
+                <span
+                  >₹
+                  <%= tax.toLocaleString("en-IN") %></span
+                >
               </div>
 
               <hr />
@@ -136,13 +178,13 @@
                 <span>Total</span>
 
                 <span class="text-[#B68D40]">
-                  ₹<%= total.toLocaleString("en-IN") %>
+                  ₹ <%= total.toLocaleString("en-IN") %>
                 </span>
               </div>
             </div>
 
             <a
-              href="/checkout"
+              href="/poeme-perfumery/checkout"
               class="block mt-10 bg-[#B68D40] hover:bg-[#9A7737] text-white text-center py-4 rounded-full font-semibold"
             >
               Proceed To Checkout
@@ -150,7 +192,7 @@
 
             <a
               href="/poeme-perfumery/perfumes"
-              class="block mt-4 text-center border border-[#B68D40] py-4 rounded-full text-[#B68D40]"
+              class="block mt-4 border border-[#B68D40] text-[#B68D40] text-center py-4 rounded-full"
             >
               Continue Shopping
             </a>
@@ -160,32 +202,23 @@
 
       <% } else { %>
 
-      <div
-        class="relative bg-white rounded-3xl shadow-lg p-20 text-center overflow-hidden"
-      >
-        <!-- Background Bottle -->
-        <div class="w-full">
-          <img
-            src="/assets/empty-cart.png"
-            class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full object-cover md:w-[430px] opacity-90 pointer-events-none z-0"
-          />
+      <div class="bg-white rounded-3xl shadow-lg p-20 text-center">
+        <div class="text-8xl text-[#B68D40]">
+          <i class="fa-solid fa-cart-shopping"></i>
         </div>
 
-        <!-- Content -->
-        <div class="relative z-10">
-          <h2 class="text-4xl font-bold text-stone-900 tracking-widest uppercase">Your Cart is Empty</h2>
+        <h2 class="text-4xl font-bold mt-8">Your Cart is Empty</h2>
 
-          <p class="text-stone-800 mt-4 tracking-widest capitalize">
-            Add your favourite fragrances and discover luxury.
-          </p>
+        <p class="text-stone-500 mt-4">
+          Add your favourite fragrances to start shopping.
+        </p>
 
-          <a
-            href="/poeme-perfumery/perfumes"
-            class="inline-block mt-10 bg-[#B68D40] hover:bg-[#9A7737] text-white px-10 py-4 rounded-full"
-          >
-            Shop Now
-          </a>
-        </div>
+        <a
+          href="/poeme-perfumery/perfumes"
+          class="inline-block mt-10 bg-[#B68D40] hover:bg-[#9A7737] text-white px-10 py-4 rounded-full"
+        >
+          Shop Now
+        </a>
       </div>
 
       <% } %>

@@ -5,6 +5,18 @@ const uploadFile = require("../../middleware/cloudinaryMiddleware");
 const csvUpload = require("../../middleware/csvUpload");
 
 const Seller = express.Router();
+const sellerAuth = pageAuth("/poeme-perfumery/seller/login", ["seller"]);
+
+const uploadImages = (req, res, next) => {
+  uploadFile.any()(req, res, (err) => {
+    if (err) {
+      console.error("Image upload middleware error:", err);
+      req.flash("error", err.message);
+      return res.redirect("/poeme-perfumery/seller/upload-image");
+    }
+    next();
+  });
+};
 
 // Register
 Seller.get("/register", sellerPageController.registerPage);
@@ -23,145 +35,111 @@ Seller.post("/login-otp", sellerPageController.loginWithOtp);
 Seller.post("/verify-login", sellerPageController.verifyLogin);
 
 // Logout
-Seller.get(
-  "/logout",
-  pageAuth("/poeme-perfumery/seller/login"),
-  sellerPageController.logout
-);
+Seller.get("/logout", sellerAuth, sellerPageController.logout);
 
 // Dashboard
-Seller.get(
-  "/dashboard",
-  pageAuth("/poeme-perfumery/seller/login"),
-  sellerPageController.dashboard
-);
+Seller.get("/dashboard", sellerAuth, sellerPageController.dashboard);
 
-Seller.get(
-  "/categories",
-  pageAuth("/poeme-perfumery/seller/login"),
-  sellerPageController.categories
-);
+Seller.get("/chat", sellerAuth, sellerPageController.chatSupport);
+
+Seller.get("/categories", sellerAuth, sellerPageController.categories);
 
 Seller.get(
   "/create/category",
-  pageAuth("/poeme-perfumery/seller/login"),
+  sellerAuth,
   sellerPageController.createCategoryPage
 );
 
 Seller.post(
   "/create/category",
-  pageAuth("/poeme-perfumery/seller/login"),
+  sellerAuth,
   sellerPageController.createCategory
 );
 
-Seller.get(
-  "/products",
-  pageAuth("/poeme-perfumery/seller/login"),
-  sellerPageController.products
-);
+Seller.get("/products", sellerAuth, sellerPageController.products);
 
 Seller.get(
   "/create/product",
-  pageAuth("/poeme-perfumery/seller/login"),
+  sellerAuth,
   sellerPageController.createProductPage
 );
 
 Seller.post(
   "/create/product",
-  pageAuth("/poeme-perfumery/seller/login"),
+  sellerAuth,
   uploadFile.array("images", 5),
   sellerPageController.createProduct
 );
 
 Seller.get(
   "/product/increase-stock/:id",
-  pageAuth("/poeme-perfumery/seller/login"),
+  sellerAuth,
   sellerPageController.increaseStock
 );
 
 Seller.get(
   "/product/decrease-stock/:id",
-  pageAuth("/poeme-perfumery/seller/login"),
+  sellerAuth,
   sellerPageController.decreaseStock
 );
 
 Seller.get(
   "/product/out-of-stock/:id",
-  pageAuth("/poeme-perfumery/seller/login"),
+  sellerAuth,
   sellerPageController.outOfStock
 );
 
-Seller.get(
-  "/bulk-upload",
-  pageAuth("/poeme-perfumery/seller/login"),
-  sellerPageController.bulkUploadPage
-);
+Seller.get("/bulk-upload", sellerAuth, sellerPageController.bulkUploadPage);
 
 Seller.post(
   "/bulk-upload",
-  pageAuth("/poeme-perfumery/seller/login"),
+  sellerAuth,
   csvUpload.single("csv"),
   sellerPageController.bulkUpload
 );
 
 Seller.get(
   "/download-template",
-  pageAuth("/poeme-perfumery/seller/login"),
+  sellerAuth,
   sellerPageController.downloadTemplate
 );
 
-Seller.get(
-  "/upload-image",
-  pageAuth("/poeme-perfumery/seller/login"),
-  sellerPageController.uploadImagePage
-);
+Seller.get("/upload-image", sellerAuth, sellerPageController.uploadImagePage);
 
 Seller.post(
   "/upload-image",
-  pageAuth("/poeme-perfumery/seller/login"),
-  uploadFile.array("images", 5),
+  sellerAuth,
+  uploadImages,
   sellerPageController.uploadImage
 );
 
-Seller.get(
-  "/image-library",
-  pageAuth("/poeme-perfumery/seller/login"),
-  sellerPageController.imageLibrary
-);
+Seller.get("/image-library", sellerAuth, sellerPageController.imageLibrary);
 
-Seller.post(
-  "/delete-image",
-  pageAuth("/poeme-perfumery/seller/login"),
-  sellerPageController.deleteImage
-);
+Seller.post("/delete-image/:id", sellerAuth, sellerPageController.deleteImage);
 
 Seller.get(
   "/edit-product/:id",
-  pageAuth("/poeme-perfumery/seller/login"),
+  sellerAuth,
   sellerPageController.editPorductPage
 );
 
-Seller.post(
-  "/edit-product/:id",
-  pageAuth("/poeme-perfumery/seller/login"),
-  sellerPageController.editProduct
-);
+Seller.post("/edit-product/:id", sellerAuth, sellerPageController.editProduct);
 
 Seller.get(
   "/deleted-products",
-  pageAuth("/poeme-perfumery/seller/login"),
+  sellerAuth,
   sellerPageController.deletedProductsPage
 );
 
 Seller.post(
   "/delete-product/:id",
-  pageAuth("/poeme-perfumery/seller/login"),
+  sellerAuth,
   sellerPageController.deleteProduct
 );
 
 Seller.post(
   "/restore-product/:id",
-  pageAuth("/poeme-perfumery/seller/login"),
+  sellerAuth,
   sellerPageController.restoreProduct
 );
 

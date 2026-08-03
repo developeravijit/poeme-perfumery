@@ -52,6 +52,12 @@ User.get(
 User.get(
   "/cart",
   pageAuth("/poeme-perfumery/login"),
+  userPageController.addToCartPage
+);
+
+User.get(
+  "/addToCart/:id",
+  pageAuth("/poeme-perfumery/login"),
   userPageController.addToCart
 );
 

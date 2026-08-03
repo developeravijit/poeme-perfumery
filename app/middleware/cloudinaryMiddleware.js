@@ -8,7 +8,10 @@ const FILE_TYPE = ["jpg", "jpeg", "png", "webp"];
 const cloudStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: process.env.CLOUD_FOLDER_NAME,
+    folder:
+      process.env.CLOUD_FOLDER_NAME ||
+      process.env.CLOUD_FOLDER ||
+      "Poeme-perfumery",
     allowed_formats: FILE_TYPE,
 
     public_id: (req, file) => {
@@ -33,7 +36,7 @@ const uploadFile = multer({
   storage: cloudStorage,
   fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, 
+    fileSize: 20 * 1024 * 1024,
   },
 });
 
