@@ -490,3 +490,677 @@ h6 {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================
+   POÈME CART / CHECKOUT
+   ========================================================= */
+
+/* =========================================================
+   CHECKOUT CARD
+   ========================================================= */
+
+.checkout-card {
+  overflow: hidden;
+}
+
+/* =========================================================
+   CHECKOUT HEADER
+   ========================================================= */
+
+.checkout-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+
+  padding-bottom: 24px;
+
+  border-bottom: 1px solid #eeeae4;
+}
+
+.checkout-header-icon {
+  width: 44px;
+  height: 44px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #f7f1e7;
+
+  color: #b68d40;
+
+  font-size: 15px;
+}
+
+.checkout-eyebrow {
+  margin: 0;
+
+  color: #b68d40;
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+  letter-spacing: 3px;
+
+  text-transform: uppercase;
+}
+
+.checkout-title {
+  margin: 4px 0 0;
+
+  color: #292524;
+
+  font-size: 25px;
+
+  line-height: 1.2;
+
+  font-weight: 600;
+}
+
+.checkout-description {
+  margin: 7px 0 0;
+
+  color: #a8a29e;
+
+  font-size: 12px;
+
+  line-height: 1.5;
+}
+
+/* =========================================================
+   ADDRESS SECTION
+   ========================================================= */
+
+.address-section {
+  padding: 25px 0 22px;
+}
+
+.address-section-heading {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  margin-bottom: 20px;
+}
+
+.address-section-number {
+  width: 30px;
+  height: 30px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #292524;
+
+  color: #ffffff;
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+  letter-spacing: 1px;
+}
+
+.address-section-heading h3 {
+  margin: 0;
+
+  color: #292524;
+
+  font-size: 17px;
+
+  font-weight: 600;
+}
+
+.address-section-heading p {
+  margin: 3px 0 0;
+
+  color: #a8a29e;
+
+  font-size: 11px;
+}
+
+/* =========================================================
+   ADDRESS GRID
+   ========================================================= */
+
+.address-grid {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+
+  gap: 12px;
+
+  margin-bottom: 14px;
+}
+
+/* =========================================================
+   ADDRESS FIELD
+   ========================================================= */
+
+.address-field {
+  margin-bottom: 14px;
+}
+
+.address-grid .address-field {
+  margin-bottom: 0;
+}
+
+.address-field label {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #57534e;
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+  letter-spacing: 1.4px;
+
+  text-transform: uppercase;
+}
+
+/* =========================================================
+   INPUT
+   ========================================================= */
+
+.address-input-wrapper {
+  position: relative;
+
+  width: 100%;
+}
+
+.address-input-icon {
+  position: absolute;
+
+  left: 14px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  width: 16px;
+
+  color: #b5aea6;
+
+  font-size: 12px;
+
+  pointer-events: none;
+
+  z-index: 2;
+}
+
+.address-input {
+  width: 100%;
+
+  height: 44px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #e7e2da;
+
+  border-radius: 11px;
+
+  background: #ffffff;
+
+  padding: 0 13px 0 40px;
+
+  color: #292524;
+
+  font-family: "Inter", sans-serif;
+
+  font-size: 12px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.address-input::placeholder {
+  color: #b8b1a9;
+}
+
+.address-input:hover {
+  border-color: #d9d1c6;
+}
+
+.address-input:focus {
+  outline: none;
+
+  border-color: #b68d40;
+
+  background: #fffdf9;
+
+  box-shadow: 0 0 0 3px rgba(182, 141, 64, 0.09);
+}
+
+/* =========================================================
+   TEXTAREA
+   ========================================================= */
+
+.address-textarea {
+  height: 82px;
+
+  min-height: 82px;
+
+  resize: vertical;
+
+  padding-top: 13px;
+
+  line-height: 1.5;
+}
+
+.address-textarea-icon {
+  top: 17px;
+
+  transform: none;
+}
+
+/* =========================================================
+   INPUT ERROR
+   ========================================================= */
+
+.address-input.input-error {
+  border-color: #dc2626;
+
+  background: #fffafa;
+
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.07);
+}
+
+.address-input.input-error:focus {
+  border-color: #dc2626;
+}
+
+/* =========================================================
+   SECURITY NOTE
+   ========================================================= */
+
+.address-security-note {
+  display: flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  margin-top: 18px;
+
+  padding-top: 15px;
+
+  border-top: 1px solid #eeeae4;
+}
+
+.address-security-note > span {
+  width: 25px;
+  height: 25px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #f7f1e7;
+
+  color: #b68d40;
+
+  font-size: 10px;
+}
+
+.address-security-note p {
+  margin: 0;
+
+  color: #a8a29e;
+
+  font-size: 9px;
+
+  line-height: 1.5;
+}
+
+/* =========================================================
+   ORDER SUMMARY
+   ========================================================= */
+
+.order-summary-section {
+  padding: 22px 0 0;
+
+  border-top: 1px solid #e8e3dc;
+}
+
+.order-summary-heading {
+  display: flex;
+
+  justify-content: space-between;
+
+  margin-bottom: 18px;
+}
+
+.order-summary-eyebrow {
+  margin: 0 0 3px;
+
+  color: #b68d40;
+
+  font-size: 9px;
+
+  font-weight: 700;
+
+  letter-spacing: 2px;
+
+  text-transform: uppercase;
+}
+
+.order-summary-heading h3 {
+  margin: 0;
+
+  color: #292524;
+
+  font-size: 17px;
+
+  font-weight: 600;
+}
+
+.order-summary-items {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 11px;
+}
+
+.order-summary-row {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  color: #78716c;
+
+  font-size: 12px;
+}
+
+.order-summary-row strong {
+  color: #44403c;
+
+  font-size: 12px;
+
+  font-weight: 500;
+}
+
+.order-summary-row small {
+  color: #a8a29e;
+
+  font-size: 9px;
+}
+
+/* =========================================================
+   TOTAL
+   ========================================================= */
+
+.order-total-row {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  margin-top: 17px;
+
+  padding-top: 16px;
+
+  border-top: 1px solid #e8e3dc;
+}
+
+.order-total-row span {
+  color: #292524;
+
+  font-size: 16px;
+
+  font-weight: 600;
+}
+
+.order-total-row strong {
+  color: #b68d40;
+
+  font-size: 23px;
+
+  font-weight: 700;
+}
+
+/* =========================================================
+   PAYMENT BUTTON
+   ========================================================= */
+
+.payment-button {
+  width: 100%;
+
+  min-height: 50px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 10px;
+
+  margin-top: 22px;
+
+  padding: 0 20px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  background: #292524;
+
+  color: #ffffff;
+
+  font-family: "Inter", sans-serif;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.payment-button:hover:not(:disabled) {
+  background: #b68d40;
+
+  transform: translateY(-1px);
+
+  box-shadow: 0 8px 20px rgba(182, 141, 64, 0.18);
+}
+
+.payment-button i {
+  font-size: 11px;
+
+  transition: transform 0.25s ease;
+}
+
+.payment-button:hover:not(:disabled) i {
+  transform: translateX(4px);
+}
+
+.payment-button:disabled {
+  opacity: 0.45;
+
+  cursor: not-allowed;
+
+  transform: none;
+
+  box-shadow: none;
+}
+
+.payment-button.payment-loading {
+  background: #b68d40;
+
+  cursor: wait;
+}
+
+/* =========================================================
+   ADDRESS MESSAGE
+   ========================================================= */
+
+.address-message {
+  margin: 10px 0 0;
+
+  text-align: center;
+
+  font-size: 9px;
+
+  line-height: 1.5;
+
+  transition: color 0.2s ease;
+}
+
+.message-default {
+  color: #a8a29e;
+}
+
+.message-success {
+  color: #4d8b62;
+}
+
+.message-error {
+  color: #dc2626;
+}
+
+/* =========================================================
+   CONTINUE SHOPPING
+   ========================================================= */
+
+.continue-shopping-button {
+  min-height: 45px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  margin-top: 10px;
+
+  border: 1px solid #d8c29c;
+
+  border-radius: 12px;
+
+  color: #b68d40;
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  text-decoration: none;
+
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.continue-shopping-button:hover {
+  background: #b68d40;
+
+  border-color: #b68d40;
+
+  color: #ffffff;
+}
+
+.continue-shopping-button i {
+  font-size: 9px;
+}
+
+/* =========================================================
+   REMOVE PRODUCT
+   ========================================================= */
+
+.cart-remove-btn {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 50%;
+
+  color: #a8a29e;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.cart-remove-btn:hover {
+  background: #fef2f2;
+
+  color: #dc2626;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1023px) {
+  .checkout-card {
+    position: static !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .address-grid {
+    grid-template-columns: 1fr;
+
+    gap: 0;
+  }
+
+  .address-grid .address-field {
+    margin-bottom: 14px;
+  }
+
+  .checkout-card {
+    padding: 22px !important;
+  }
+
+  .checkout-title {
+    font-size: 22px;
+  }
+
+  .order-total-row strong {
+    font-size: 21px;
+  }
+
+  .payment-button {
+    min-height: 48px;
+  }
+}
