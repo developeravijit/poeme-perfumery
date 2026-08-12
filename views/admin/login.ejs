@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Login | POÈME Perfumery</title>
+    <link rel="stylesheet" href="/css/output.css" />
+  </head>
+  <body class="min-h-screen bg-[#0B1120] text-white">
+    <div class="min-h-screen flex items-center justify-center px-4 py-12">
+      <div
+        class="w-full max-w-6xl grid gap-8 lg:grid-cols-[1.15fr_1fr] xl:gap-12"
+      >
+        <div
+          class="rounded-[32px] bg-[#111B38] p-10 shadow-2xl ring-1 ring-white/10 sm:p-12"
+        >
+          <div class="flex items-center gap-4 mb-10">
+            <div
+              class="flex h-14 w-14 items-center justify-center rounded-3xl bg-[#B68D40]/15 text-[#B68D40] text-2xl font-bold"
+            >
+              P
+            </div>
+            <div>
+              <p class="text-sm uppercase tracking-[0.35em] text-stone-400">
+                POÈME Perfumery
+              </p>
+              <h1 class="mt-2 text-3xl font-semibold text-white">
+                Admin Console
+              </h1>
+            </div>
+          </div>
+
+          <div class="space-y-6 text-stone-300">
+            <p class="text-base leading-8">
+              Secure access for administrators. Sign in to manage products,
+              verify sellers, and oversee the POÈME experience.
+            </p>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div class="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <p class="text-sm uppercase tracking-[0.3em] text-stone-400">
+                  Fast admin actions
+                </p>
+                <p class="mt-4 text-sm text-stone-300">
+                  Approve new perfumes, manage categories, and review orders
+                  from a single dashboard.
+                </p>
+              </div>
+              <div class="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <p class="text-sm uppercase tracking-[0.3em] text-stone-400">
+                  Security first
+                </p>
+                <p class="mt-4 text-sm text-stone-300">
+                  Your admin credentials are protected with strong session
+                  controls and secure authentication.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-10 grid gap-4 text-sm text-stone-400">
+            <div class="rounded-3xl bg-[#111B38]/70 p-5">
+              <p class="font-medium text-white">
+                Design inspired by luxury fragrance brands
+              </p>
+              <p class="mt-2">
+                Refined, modern, and polished — the admin login page matches the
+                POÈME brand aesthetic.
+              </p>
+            </div>
+            <div class="rounded-3xl bg-[#111B38]/70 p-5">
+              <p class="font-medium text-white">Tip</p>
+              <p class="mt-2">
+                Use your official admin credentials to sign in and access the
+                control panel.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="rounded-[32px] bg-white/5 p-8 shadow-2xl ring-1 ring-white/10 sm:p-10"
+        >
+          <div class="mb-8">
+            <p class="text-sm uppercase tracking-[0.3em] text-stone-400">
+              Welcome Back
+            </p>
+            <h2 class="mt-4 text-3xl font-semibold text-white">
+              Admin Sign In
+            </h2>
+          </div>
+
+          <% if (typeof error !== 'undefined' && error) { %>
+          <div
+            class="mb-6 rounded-3xl bg-red-500/10 border border-red-400/20 p-4 text-sm text-red-100"
+          >
+            <%= error %>
+          </div>
+          <% } %>
+
+          <form
+            action="/poeme-perfumery/admin/login"
+            method="POST"
+            class="space-y-6"
+          >
+            <div>
+              <label
+                for="email"
+                class="mb-2 block text-sm font-medium text-stone-200"
+                >Email address</label
+              >
+              <input
+                id="email"
+                name="email"
+                type="email"
+                value="<%= typeof email !== 'undefined' ? email : '' %>"
+                required
+                class="w-full rounded-3xl border border-stone-700 bg-[#0B1120] px-4 py-3 text-white outline-none transition focus:border-[#B68D40] focus:ring-2 focus:ring-[#B68D40]/20"
+              />
+            </div>
+
+            <div>
+              <label
+                for="password"
+                class="mb-2 block text-sm font-medium text-stone-200"
+                >Password</label
+              >
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                class="w-full rounded-3xl border border-stone-700 bg-[#0B1120] px-4 py-3 text-white outline-none transition focus:border-[#B68D40] focus:ring-2 focus:ring-[#B68D40]/20"
+              />
+            </div>
+
+            <div
+              class="flex items-center justify-between text-sm text-stone-400"
+            >
+              <label class="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="remember"
+                  class="h-4 w-4 rounded border-stone-600 bg-[#0B1120] text-[#B68D40] focus:ring-[#B68D40]"
+                />
+                Remember me
+              </label>
+              <a
+                href="#"
+                class="font-medium text-[#B68D40] hover:text-[#9C7834]"
+                >Forgot password?</a
+              >
+            </div>
+
+            <button
+              type="submit"
+              class="w-full rounded-3xl bg-[#B68D40] px-5 py-3 text-base font-semibold text-white transition hover:bg-[#9C7834]"
+            >
+              Sign In
+            </button>
+          </form>
+
+          <div
+            class="mt-8 border-t border-white/10 pt-6 text-center text-sm text-stone-400"
+          >
+            <p>Secure admin access for the POÈME team.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

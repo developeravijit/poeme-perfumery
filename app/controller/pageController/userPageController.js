@@ -1,5 +1,6 @@
 const Cart = require("../../model/cart");
 const Category = require("../../model/category");
+const Order = require("../../model/order");
 const Otp = require("../../model/otp");
 const Product = require("../../model/products");
 const Role = require("../../model/role");
@@ -30,8 +31,8 @@ class userPageController {
       const products = await Product.aggregate([
         {
           $match: {
-            approvalStatus: "pending",
-            isApproved: false,
+            approvalStatus: "approved",
+            isApproved: true,
             isActive: true,
             stock: { $gt: 0 },
           },
@@ -120,8 +121,8 @@ class userPageController {
       });
 
       const matchStage = {
-        approvalStatus: "pending",
-        isApproved: false,
+        approvalStatus: "approved",
+        isApproved: true,
         isActive: true,
         stock: { $gt: 0 },
       };
@@ -542,6 +543,95 @@ class userPageController {
     }
   }
 
+  // View Product Page
+  async viewProductPage(req, res) {
+    try {
+      const { slug } = req.params;
+
+      if (!slug) {
+        req.flash("error", "Product not found");
+        return res.redirect("/poeme-perfumery/perfumes");
+      }
+
+      const products = await Product.aggregate([
+        {
+          $match: {
+            slug: slug,
+            isActive: true,
+          },
+        },
+
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categoryId",
+            foreignField: "_id",
+            as: "categoryData",
+          },
+        },
+
+        {
+          $unwind: {
+            path: "$categoryData",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+
+        {
+          $project: {
+            _id: 1,
+            productName: 1,
+            slug: 1,
+            description: 1,
+            price: 1,
+            discountPrice: 1,
+            stock: 1,
+            quantity: 1,
+            brand: 1,
+            images: 1,
+            image: 1,
+            categoryId: 1,
+            isActive: 1,
+            approvalStatus: 1,
+            isApproved: 1,
+            createdAt: 1,
+            updatedAt: 1,
+
+            category: {
+              _id: "$categoryData._id",
+              categoryName: "$categoryData.categoryName",
+            },
+          },
+        },
+      ]);
+
+      if (!products || products.length === 0) {
+        req.flash("error", "Product not found");
+
+        return res.redirect("/poeme-perfumery/perfumes");
+      }
+
+      const product = products[0];
+
+      const cartCount = await getCartCount(req.user ? req.user._id : null);
+
+      return res.render("productDetail", {
+        user: req.user || null,
+        product,
+        cartCount,
+        success: req.flash("success"),
+        error: req.flash("error"),
+      });
+    } catch (error) {
+      console.log("VIEW PRODUCT PAGE ERROR:", error);
+
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
   // Add To Cart Page
   async addToCartPage(req, res) {
     try {
@@ -685,15 +775,131 @@ class userPageController {
     }
   }
 
+  // Increase Cart Item
+  async increaseCartQuantity(req, res) {
+    try {
+      const { id } = req.params;
+
+      const cart = await Cart.findOne({
+        userId: req.user._id,
+        productId: id,
+      });
+
+      if (!cart) {
+        req.flash("error", "Cart item not found");
+        return res.redirect("/poeme-perfumery/cart");
+      }
+
+      const product = await Product.findById(id);
+
+      if (!product || !product.isActive) {
+        req.flash("error", "Product not found");
+        return res.redirect("/poeme-perfumery/cart");
+      }
+
+      if (cart.quantity >= product.stock) {
+        req.flash("error", "Maximum available stock reached");
+        return res.redirect("/poeme-perfumery/cart");
+      }
+
+      cart.quantity += 1;
+      await cart.save();
+
+      return res.redirect("/poeme-perfumery/cart");
+    } catch (error) {
+      console.log(error);
+
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Decrease Cart Item
+  async decreaseCartQuantity(req, res) {
+    try {
+      const { id } = req.params;
+
+      const cart = await Cart.findOne({
+        userId: req.user._id,
+        productId: id,
+      });
+
+      if (!cart) {
+        req.flash("error", "Cart item not found");
+        return res.redirect("/poeme-perfumery/cart");
+      }
+
+      // Remove item if quantity becomes zero
+      if (cart.quantity <= 1) {
+        await Cart.deleteOne({
+          _id: cart._id,
+        });
+
+        req.flash("success", "Product removed from cart");
+        return res.redirect("/poeme-perfumery/cart");
+      }
+
+      cart.quantity -= 1;
+      await cart.save();
+
+      return res.redirect("/poeme-perfumery/cart");
+    } catch (error) {
+      console.log(error);
+
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Remove Cart Item
+  async removeCartItem(req, res) {
+    try {
+      const { id } = req.params;
+
+      await Cart.findOneAndDelete({
+        userId: req.user._id,
+        productId: id,
+      });
+
+      req.flash("success", "Product removed from cart");
+
+      return res.redirect("/poeme-perfumery/cart");
+    } catch (error) {
+      console.log(error);
+
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
   // Orders
   async orders(req, res) {
     try {
-      const orders = [];
+      if (!req.user) {
+        return res.redirect("/poeme-perfumery/login");
+      }
+
+      const orders = await Order.find({
+        userId: req.user._id,
+        paymentStatus: "paid",
+      })
+        .sort({ createdAt: -1 })
+        .lean();
 
       return res.render("order", {
         orders,
+        user: req.user,
+        cartCount: await getCartCount(req.user._id),
       });
     } catch (error) {
+      console.log("ORDERS PAGE ERROR:", error);
+
       return res.status(httpCodes.server_error).render("error", {
         success: false,
         message: error.message,

@@ -26,6 +26,7 @@ const generateProductTemplate = require("../../utils/csvTemplate");
 const { csvCleaner, imageCleaner } = require("../../utils/fileCleaner");
 const ImageLibrary = require("../../model/imageLibrary");
 const cloudinary = require("../../config/cloudinary");
+const Order = require("../../model/order");
 
 class sellerPageController {
   // Register Page
@@ -246,10 +247,10 @@ class sellerPageController {
         return res.redirect("/poeme-perfumery/seller/login");
       }
 
-      const accessToken = generateAccessToken(seller);
-      const refreshToken = generateRefreshToken(seller);
+      const sellerAccessToken = generateAccessToken(seller);
+      const sellerRefreshToken = generateRefreshToken(seller);
 
-      seller.refreshToken = refreshToken;
+      seller.refreshToken = sellerRefreshToken;
       await seller.save();
 
       const rememberMe = remember === "on";
@@ -262,15 +263,17 @@ class sellerPageController {
         ? 30 * 24 * 60 * 60 * 1000
         : 7 * 24 * 60 * 60 * 1000;
 
-      res.cookie("accessToken", accessToken, {
+      res.cookie("sellerAccessToken", sellerAccessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
         maxAge: accessMaxAge,
       });
 
-      res.cookie("refreshToken", refreshToken, {
+      res.cookie("sellerRefreshToken", sellerRefreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
         maxAge: refreshMaxAge,
       });
 
@@ -333,20 +336,20 @@ class sellerPageController {
         _id: otpData._id,
       });
 
-      const accessToken = generateAccessToken(seller);
-      const refreshToken = generateRefreshToken(seller);
+      const sellerAccessToken = generateAccessToken(seller);
+      const sellerRefreshToken = generateRefreshToken(seller);
 
-      seller.refreshToken = refreshToken;
+      seller.refreshToken = sellerRefreshToken;
 
       await seller.save();
 
-      res.cookie("accessToken", accessToken, {
+      res.cookie("sellerAccessToken", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         maxAge: 30 * 60 * 1000,
       });
 
-      res.cookie("refreshToken", refreshToken, {
+      res.cookie("sellerRefreshToken", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -416,8 +419,8 @@ class sellerPageController {
         });
       }
 
-      res.clearCookie("accessToken");
-      res.clearCookie("refreshToken");
+      res.clearCookie("sellerAccessToken");
+      res.clearCookie("sellerRefreshToken");
 
       return res.redirect("/poeme-perfumery/seller/login");
     } catch (error) {
@@ -434,24 +437,333 @@ class sellerPageController {
   // Seller Dashboard
   async dashboard(req, res) {
     try {
-      const seller = await User.findById(req.user.id);
+      const sellerId = new mongoose.Types.ObjectId(req.user.id);
+
+      // Get seller
+      const seller = await User.findById(sellerId).lean();
+
+      if (!seller) {
+        return res.status(httpCodes.not_found).render("error", {
+          success: false,
+          message: "Seller not found",
+        });
+      }
+
+      /*
+    ============================================================
+    1. TOTAL PRODUCTS
+    ============================================================
+    */
+
+      const totalProducts = await Product.countDocuments({
+        sellerId,
+        isActive: true,
+      });
+
+      /*
+    ============================================================
+    2. LOW STOCK PRODUCTS
+    ============================================================
+    */
+
+      const lowStock = await Product.countDocuments({
+        sellerId,
+        isActive: true,
+        stock: {
+          $lte: 5,
+        },
+      });
+
+      /*
+    ============================================================
+    3. PRODUCT-WISE ORDER ANALYTICS
+    ============================================================
+
+    Only PAID orders are counted.
+
+    We:
+    Order
+      ↓
+    items
+      ↓
+    Product
+      ↓
+    sellerId
+    */
+
+      const productOrders = await Order.aggregate([
+        // Only successful payments
+        {
+          $match: {
+            paymentStatus: "paid",
+          },
+        },
+
+        // Separate every product inside an order
+        {
+          $unwind: "$items",
+        },
+
+        // Find the actual Product document
+        {
+          $lookup: {
+            from: "products",
+
+            localField: "items.productId",
+
+            foreignField: "_id",
+
+            as: "product",
+          },
+        },
+
+        // Convert product array into object
+        {
+          $unwind: "$product",
+        },
+
+        // Only products belonging to current seller
+        {
+          $match: {
+            "product.sellerId": sellerId,
+            "product.isActive": true,
+          },
+        },
+
+        // Group by product
+        {
+          $group: {
+            _id: "$items.productId",
+
+            productName: {
+              $first: "$items.productName",
+            },
+
+            orders: {
+              $sum: 1,
+            },
+
+            quantitySold: {
+              $sum: "$items.quantity",
+            },
+
+            revenue: {
+              $sum: "$items.totalPrice",
+            },
+          },
+        },
+
+        // Highest order count first
+        {
+          $sort: {
+            orders: -1,
+          },
+        },
+
+        // Clean response
+        {
+          $project: {
+            _id: 0,
+
+            productId: "$_id",
+
+            productName: 1,
+
+            orders: 1,
+
+            quantitySold: 1,
+
+            revenue: 1,
+          },
+        },
+      ]);
+
+      /*
+    ============================================================
+    4. TOTAL SELLER ORDERS
+    ============================================================
+
+    Important:
+    We count unique orders, not individual products.
+    */
+
+      const sellerOrders = await Order.aggregate([
+        {
+          $match: {
+            paymentStatus: "paid",
+          },
+        },
+
+        {
+          $unwind: "$items",
+        },
+
+        {
+          $lookup: {
+            from: "products",
+
+            localField: "items.productId",
+
+            foreignField: "_id",
+
+            as: "product",
+          },
+        },
+
+        {
+          $unwind: "$product",
+        },
+
+        {
+          $match: {
+            "product.sellerId": sellerId,
+          },
+        },
+
+        // One record per order
+        {
+          $group: {
+            _id: "$_id",
+
+            userId: {
+              $first: "$userId",
+            },
+
+            total: {
+              $sum: "$items.totalPrice",
+            },
+          },
+        },
+      ]);
+
+      const totalOrders = sellerOrders.length;
+
+      /*
+    ============================================================
+    5. TOTAL REVENUE
+    ============================================================
+    */
+
+      const revenue = sellerOrders.reduce(
+        (sum, order) => sum + Number(order.total || 0),
+        0
+      );
+
+      /*
+    ============================================================
+    6. UNIQUE CUSTOMERS
+    ============================================================
+    */
+
+      const customerIds = new Set();
+
+      sellerOrders.forEach((order) => {
+        if (order.userId) {
+          customerIds.add(order.userId.toString());
+        }
+      });
+
+      const customers = customerIds.size;
+
+      /*
+    ============================================================
+    7. PENDING ORDERS
+    ============================================================
+
+    pending
+    confirmed
+    processing
+
+    are considered active/pending seller orders.
+    */
+
+      const pendingSellerOrders = await Order.aggregate([
+        {
+          $match: {
+            paymentStatus: "paid",
+
+            orderStatus: {
+              $in: ["pending", "confirmed", "processing"],
+            },
+          },
+        },
+
+        {
+          $unwind: "$items",
+        },
+
+        {
+          $lookup: {
+            from: "products",
+
+            localField: "items.productId",
+
+            foreignField: "_id",
+
+            as: "product",
+          },
+        },
+
+        {
+          $unwind: "$product",
+        },
+
+        {
+          $match: {
+            "product.sellerId": sellerId,
+          },
+        },
+
+        {
+          $group: {
+            _id: "$_id",
+          },
+        },
+      ]);
+
+      const pendingOrders = pendingSellerOrders.length;
+
+      /*
+    ============================================================
+    8. FINAL STATS OBJECT
+    ============================================================
+    */
 
       const stats = {
-        totalProducts: [],
-        totalOrders: [],
-        revenue: [],
-        customers: [],
-        pendingOrders: [],
-        lowStock: [],
+        totalProducts,
+
+        totalOrders,
+
+        revenue,
+
+        customers,
+
+        pendingOrders,
+
+        lowStock,
+
+        productOrders,
       };
-      res.render("seller/dashboard", {
+
+      /*
+    ============================================================
+    9. RENDER DASHBOARD
+    ============================================================
+    */
+
+      return res.render("seller/dashboard", {
         seller,
+
         stats,
+
         currentPage: "dashboard",
       });
     } catch (error) {
+      console.error("SELLER DASHBOARD ERROR:", error);
+
       return res.status(httpCodes.server_error).render("error", {
         success: false,
+
         message: error.message,
       });
     }
@@ -1441,6 +1753,52 @@ class sellerPageController {
     }
   }
 
+  // View Product Page
+  async viewProductPage(req, res) {
+    try {
+      const { id } = req.params;
+      const sellerId = req.user.id;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        req.flash("error", "Invalid product ID");
+        return res.redirect("/poeme-perfumery/seller/products");
+      }
+
+      const product = await Product.findOne({
+        _id: id,
+        sellerId,
+        isActive: true,
+      })
+        .populate({
+          path: "categoryId",
+          select: "categoryName",
+        })
+        .lean();
+
+      if (!product) {
+        req.flash("error", "Product not found");
+        return res.redirect("/poeme-perfumery/seller/products");
+      }
+
+      product.category = product.categoryId;
+
+      const seller = await User.findById(sellerId);
+
+      return res.render("seller/viewProduct", {
+        seller,
+        product,
+        success: req.flash("success"),
+        error: req.flash("error"),
+        currentPage: "product",
+      });
+    } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
   // Deleted Products Page
   async deletedProductsPage(req, res) {
     try {
@@ -1584,6 +1942,593 @@ class sellerPageController {
 
       return res.redirect("/poeme-perfumery/seller/products");
     } catch (error) {
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // ============================================================
+  // ORDERS PAGE
+  // ============================================================
+
+  async orders(req, res) {
+    try {
+      const sellerId = new mongoose.Types.ObjectId(req.user.id);
+
+      const seller = await User.findById(sellerId).lean();
+
+      if (!seller) {
+        req.flash("error", "Seller not found");
+        return res.redirect("/poeme-perfumery/seller/login");
+      }
+
+      const search = (req.query.search || "").trim();
+      const status = (req.query.status || "").trim();
+
+      const allowedStatuses = [
+        "pending",
+        "confirmed",
+        "processing",
+        "shipped",
+        "delivered",
+        "cancelled",
+      ];
+
+      // ============================================================
+      // ORDER MATCH
+      // ============================================================
+
+      const orderMatch = {
+        paymentStatus: "paid",
+      };
+
+      if (allowedStatuses.includes(status)) {
+        orderMatch.orderStatus = status;
+      }
+
+      // ============================================================
+      // ORDERS PIPELINE
+      // ============================================================
+
+      const pipeline = [
+        {
+          $match: orderMatch,
+        },
+
+        // Split products inside order
+        {
+          $unwind: "$items",
+        },
+
+        // Find product
+        {
+          $lookup: {
+            from: "products",
+            localField: "items.productId",
+            foreignField: "_id",
+            as: "product",
+          },
+        },
+
+        {
+          $unwind: "$product",
+        },
+
+        // Only products belonging to logged-in seller
+        {
+          $match: {
+            "product.sellerId": sellerId,
+          },
+        },
+
+        // Find customer
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "customer",
+          },
+        },
+
+        {
+          $unwind: {
+            path: "$customer",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+
+        // ==========================================================
+        // SEARCH
+        // ==========================================================
+
+        ...(search
+          ? [
+              {
+                $match: {
+                  $or: [
+                    {
+                      "customer.name": {
+                        $regex: search,
+                        $options: "i",
+                      },
+                    },
+                    {
+                      "customer.email": {
+                        $regex: search,
+                        $options: "i",
+                      },
+                    },
+                    {
+                      "customer.phone": {
+                        $regex: search,
+                        $options: "i",
+                      },
+                    },
+                    {
+                      "items.productName": {
+                        $regex: search,
+                        $options: "i",
+                      },
+                    },
+                    {
+                      $expr: {
+                        $regexMatch: {
+                          input: {
+                            $toString: "$_id",
+                          },
+                          regex: search,
+                          options: "i",
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            ]
+          : []),
+
+        // ==========================================================
+        // GROUP PRODUCTS BACK INTO ORDER
+        // ==========================================================
+
+        {
+          $group: {
+            _id: "$_id",
+
+            userId: {
+              $first: "$userId",
+            },
+
+            customer: {
+              $first: {
+                _id: "$customer._id",
+                name: "$customer.name",
+                email: "$customer.email",
+                phone: "$customer.phone",
+              },
+            },
+
+            // IMPORTANT:
+            // Your EJS expects sellerItems
+            sellerItems: {
+              $push: {
+                productId: "$items.productId",
+                productName: "$items.productName",
+                price: "$items.price",
+                quantity: "$items.quantity",
+                totalPrice: "$items.totalPrice",
+                image: "$items.image",
+              },
+            },
+
+            // IMPORTANT:
+            // Your EJS expects sellerSubtotal
+            sellerSubtotal: {
+              $sum: "$items.totalPrice",
+            },
+
+            total: {
+              $first: "$total",
+            },
+
+            subtotal: {
+              $first: "$subtotal",
+            },
+
+            shipping: {
+              $first: "$shipping",
+            },
+
+            tax: {
+              $first: "$tax",
+            },
+
+            orderStatus: {
+              $first: "$orderStatus",
+            },
+
+            paymentStatus: {
+              $first: "$paymentStatus",
+            },
+
+            paymentMethod: {
+              $first: "$paymentMethod",
+            },
+
+            shippingAddress: {
+              $first: "$shippingAddress",
+            },
+
+            razorpayOrderId: {
+              $first: "$razorpayOrderId",
+            },
+
+            createdAt: {
+              $first: "$createdAt",
+            },
+
+            updatedAt: {
+              $first: "$updatedAt",
+            },
+          },
+        },
+
+        // Latest orders first
+        {
+          $sort: {
+            createdAt: -1,
+          },
+        },
+      ];
+
+      const orders = await Order.aggregate(pipeline);
+
+      // ============================================================
+      // ORDER STATISTICS
+      // ============================================================
+
+      const statisticsPipeline = [
+        {
+          $match: {
+            paymentStatus: "paid",
+          },
+        },
+
+        {
+          $unwind: "$items",
+        },
+
+        {
+          $lookup: {
+            from: "products",
+            localField: "items.productId",
+            foreignField: "_id",
+            as: "product",
+          },
+        },
+
+        {
+          $unwind: "$product",
+        },
+
+        {
+          $match: {
+            "product.sellerId": sellerId,
+          },
+        },
+
+        // One entry per order
+        {
+          $group: {
+            _id: "$_id",
+
+            orderStatus: {
+              $first: "$orderStatus",
+            },
+
+            sellerSubtotal: {
+              $sum: "$items.totalPrice",
+            },
+          },
+        },
+
+        {
+          $group: {
+            _id: null,
+
+            total: {
+              $sum: 1,
+            },
+
+            pending: {
+              $sum: {
+                $cond: [
+                  {
+                    $eq: ["$orderStatus", "pending"],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+
+            confirmed: {
+              $sum: {
+                $cond: [
+                  {
+                    $eq: ["$orderStatus", "confirmed"],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+
+            processing: {
+              $sum: {
+                $cond: [
+                  {
+                    $eq: ["$orderStatus", "processing"],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+
+            shipped: {
+              $sum: {
+                $cond: [
+                  {
+                    $eq: ["$orderStatus", "shipped"],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+
+            delivered: {
+              $sum: {
+                $cond: [
+                  {
+                    $eq: ["$orderStatus", "delivered"],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+
+            cancelled: {
+              $sum: {
+                $cond: [
+                  {
+                    $eq: ["$orderStatus", "cancelled"],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+
+            revenue: {
+              $sum: "$sellerSubtotal",
+            },
+          },
+        },
+      ];
+
+      const statisticsResult = await Order.aggregate(statisticsPipeline);
+
+      const statistics = statisticsResult[0] || {
+        total: 0,
+        pending: 0,
+        confirmed: 0,
+        processing: 0,
+        shipped: 0,
+        delivered: 0,
+        cancelled: 0,
+        revenue: 0,
+      };
+
+      // ============================================================
+      // RENDER
+      // ============================================================
+
+      return res.render("seller/orders", {
+        seller,
+        orders,
+
+        search,
+        status,
+
+        statistics,
+
+        success: req.flash("success"),
+        error: req.flash("error"),
+
+        currentPage: "orders",
+      });
+    } catch (error) {
+      console.error("SELLER ORDERS ERROR:", error);
+
+      return res.status(httpCodes.server_error).render("error", {
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+  async updateOrderStatus(req, res) {
+    try {
+      const sellerId = new mongoose.Types.ObjectId(req.user.id);
+
+      const { id } = req.params;
+      const { orderStatus } = req.body;
+
+      // --------------------------------------------------------
+      // Validate order ID
+      // --------------------------------------------------------
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        req.flash("error", "Invalid order ID");
+        return res.redirect("/poeme-perfumery/seller/orders");
+      }
+
+      // --------------------------------------------------------
+      // Allowed statuses
+      // --------------------------------------------------------
+
+      const allowedStatuses = [
+        "pending",
+        "confirmed",
+        "processing",
+        "shipped",
+        "delivered",
+        "cancelled",
+      ];
+
+      if (!allowedStatuses.includes(orderStatus)) {
+        req.flash("error", "Invalid order status");
+        return res.redirect("/poeme-perfumery/seller/orders");
+      }
+
+      // --------------------------------------------------------
+      // Find order containing a product owned by this seller
+      //
+      // This is important. A seller cannot update an order that
+      // does not contain one of their products.
+      // --------------------------------------------------------
+
+      const sellerOrder = await Order.aggregate([
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(id),
+            paymentStatus: "paid",
+          },
+        },
+
+        {
+          $unwind: "$items",
+        },
+
+        {
+          $lookup: {
+            from: "products",
+            localField: "items.productId",
+            foreignField: "_id",
+            as: "product",
+          },
+        },
+
+        {
+          $unwind: "$product",
+        },
+
+        {
+          $match: {
+            "product.sellerId": sellerId,
+          },
+        },
+
+        {
+          $project: {
+            _id: 1,
+            orderStatus: 1,
+          },
+        },
+
+        {
+          $limit: 1,
+        },
+      ]);
+
+      if (!sellerOrder.length) {
+        req.flash(
+          "error",
+          "Order not found or this order does not belong to your products."
+        );
+
+        return res.redirect("/poeme-perfumery/seller/orders");
+      }
+
+      const currentStatus = sellerOrder[0].orderStatus;
+
+      // --------------------------------------------------------
+      // Prevent changing a completed/cancelled order
+      // --------------------------------------------------------
+
+      if (currentStatus === "delivered" || currentStatus === "cancelled") {
+        req.flash(
+          "error",
+          `This order is already ${currentStatus} and cannot be changed.`
+        );
+
+        return res.redirect("/poeme-perfumery/seller/orders");
+      }
+
+      // --------------------------------------------------------
+      // Valid forward order flow
+      // --------------------------------------------------------
+
+      const statusFlow = {
+        pending: ["confirmed", "cancelled"],
+
+        confirmed: ["processing", "cancelled"],
+
+        processing: ["shipped", "cancelled"],
+
+        shipped: ["delivered"],
+
+        delivered: [],
+
+        cancelled: [],
+      };
+
+      if (!statusFlow[currentStatus]?.includes(orderStatus)) {
+        req.flash(
+          "error",
+          `You cannot change order status from "${currentStatus}" to "${orderStatus}".`
+        );
+
+        return res.redirect("/poeme-perfumery/seller/orders");
+      }
+
+      // --------------------------------------------------------
+      // Update order
+      // --------------------------------------------------------
+
+      const updatedOrder = await Order.findOneAndUpdate(
+        {
+          _id: new mongoose.Types.ObjectId(id),
+          orderStatus: currentStatus,
+        },
+        {
+          $set: {
+            orderStatus,
+          },
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+
+      if (!updatedOrder) {
+        req.flash("error", "Order status could not be updated.");
+
+        return res.redirect("/poeme-perfumery/seller/orders");
+      }
+
+      req.flash("success", `Order status changed to ${orderStatus}.`);
+
+      return res.redirect("/poeme-perfumery/seller/orders");
+    } catch (error) {
+      console.error("SELLER UPDATE ORDER STATUS ERROR:", error);
+
       return res.status(httpCodes.server_error).render("error", {
         success: false,
         message: error.message,

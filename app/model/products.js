@@ -90,6 +90,7 @@ const productSchema = new mongoose.Schema(
       enum: ["in_stock", "out_of_stock"],
       default: "in_stock",
     },
+
     isApproved: {
       type: Boolean,
       default: false,

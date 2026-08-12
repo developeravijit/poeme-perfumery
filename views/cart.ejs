@@ -84,11 +84,6 @@
                 </span>
               </p>
 
-              <p class="text-stone-500 mt-1">
-                Stock :
-                <span class="font-medium"> <%= item.product.stock %> </span>
-              </p>
-
               <div
                 class="flex flex-col md:flex-row md:justify-between md:items-center mt-8 gap-6"
               >
@@ -96,7 +91,7 @@
                 <div class="flex items-center border rounded-full">
                   <a
                     href="/poeme-perfumery/cart/decrease/<%= item.product._id %>"
-                    class="px-5 py-2 text-xl"
+                    class="px-5 py-2 text-xl hover:bg-stone-100 rounded-l-full"
                   >
                     -
                   </a>
@@ -105,11 +100,35 @@
 
                   <a
                     href="/poeme-perfumery/cart/increase/<%= item.product._id %>"
-                    class="px-5 py-2 text-xl"
+                    class="px-5 py-2 text-xl hover:bg-stone-100 rounded-r-full"
                   >
                     +
                   </a>
                 </div>
+
+                <a
+                  href="/poeme-perfumery/cart/remove/<%= item.product._id %>"
+                  class="text-red-600 hover:text-red-700"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1.5em"
+                    height="1.5em"
+                    viewBox="0 0 36 36"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="m19.61 18l4.86-4.86a1 1 0 0 0-1.41-1.41l-4.86 4.81l-4.89-4.89a1 1 0 0 0-1.41 1.41L16.78 18L12 22.72a1 1 0 1 0 1.41 1.41l4.77-4.77l4.74 4.74a1 1 0 0 0 1.41-1.41Z"
+                      className="clr-i-outline clr-i-outline-path-1"
+                    ></path>
+                    <path
+                      fill="currentColor"
+                      d="M18 34a16 16 0 1 1 16-16a16 16 0 0 1-16 16m0-30a14 14 0 1 0 14 14A14 14 0 0 0 18 4"
+                      className="clr-i-outline clr-i-outline-path-2"
+                    ></path>
+                    <path fill="none" d="M0 0h36v36H0z"></path>
+                  </svg>
+                </a>
 
                 <!-- Price -->
                 <div class="text-right">
@@ -183,12 +202,12 @@
               </div>
             </div>
 
-            <a
-              href="/poeme-perfumery/checkout"
-              class="block mt-10 bg-[#B68D40] hover:bg-[#9A7737] text-white text-center py-4 rounded-full font-semibold"
+            <button
+              id="payBtn"
+              class="block w-full mt-10 bg-[#B68D40] hover:bg-[#9A7737] text-white text-center py-4 rounded-full font-semibold"
             >
-              Proceed To Checkout
-            </a>
+              Pay Now
+            </button>
 
             <a
               href="/poeme-perfumery/perfumes"
@@ -227,5 +246,77 @@
     <%- include("layout/footer.ejs") %>
 
     <script src="/js/index.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+      (function(){
+        const payBtn = document.getElementById("payBtn");
+        if (!payBtn) return;
+
+        payBtn.addEventListener("click", async function (e) {
+          e.preventDefault();
+
+          try {
+            const resp = await fetch("/api/v1/payment/create-order", {
+              method: "POST",
+              credentials: "same-origin",
+              headers: { "Content-Type": "application/json" },
+            });
+
+            const data = await resp.json();
+
+            if (!data || !data.success) {
+              alert(data.message || "Unable to create order");
+              return;
+            }
+
+            const options = {
+              key: data.key,
+              amount: data.amount,
+              currency: data.currency,
+              name: "POÈME Perfumery",
+              description: "Order Payment",
+              order_id: data.orderId,
+              handler: async function (razorResp) {
+                try {
+                  const verify = await fetch("/api/v1/payment/verify-payment", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      razorpay_payment_id: razorResp.razorpay_payment_id,
+                      razorpay_order_id: razorResp.razorpay_order_id,
+                      razorpay_signature: razorResp.razorpay_signature,
+                      dbOrderId: data.dbOrderId,
+                    }),
+                  });
+
+                  const vdata = await verify.json();
+                  if (vdata.success) {
+                    window.location.href = "/poeme-perfumery/orders";
+                  } else {
+                    alert(vdata.message || "Payment verification failed");
+                  }
+                } catch (err) {
+                  console.error(err);
+                  alert("Verification error");
+                }
+              },
+              prefill: {
+                name: "<%= user ? user.name : "" %>",
+                email: "<%= user ? user.email : "" %>",
+                contact: "<%= user ? user.phone || "" : "" %>",
+              },
+              theme: { color: "#B68D40" },
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.open();
+          } catch (error) {
+            console.error(error);
+            alert("Payment initiation failed");
+          }
+        });
+      })();
+    </script>
   </body>
 </html>

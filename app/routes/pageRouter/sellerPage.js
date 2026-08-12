@@ -89,6 +89,12 @@ Seller.get(
   sellerPageController.outOfStock
 );
 
+Seller.get(
+  "/product/view/:id",
+  sellerAuth,
+  sellerPageController.viewProductPage
+);
+
 Seller.get("/bulk-upload", sellerAuth, sellerPageController.bulkUploadPage);
 
 Seller.post(
@@ -141,6 +147,14 @@ Seller.post(
   "/restore-product/:id",
   sellerAuth,
   sellerPageController.restoreProduct
+);
+
+Seller.get("/orders", sellerAuth, sellerPageController.orders);
+
+Seller.post(
+  "/orders/:id/status",
+  sellerAuth,
+  sellerPageController.updateOrderStatus
 );
 
 module.exports = Seller;

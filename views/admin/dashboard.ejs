@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Admin Dashboard | POÈME Perfumery</title>
+
+    <link rel="stylesheet" href="/css/output.css" />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+  </head>
+
+  <body class="min-h-screen bg-[#0B1120] text-white">
+    <%- include("partials/sidebar") %>
+
+    <main class="ml-72 min-h-screen bg-[#0B1120]">
+      <%- include("partials/navbar") %>
+
+      <section class="p-8">
+        <!-- ================================================= -->
+        <!-- OWNER WELCOME -->
+        <!-- ================================================= -->
+
+        <div
+          class="relative overflow-hidden rounded-[30px] bg-[#111B38] border border-white/10 p-8 lg:p-10"
+        >
+          <!-- Glow -->
+
+          <div
+            class="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-[#B68D40]/10 blur-3xl"
+          ></div>
+
+          <div
+            class="absolute -left-20 -bottom-20 w-64 h-64 rounded-full bg-indigo-600/10 blur-3xl"
+          ></div>
+
+          <div class="relative flex items-center justify-between">
+            <div>
+              <p class="text-sm uppercase tracking-[0.3em] text-[#B68D40]">
+                Owner Dashboard
+              </p>
+
+              <h1 class="mt-3 text-3xl lg:text-4xl font-semibold">
+                Welcome back,
+                <%= admin?.name || "Owner" %>.
+              </h1>
+
+              <p class="mt-4 max-w-2xl text-stone-400 leading-7">
+                Monitor your entire POÈME business from one place. Track sales,
+                sellers, customers, products, orders, payments and overall
+                business performance.
+              </p>
+
+              <div class="mt-7 flex flex-wrap gap-3">
+                <a
+                  href="/poeme-perfumery/admin/orders"
+                  class="px-5 py-3 rounded-xl bg-[#B68D40] text-[#0B1120] font-semibold hover:bg-[#c99f53] transition"
+                >
+                  <i class="fa-solid fa-cart-shopping mr-2"></i>
+                  View Orders
+                </a>
+
+                <a
+                  href="/poeme-perfumery/admin/sellers"
+                  class="px-5 py-3 rounded-xl border border-white/10 bg-white/5 text-white hover:bg-white/10 transition"
+                >
+                  <i class="fa-solid fa-store mr-2"></i>
+                  Manage Sellers
+                </a>
+              </div>
+            </div>
+
+            <div class="hidden xl:flex">
+              <div
+                class="w-36 h-36 rounded-full bg-[#B68D40]/10 border border-[#B68D40]/20 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-crown text-5xl text-[#B68D40]"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================= -->
+        <!-- BUSINESS KPIs -->
+        <!-- ================================================= -->
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mt-7">
+          <!-- REVENUE -->
+
+          <div
+            class="rounded-3xl bg-[#111B38] border border-white/10 p-6 hover:border-[#B68D40]/30 transition"
+          >
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-sm text-stone-500">Total Revenue</p>
+
+                <h2 class="mt-3 text-3xl font-semibold">
+                  ₹<%= Number(stats?.revenue || 0).toLocaleString("en-IN") %>
+                </h2>
+
+                <p class="mt-3 text-xs text-emerald-400">
+                  <i class="fa-solid fa-arrow-trend-up mr-1"></i>
+                  Business revenue
+                </p>
+              </div>
+
+              <div
+                class="w-12 h-12 rounded-2xl bg-[#B68D40]/10 text-[#B68D40] flex items-center justify-center"
+              >
+                <i class="fa-solid fa-indian-rupee-sign text-lg"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- ORDERS -->
+
+          <div
+            class="rounded-3xl bg-[#111B38] border border-white/10 p-6 hover:border-[#B68D40]/30 transition"
+          >
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-sm text-stone-500">Total Orders</p>
+
+                <h2 class="mt-3 text-3xl font-semibold">
+                  <%= stats?.orders || 0 %>
+                </h2>
+
+                <p class="mt-3 text-xs text-stone-500">All-time orders</p>
+              </div>
+
+              <div
+                class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-cart-shopping text-lg"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- CUSTOMERS -->
+
+          <div
+            class="rounded-3xl bg-[#111B38] border border-white/10 p-6 hover:border-[#B68D40]/30 transition"
+          >
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-sm text-stone-500">Customers</p>
+
+                <h2 class="mt-3 text-3xl font-semibold">
+                  <%= stats?.customers || 0 %>
+                </h2>
+
+                <p class="mt-3 text-xs text-stone-500">Registered customers</p>
+              </div>
+
+              <div
+                class="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-users text-lg"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- SELLERS -->
+
+          <div
+            class="rounded-3xl bg-[#111B38] border border-white/10 p-6 hover:border-[#B68D40]/30 transition"
+          >
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-sm text-stone-500">Active Sellers</p>
+
+                <h2 class="mt-3 text-3xl font-semibold">
+                  <%= stats?.sellers || 0 %>
+                </h2>
+
+                <p class="mt-3 text-xs text-stone-500">Sellers operating</p>
+              </div>
+
+              <div
+                class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-store text-lg"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================= -->
+        <!-- SECONDARY STATS -->
+        <!-- ================================================= -->
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-5">
+          <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-5">
+            <p class="text-xs text-stone-500">Products</p>
+
+            <p class="mt-2 text-2xl font-semibold">
+              <%= stats?.products || 0 %>
+            </p>
+          </div>
+
+          <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-5">
+            <p class="text-xs text-stone-500">Pending Sellers</p>
+
+            <p class="mt-2 text-2xl font-semibold text-[#B68D40]">
+              <%= stats?.pendingSellers || 0 %>
+            </p>
+          </div>
+
+          <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-5">
+            <p class="text-xs text-stone-500">Pending Orders</p>
+
+            <p class="mt-2 text-2xl font-semibold">
+              <%= stats?.pendingOrders || 0 %>
+            </p>
+          </div>
+
+          <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-5">
+            <p class="text-xs text-stone-500">Low Stock</p>
+
+            <p class="mt-2 text-2xl font-semibold text-red-400">
+              <%= stats?.lowStock || 0 %>
+            </p>
+          </div>
+        </div>
+
+        <!-- ================================================= -->
+        <!-- ANALYTICS -->
+        <!-- ================================================= -->
+
+        <div class="grid grid-cols-1 xl:grid-cols-[1.7fr_1fr] gap-6 mt-7">
+          <!-- SALES GRAPH -->
+
+          <div class="rounded-3xl bg-[#111B38] border border-white/10 p-7">
+            <div class="flex items-center justify-between mb-7">
+              <div>
+                <p class="text-xs uppercase tracking-[0.25em] text-[#B68D40]">
+                  Business Analytics
+                </p>
+
+                <h2 class="mt-2 text-xl font-semibold">Revenue Overview</h2>
+
+                <p class="mt-1 text-sm text-stone-500">
+                  Overall business revenue performance
+                </p>
+              </div>
+
+              <select
+                id="periodSelect"
+                class="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-stone-300 outline-none"
+              >
+                <option value="7">7 Days</option>
+                <option value="30" selected>30 Days</option>
+                <option value="90">90 Days</option>
+              </select>
+            </div>
+
+            <div class="h-[320px]">
+              <canvas id="revenueChart"></canvas>
+            </div>
+          </div>
+
+          <!-- BUSINESS HEALTH -->
+
+          <div class="rounded-3xl bg-[#111B38] border border-white/10 p-7">
+            <div>
+              <p class="text-xs uppercase tracking-[0.25em] text-[#B68D40]">
+                Business Health
+              </p>
+
+              <h2 class="mt-2 text-xl font-semibold">Store Overview</h2>
+            </div>
+
+            <div class="mt-8 space-y-6">
+              <!-- SELLERS -->
+
+              <div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-stone-400"> Seller activity </span>
+
+                  <span class="text-white">
+                    <%= stats?.sellerActivity || 0 %>%
+                  </span>
+                </div>
+
+                <div class="mt-2 h-2 rounded-full bg-white/5">
+                  <div
+                    class="h-2 rounded-full bg-[#B68D40]"
+                    style="
+                      width: <%= Math.min(stats?.sellerActivity || 0, 100) %>%;
+                    "
+                  ></div>
+                </div>
+              </div>
+
+              <!-- ORDERS -->
+
+              <div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-stone-400"> Order fulfillment </span>
+
+                  <span class="text-white">
+                    <%= stats?.orderFulfillment || 0 %>%
+                  </span>
+                </div>
+
+                <div class="mt-2 h-2 rounded-full bg-white/5">
+                  <div
+                    class="h-2 rounded-full bg-emerald-500"
+                    style="
+                      width: <%= Math.min(stats?.orderFulfillment || 0, 100) %>%;
+                    "
+                  ></div>
+                </div>
+              </div>
+
+              <!-- PRODUCT HEALTH -->
+
+              <div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-stone-400"> Product availability </span>
+
+                  <span class="text-white">
+                    <%= stats?.productHealth || 0 %>%
+                  </span>
+                </div>
+
+                <div class="mt-2 h-2 rounded-full bg-white/5">
+                  <div
+                    class="h-2 rounded-full bg-indigo-500"
+                    style="
+                      width: <%= Math.min(stats?.productHealth || 0, 100) %>%;
+                    "
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="mt-8 rounded-2xl bg-[#B68D40]/5 border border-[#B68D40]/10 p-5"
+            >
+              <div class="flex gap-4">
+                <i class="fa-solid fa-circle-info text-[#B68D40] mt-1"></i>
+
+                <div>
+                  <p class="font-medium">Owner insight</p>
+
+                  <p class="mt-1 text-sm text-stone-500">
+                    Keep an eye on pending sellers and low-stock products to
+                    avoid operational delays.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================= -->
+        <!-- RECENT ORDERS + SELLER ACTIVITY -->
+        <!-- ================================================= -->
+
+        <div class="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-6 mt-6">
+          <!-- RECENT ORDERS -->
+
+          <div
+            class="rounded-3xl bg-[#111B38] border border-white/10 overflow-hidden"
+          >
+            <div
+              class="p-7 flex items-center justify-between border-b border-white/10"
+            >
+              <div>
+                <h2 class="text-xl font-semibold">Recent Orders</h2>
+
+                <p class="text-sm text-stone-500 mt-1">
+                  Latest activity across the entire store
+                </p>
+              </div>
+
+              <a
+                href="/poeme-perfumery/admin/orders"
+                class="text-sm text-[#B68D40] hover:text-white transition"
+              >
+                View all
+                <i class="fa-solid fa-arrow-right ml-1"></i>
+              </a>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead>
+                  <tr
+                    class="text-left text-xs uppercase tracking-wider text-stone-500 border-b border-white/10"
+                  >
+                    <th class="px-7 py-4">Order</th>
+
+                    <th class="px-7 py-4">Customer</th>
+
+                    <th class="px-7 py-4">Seller</th>
+
+                    <th class="px-7 py-4">Amount</th>
+
+                    <th class="px-7 py-4">Status</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <% if (recentOrders && recentOrders.length) { %>
+
+                  <% recentOrders.forEach(order => { %>
+
+                  <tr class="border-b border-white/5 hover:bg-white/[0.02]">
+                    <td class="px-7 py-5">
+                      <span class="font-medium">
+                        #<%= order.orderNumber || order._id %>
+                      </span>
+                    </td>
+
+                    <td class="px-7 py-5 text-sm text-stone-400">
+                      <%= order.customer?.name || "Customer" %>
+                    </td>
+
+                    <td class="px-7 py-5 text-sm text-stone-400">
+                      <%= order.seller?.name || "Seller" %>
+                    </td>
+
+                    <td class="px-7 py-5 font-medium">
+                      ₹<%= Number(order.totalAmount ||
+                      0).toLocaleString("en-IN") %>
+                    </td>
+
+                    <td class="px-7 py-5">
+                      <span
+                        class="px-3 py-1.5 rounded-full text-xs bg-white/5 text-stone-300"
+                      >
+                        <%= order.status || "Pending" %>
+                      </span>
+                    </td>
+                  </tr>
+
+                  <% }) %>
+
+                  <% } else { %>
+
+                  <tr>
+                    <td
+                      colspan="5"
+                      class="px-7 py-12 text-center text-stone-500"
+                    >
+                      No recent orders.
+                    </td>
+                  </tr>
+
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- SELLER ACTIVITY -->
+
+          <div
+            class="rounded-3xl bg-[#111B38] border border-white/10 overflow-hidden"
+          >
+            <div class="p-7 border-b border-white/10">
+              <h2 class="text-xl font-semibold">Seller Activity</h2>
+
+              <p class="text-sm text-stone-500 mt-1">Top performing sellers</p>
+            </div>
+
+            <div class="p-5">
+              <% if (topSellers && topSellers.length) { %> <%
+              topSellers.forEach((seller, index) => { %>
+
+              <div
+                class="flex items-center gap-4 p-3 rounded-2xl hover:bg-white/5 transition"
+              >
+                <div
+                  class="w-10 h-10 rounded-full bg-[#B68D40]/10 text-[#B68D40] flex items-center justify-center font-semibold"
+                >
+                  <%= index + 1 %>
+                </div>
+
+                <div class="flex-1 min-w-0">
+                  <p class="font-medium truncate"><%= seller.name %></p>
+
+                  <p class="text-xs text-stone-500">
+                    <%= seller.orders || 0 %> orders
+                  </p>
+                </div>
+
+                <p class="font-semibold text-sm">
+                  ₹<%= Number(seller.revenue || 0).toLocaleString("en-IN") %>
+                </p>
+              </div>
+
+              <% }) %>
+
+              <% } else { %>
+
+              <div class="py-10 text-center text-stone-500">
+                No seller data available.
+              </div>
+
+              <% } %>
+            </div>
+
+            <div class="px-7 pb-7">
+              <a
+                href="/poeme-perfumery/admin/sellers"
+                class="block text-center py-3 rounded-xl border border-white/10 text-sm text-stone-300 hover:bg-white/5 hover:text-white transition"
+              >
+                View All Sellers
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================= -->
+        <!-- OWNER ALERTS -->
+        <!-- ================================================= -->
+
+        <div class="mt-6">
+          <div class="rounded-3xl bg-[#111B38] border border-white/10 p-7">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs uppercase tracking-[0.25em] text-[#B68D40]">
+                  Attention Required
+                </p>
+
+                <h2 class="mt-2 text-xl font-semibold">Owner Alerts</h2>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              <!-- SELLER APPROVAL -->
+
+              <a
+                href="/poeme-perfumery/admin/seller-approvals"
+                class="group rounded-2xl border border-white/10 bg-white/[0.02] p-5 hover:border-[#B68D40]/30 hover:bg-white/5 transition"
+              >
+                <div
+                  class="w-11 h-11 rounded-xl bg-[#B68D40]/10 text-[#B68D40] flex items-center justify-center"
+                >
+                  <i class="fa-solid fa-user-check"></i>
+                </div>
+
+                <p class="mt-4 font-semibold">Seller Approvals</p>
+
+                <p class="mt-1 text-sm text-stone-500">
+                  <%= stats?.pendingSellers || 0 %> seller applications waiting
+                  for review.
+                </p>
+              </a>
+
+              <!-- LOW STOCK -->
+
+              <a
+                href="/poeme-perfumery/admin/products"
+                class="group rounded-2xl border border-white/10 bg-white/[0.02] p-5 hover:border-red-400/30 hover:bg-white/5 transition"
+              >
+                <div
+                  class="w-11 h-11 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center"
+                >
+                  <i class="fa-solid fa-box-open"></i>
+                </div>
+
+                <p class="mt-4 font-semibold">Low Stock Products</p>
+
+                <p class="mt-1 text-sm text-stone-500">
+                  <%= stats?.lowStock || 0 %> products need inventory attention.
+                </p>
+              </a>
+
+              <!-- ORDERS -->
+
+              <a
+                href="/poeme-perfumery/admin/orders"
+                class="group rounded-2xl border border-white/10 bg-white/[0.02] p-5 hover:border-indigo-400/30 hover:bg-white/5 transition"
+              >
+                <div
+                  class="w-11 h-11 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center"
+                >
+                  <i class="fa-solid fa-clock"></i>
+                </div>
+
+                <p class="mt-4 font-semibold">Pending Orders</p>
+
+                <p class="mt-1 text-sm text-stone-500">
+                  <%= stats?.pendingOrders || 0 %> orders require attention.
+                </p>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- CHART.JS -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+
+      const revenueData = <%- JSON.stringify(revenueData || {
+        labels: [],
+        values: []
+      }) %>;
+
+
+      const ctx =
+        document.getElementById("revenueChart");
+
+
+      if (ctx) {
+
+        new Chart(ctx, {
+
+          type: "line",
+
+          data: {
+
+            labels: revenueData.labels,
+
+            datasets: [
+
+              {
+
+                label: "Revenue",
+
+                data: revenueData.values,
+
+                borderColor: "#B68D40",
+
+                backgroundColor: "rgba(182,141,64,0.08)",
+
+                fill: true,
+
+                tension: 0.4,
+
+                pointRadius: 3,
+
+                pointBackgroundColor: "#B68D40"
+
+              }
+
+            ]
+
+          },
+
+
+          options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            plugins: {
+
+              legend: {
+                display: false
+              }
+
+            },
+
+            scales: {
+
+              x: {
+
+                grid: {
+                  color: "rgba(255,255,255,0.05)"
+                },
+
+                ticks: {
+                  color: "#78716c"
+                }
+
+              },
+
+              y: {
+
+                beginAtZero: true,
+
+                grid: {
+                  color: "rgba(255,255,255,0.05)"
+                },
+
+                ticks: {
+
+                  color: "#78716c",
+
+                  callback: function(value) {
+                    return "₹" + value.toLocaleString("en-IN");
+                  }
+
+                }
+
+              }
+
+            }
+
+          }
+
+        });
+
+      }
+    </script>
+  </body>
+</html>

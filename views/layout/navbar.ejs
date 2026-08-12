@@ -1,9 +1,23 @@
+<%
+
+  const currentUser =
+    typeof user !== "undefined" ? user : null;
+
+  const currentAuthRole =
+    typeof authRole !== "undefined" ? authRole : null;
+
+  const currentCartCount =
+    typeof cartCount !== "undefined" ? cartCount : 0;
+%>
+
 <nav
   class="fixed top-0 left-0 w-full z-50 bg-white/75 backdrop-blur-xl border-b border-stone-200/70 shadow-sm"
 >
   <div class="max-w-7xl mx-auto px-6 lg:px-8">
     <div class="flex items-center justify-between h-20">
-      <!-- Logo -->
+      <!-- ===================================================
+           LOGO
+      ==================================================== -->
 
       <a href="/poeme-perfumery/home" class="flex flex-col">
         <h1 class="text-4xl font-bold tracking-wide text-stone-900">POÈME</h1>
@@ -15,7 +29,9 @@
         </span>
       </a>
 
-      <!-- Desktop Menu -->
+      <!-- ===================================================
+           DESKTOP MENU
+      ==================================================== -->
 
       <div class="hidden lg:flex items-center gap-10">
         <a
@@ -33,12 +49,14 @@
         </a>
       </div>
 
-      <!-- Right Side -->
-
-      <!-- Right Side -->
+      <!-- ===================================================
+           RIGHT SIDE
+      ==================================================== -->
 
       <div class="hidden lg:flex items-center gap-4">
-        <!-- Cart -->
+        <!-- =================================================
+             CART
+        ================================================== -->
 
         <a
           href="/poeme-perfumery/cart"
@@ -62,11 +80,17 @@
           <span
             class="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-[#B68D40] text-white text-xs flex items-center justify-center"
           >
-            <%= typeof cartCount !== "undefined" ? cartCount : 0 %>
+            <%= currentCartCount %>
           </span>
         </a>
 
-        <% if(!user){ %>
+        <!-- =================================================
+             AUTH / PROFILE
+        ================================================== -->
+
+        <% if (!currentUser) { %>
+
+        <!-- LOGIN -->
 
         <a
           href="/poeme-perfumery/login"
@@ -74,6 +98,8 @@
         >
           Login
         </a>
+
+        <!-- SIGN UP -->
 
         <a
           href="/poeme-perfumery/register"
@@ -84,24 +110,42 @@
 
         <% } else { %>
 
+        <!-- =================================================
+               PROFILE MENU
+          ================================================== -->
+
         <div class="relative" id="profileMenuWrapper">
           <button
             id="profileBtn"
+            type="button"
             class="w-11 h-11 rounded-full bg-[#B68D40] text-white font-semibold text-lg flex items-center justify-center shadow-md"
           >
-            <%= user.name.charAt(0).toUpperCase() %>
+            <%= currentUser.name
+                ? currentUser.name.charAt(0).toUpperCase()
+                : "U"
+              %>
           </button>
+
+          <!-- PROFILE DROPDOWN -->
 
           <div
             id="profileDropdown"
             style="display: none"
             class="absolute right-0 top-12 w-64 bg-white rounded-2xl shadow-2xl border border-stone-200 z-[9999]"
           >
-            <div class="px-5 py-4 border-b">
-              <p class="font-semibold text-stone-900"><%= user.name %></p>
+            <!-- USER INFORMATION -->
 
-              <p class="text-sm text-stone-500"><%= user.email %></p>
+            <div class="px-5 py-4 border-b">
+              <p class="font-semibold text-stone-900">
+                <%= currentUser.name || "User" %>
+              </p>
+
+              <p class="text-sm text-stone-500">
+                <%= currentUser.email || "" %>
+              </p>
             </div>
+
+            <!-- ORDERS -->
 
             <a
               href="/poeme-perfumery/orders"
@@ -110,12 +154,16 @@
               Orders
             </a>
 
+            <!-- SETTINGS -->
+
             <a
               href="/poeme-perfumery/settings"
               class="block px-5 py-3 hover:bg-stone-100"
             >
               Settings
             </a>
+
+            <!-- CUSTOMER SUPPORT -->
 
             <a
               href="/poeme-perfumery/chat"
@@ -125,6 +173,8 @@
             </a>
 
             <hr />
+
+            <!-- LOGOUT -->
 
             <a
               href="/poeme-perfumery/logout"
@@ -138,10 +188,13 @@
         <% } %>
       </div>
 
-      <!-- Mobile Menu Button -->
+      <!-- ===================================================
+           MOBILE MENU BUTTON
+      ==================================================== -->
 
       <button
         id="menuBtn"
+        type="button"
         class="lg:hidden w-11 h-11 rounded-full bg-white border border-stone-200 flex items-center justify-center shadow"
       >
         <svg
@@ -162,31 +215,91 @@
     </div>
   </div>
 
-  <!-- Mobile Menu -->
+  <!-- =====================================================
+       MOBILE MENU
+  ====================================================== -->
 
   <div
     id="mobileMenu"
     class="hidden lg:hidden bg-white border-t border-stone-200"
   >
     <div class="flex flex-col px-6 py-6 space-y-5">
-      <a href="#hero" class="text-stone-700 hover:text-[#B68D40]"> Home </a>
-
-      <a href="#collections" class="text-stone-700 hover:text-[#B68D40]">
-        Collections
-      </a>
-
-      <a href="#about" class="text-stone-700 hover:text-[#B68D40]"> About </a>
-
-      <a href="#contact" class="text-stone-700 hover:text-[#B68D40]">
-        Contact
+      <a
+        href="/poeme-perfumery/home"
+        class="text-stone-700 hover:text-[#B68D40]"
+      >
+        Home
       </a>
 
       <a
-        href="#collections"
+        href="/poeme-perfumery/perfumes"
+        class="text-stone-700 hover:text-[#B68D40]"
+      >
+        Perfumes
+      </a>
+
+      <% if (currentUser) { %>
+
+      <a
+        href="/poeme-perfumery/cart"
+        class="text-stone-700 hover:text-[#B68D40]"
+      >
+        Cart
+      </a>
+
+      <a
+        href="/poeme-perfumery/orders"
+        class="text-stone-700 hover:text-[#B68D40]"
+      >
+        Orders
+      </a>
+
+      <a
+        href="/poeme-perfumery/settings"
+        class="text-stone-700 hover:text-[#B68D40]"
+      >
+        Settings
+      </a>
+
+      <a
+        href="/poeme-perfumery/chat"
+        class="text-stone-700 hover:text-[#B68D40]"
+      >
+        Contact Us
+      </a>
+
+      <a href="/poeme-perfumery/logout" class="text-red-600 hover:text-red-700">
+        Logout
+      </a>
+
+      <% } else { %>
+
+      <a
+        href="/poeme-perfumery/login"
+        class="text-stone-700 hover:text-[#B68D40]"
+      >
+        Login
+      </a>
+
+      <a
+        href="/poeme-perfumery/register"
+        class="text-stone-700 hover:text-[#B68D40]"
+      >
+        Sign Up
+      </a>
+
+      <% } %>
+
+      <% if (!currentUser) { %>
+
+      <a
+        href="/poeme-perfumery/perfumes"
         class="mt-3 text-center bg-[#B68D40] text-white py-3 rounded-full font-semibold hover:bg-[#9D7A37] transition"
       >
         Shop Now
       </a>
+
+      <% } %>
     </div>
   </div>
 </nav>

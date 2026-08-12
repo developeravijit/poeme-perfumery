@@ -1,2 +1,6 @@
 .env
 node_modules/
+server.log
+render_test.js
+rest-test.jslist-models.js
+gemini-test.js

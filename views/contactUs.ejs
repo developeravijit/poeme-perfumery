@@ -7,8 +7,10 @@
 
     <title>Customer Support | POÈME Perfumery</title>
 
+    <!-- Socket.IO -->
     <script src="/socket.io/socket.io.js"></script>
 
+    <!-- Current logged-in user -->
     <script>
       window.userId = "<%= user._id %>";
       window.userName = "<%= user.name || user.email || 'Customer' %>";
@@ -17,74 +19,175 @@
     <link rel="stylesheet" href="/css/output.css" />
   </head>
 
-  <body class="bg-[#FCFBF8]">
+  <body class="bg-[#FCFBF8] text-stone-900">
+    <!-- Navbar -->
     <%- include("layout/navbar") %>
 
-    <section class="pt-36 pb-20">
-      <div class="max-w-5xl mx-auto px-6">
-        <div class="text-center mb-12">
-          <p class="uppercase tracking-[8px] text-[#B68D40] font-semibold">
-            Customer Care
+    <!-- Customer Support -->
+    <section class="pt-36 pb-20 min-h-screen">
+      <div class="max-w-6xl mx-auto px-6">
+        <!-- Page Header -->
+        <div class="text-center mb-10">
+          <p
+            class="uppercase tracking-[7px] text-[#B68D40] font-semibold text-sm"
+          >
+            Customer Support
           </p>
 
-          <h1 class="text-6xl font-bold mt-5">Live Chat Support</h1>
+          <h1 class="text-5xl md:text-6xl font-bold mt-5">
+            How can we help you?
+          </h1>
 
-          <p class="mt-5 text-stone-500">
-            Chat directly with our customer care team.
+          <p class="mt-5 text-stone-500 max-w-2xl mx-auto leading-relaxed">
+            Chat directly with our customer support team for help with your
+            orders, perfumes, payments, delivery, returns, or any other POÈME
+            Perfumery related question.
           </p>
         </div>
 
+        <!-- Main Support Card -->
         <div
           class="bg-white rounded-[36px] shadow-xl border border-stone-200 overflow-hidden"
         >
           <!-- Header -->
-
-          <div class="bg-[#B68D40] px-8 py-6 flex items-center justify-between">
+          <div
+            class="bg-[#B68D40] px-6 md:px-8 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+          >
             <div>
-              <h2 class="text-2xl font-semibold text-white">
-                Customer Support
+              <p
+                class="uppercase tracking-[4px] text-[#FFF2D5] text-xs font-semibold"
+              >
+                POÈME Perfumery
+              </p>
+
+              <h2 class="text-2xl md:text-3xl font-semibold text-white mt-1">
+                Customer Care
               </h2>
 
-              <p class="text-[#FFF2D5]">
+              <div class="flex items-center gap-2 mt-2">
                 <span
-                  class="inline-block w-2 h-2 rounded-full bg-green-400"
+                  class="inline-block w-2.5 h-2.5 rounded-full bg-green-400"
                 ></span>
 
-                Online
-              </p>
+                <span class="text-[#FFF2D5] text-sm"> Support available </span>
+              </div>
+            </div>
+
+            <!-- Connection Status -->
+            <div class="text-left md:text-right text-white">
+              <div id="connectionStatus" class="font-semibold">
+                Waiting for support
+              </div>
+
+              <div id="connectionSubStatus" class="text-sm text-white/80 mt-1">
+                You will be connected to an available support agent
+              </div>
             </div>
           </div>
 
-          <!-- Messages -->
-
-          <div
-            id="chatBox"
-            class="h-[500px] max-h-[500px] overflow-y-auto p-8 bg-[#FCFBF8] space-y-5"
-          ></div>
-
-          <!-- Input -->
-
-          <div class="border-t border-stone-200 p-6">
-            <div class="flex gap-4">
-              <input
-                id="message"
-                type="text"
-                placeholder="Type your message..."
-                class="flex-1 rounded-full border border-stone-300 px-6 py-4 outline-none focus:border-[#B68D40]"
-              />
-
-              <button
-                id="sendBtn"
-                class="bg-[#B68D40] hover:bg-[#9D7A37] text-white px-8 rounded-full transition"
-              >
-                Send
-              </button>
+          <!-- Chat Area -->
+          <div class="p-5 md:p-8">
+            <!-- Chat Box -->
+            <div
+              id="chatBox"
+              class="h-[500px] md:h-[560px] overflow-y-auto p-5 md:p-8 bg-[#FCFBF8] space-y-5 rounded-3xl border border-stone-200"
+            >
+              <div class="flex justify-center">
+                <div
+                  class="bg-stone-100 border border-stone-200 rounded-3xl px-6 py-5 text-center text-stone-600"
+                >
+                  <p class="font-semibold mb-2">
+                    Welcome to POÈME Perfumery Customer Support
+                  </p>
+                  <p>
+                    We are getting your chat ready. Please wait while a support
+                    agent connects.
+                  </p>
+                </div>
+              </div>
             </div>
+
+            <!-- Message Input -->
+            <div class="mt-5">
+              <div class="flex flex-col sm:flex-row gap-3">
+                <input
+                  id="message"
+                  type="text"
+                  autocomplete="off"
+                  maxlength="1000"
+                  placeholder="Type your message..."
+                  disabled
+                  class="flex-1 rounded-full border border-stone-300 px-6 py-4 outline-none bg-white text-stone-900 placeholder:text-stone-400 focus:border-[#B68D40] focus:ring-1 focus:ring-[#B68D40] disabled:bg-stone-100 disabled:cursor-not-allowed"
+                />
+
+                <button
+                  id="sendBtn"
+                  type="button"
+                  disabled
+                  class="bg-[#B68D40] hover:bg-[#9D7A37] disabled:bg-stone-300 disabled:cursor-not-allowed text-white px-8 py-4 rounded-full transition font-medium"
+                >
+                  Send
+                </button>
+              </div>
+
+              <p class="text-xs text-stone-400 mt-3 px-2">
+                You can press Enter to send your message.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Help Information -->
+        <div class="grid md:grid-cols-3 gap-5 mt-8">
+          <div class="bg-white border border-stone-200 rounded-3xl p-6">
+            <div
+              class="w-11 h-11 rounded-full bg-[#FCF6EA] flex items-center justify-center text-[#B68D40] mb-4"
+            >
+              ?
+            </div>
+
+            <h3 class="font-semibold text-lg">Product Help</h3>
+
+            <p class="text-sm text-stone-500 mt-2 leading-relaxed">
+              Need help choosing a perfume or understanding a fragrance? Our
+              support team can help.
+            </p>
+          </div>
+
+          <div class="bg-white border border-stone-200 rounded-3xl p-6">
+            <div
+              class="w-11 h-11 rounded-full bg-[#FCF6EA] flex items-center justify-center text-[#B68D40] mb-4"
+            >
+              #
+            </div>
+
+            <h3 class="font-semibold text-lg">Order Support</h3>
+
+            <p class="text-sm text-stone-500 mt-2 leading-relaxed">
+              Ask about your order, delivery status, payment, cancellation, or
+              returns.
+            </p>
+          </div>
+
+          <div class="bg-white border border-stone-200 rounded-3xl p-6">
+            <div
+              class="w-11 h-11 rounded-full bg-[#FCF6EA] flex items-center justify-center text-[#B68D40] mb-4"
+            >
+              ✓
+            </div>
+
+            <h3 class="font-semibold text-lg">Live Customer Care</h3>
+
+            <p class="text-sm text-stone-500 mt-2 leading-relaxed">
+              Once a support agent accepts your request, you can chat with them
+              directly in real time.
+            </p>
           </div>
         </div>
       </div>
     </section>
 
+    <!-- Footer -->
     <%- include("layout/footer") %>
 
     <script src="/js/index.js"></script>

@@ -7,25 +7,646 @@
 
     <title>Seller Dashboard</title>
 
+    <!-- Tailwind -->
+
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
 
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     />
+
+    <!-- Chart.js -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
 
   <body class="bg-slate-100">
+    <!-- Sidebar -->
+
     <%- include("partials/sidebar.ejs") %>
 
+    <!-- Main -->
+
     <main class="ml-72 min-h-screen">
+      <!-- Navbar -->
+
       <%- include("partials/navbar.ejs") %>
 
       <section class="p-8">
+        <!-- Welcome -->
+
         <%- include("partials/welcome.ejs") %>
 
-        <div class="mt-8"><%- include("partials/stats.ejs") %></div>
+        <!-- ================================================= -->
+        <!-- ANALYTICS -->
+        <!-- ================================================= -->
+
+        <div class="mt-8 space-y-6">
+          <!-- ================================================= -->
+          <!-- MAIN GRAPH -->
+          <!-- ================================================= -->
+
+          <div
+            class="bg-white rounded-3xl shadow-sm border border-slate-200 p-8"
+          >
+            <!-- Header -->
+
+            <div
+              class="flex flex-col md:flex-row md:items-center md:justify-between gap-5 mb-8"
+            >
+              <div>
+                <p
+                  class="text-xs font-semibold uppercase tracking-[3px] text-indigo-500"
+                >
+                  Sales Analytics
+                </p>
+
+                <h1 class="mt-2 text-3xl font-bold text-slate-800">
+                  Orders by Product
+                </h1>
+
+                <p class="mt-2 text-sm text-slate-500">
+                  Number of successful orders received for each product.
+                </p>
+              </div>
+
+              <!-- Total Orders -->
+
+              <div
+                class="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4"
+              >
+                <p class="text-xs uppercase tracking-wider text-slate-500">
+                  Total Orders
+                </p>
+
+                <p class="mt-1 text-3xl font-bold text-slate-800">
+                  <%= stats.totalOrders || 0 %>
+                </p>
+              </div>
+            </div>
+
+            <!-- Chart -->
+
+            <% if ( stats.productOrders && stats.productOrders.length > 0 ) { %>
+
+            <div class="relative w-full h-[430px]">
+              <canvas id="productOrdersChart"></canvas>
+            </div>
+
+            <% } else { %>
+
+            <!-- Empty -->
+
+            <div
+              class="h-[430px] flex flex-col items-center justify-center text-center"
+            >
+              <div
+                class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center"
+              >
+                <i class="fa-solid fa-chart-column text-3xl text-slate-400"></i>
+              </div>
+
+              <h3 class="mt-5 text-xl font-semibold text-slate-700">
+                No Order Data Yet
+              </h3>
+
+              <p class="mt-2 text-sm text-slate-500 max-w-md">
+                Once customers successfully purchase your products, product-wise
+                order statistics will appear here.
+              </p>
+            </div>
+
+            <% } %>
+          </div>
+
+          <!-- ================================================= -->
+          <!-- LOWER SECTION -->
+          <!-- ================================================= -->
+
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <!-- =============================================== -->
+            <!-- TOP PRODUCTS -->
+            <!-- =============================================== -->
+
+            <div
+              class="xl:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-200 p-8"
+            >
+              <div class="mb-7">
+                <p
+                  class="text-xs font-semibold uppercase tracking-[3px] text-indigo-500"
+                >
+                  Product Performance
+                </p>
+
+                <h2 class="mt-2 text-2xl font-bold text-slate-800">
+                  Top Products
+                </h2>
+              </div>
+
+              <% if ( stats.productOrders && stats.productOrders.length > 0 ) {
+              %>
+
+              <div class="space-y-6">
+                <% stats.productOrders .slice(0, 6) .forEach((product, index) =>
+                { %>
+
+                <div>
+                  <!-- Product name -->
+
+                  <div class="flex items-center justify-between gap-4 mb-2">
+                    <div class="flex items-center gap-4 min-w-0">
+                      <div
+                        class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0"
+                      >
+                        <%= index + 1 %>
+                      </div>
+
+                      <p class="font-semibold text-slate-700 truncate">
+                        <%= product.productName %>
+                      </p>
+                    </div>
+
+                    <p class="font-bold text-slate-800 shrink-0">
+                      <%= product.orders %>
+                      <span class="font-normal text-slate-400 text-sm">
+                        orders
+                      </span>
+                    </p>
+                  </div>
+
+                  <!-- Progress -->
+
+                  <div
+                    class="w-full h-2 bg-slate-100 rounded-full overflow-hidden"
+                  >
+                    <div
+                      class="product-progress h-full bg-indigo-500 rounded-full"
+                      data-orders="<%= product.orders %>"
+                    ></div>
+                  </div>
+
+                  <!-- Additional information -->
+
+                  <div class="mt-2 flex justify-between text-xs text-slate-400">
+                    <span>
+                      Units sold:
+                      <%= product.quantitySold || 0 %>
+                    </span>
+
+                    <span>
+                      ₹<%= Number(
+                          product.revenue || 0
+                        ).toLocaleString("en-IN") %>
+                    </span>
+                  </div>
+                </div>
+
+                <% }) %>
+              </div>
+
+              <% } else { %>
+
+              <div class="h-60 flex items-center justify-center text-slate-400">
+                No products have been ordered yet.
+              </div>
+
+              <% } %>
+            </div>
+
+            <!-- =============================================== -->
+            <!-- QUICK SUMMARY -->
+            <!-- =============================================== -->
+
+            <div
+              class="bg-white rounded-3xl shadow-sm border border-slate-200 p-8"
+            >
+              <p
+                class="text-xs font-semibold uppercase tracking-[3px] text-indigo-500"
+              >
+                Overview
+              </p>
+
+              <h2 class="mt-2 text-2xl font-bold text-slate-800">
+                Store Summary
+              </h2>
+
+              <div class="mt-7 space-y-4">
+                <!-- Products -->
+
+                <div
+                  class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl"
+                >
+                  <div class="flex items-center gap-4">
+                    <div
+                      class="w-11 h-11 rounded-xl bg-indigo-100 flex items-center justify-center"
+                    >
+                      <i class="fa-solid fa-box text-indigo-600"></i>
+                    </div>
+
+                    <div>
+                      <p class="text-sm text-slate-500">Products</p>
+
+                      <p class="text-xl font-bold text-slate-800">
+                        <%= stats.totalProducts || 0 %>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Orders -->
+
+                <div
+                  class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl"
+                >
+                  <div class="flex items-center gap-4">
+                    <div
+                      class="w-11 h-11 rounded-xl bg-green-100 flex items-center justify-center"
+                    >
+                      <i class="fa-solid fa-cart-shopping text-green-600"></i>
+                    </div>
+
+                    <div>
+                      <p class="text-sm text-slate-500">Orders</p>
+
+                      <p class="text-xl font-bold text-slate-800">
+                        <%= stats.totalOrders || 0 %>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Revenue -->
+
+                <div
+                  class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl"
+                >
+                  <div class="flex items-center gap-4">
+                    <div
+                      class="w-11 h-11 rounded-xl bg-yellow-100 flex items-center justify-center"
+                    >
+                      <i
+                        class="fa-solid fa-indian-rupee-sign text-yellow-600"
+                      ></i>
+                    </div>
+
+                    <div>
+                      <p class="text-sm text-slate-500">Revenue</p>
+
+                      <p class="text-xl font-bold text-slate-800">
+                        ₹<%= Number( stats.revenue || 0
+                        ).toLocaleString("en-IN") %>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Customers -->
+
+                <div
+                  class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl"
+                >
+                  <div class="flex items-center gap-4">
+                    <div
+                      class="w-11 h-11 rounded-xl bg-cyan-100 flex items-center justify-center"
+                    >
+                      <i class="fa-solid fa-users text-cyan-600"></i>
+                    </div>
+
+                    <div>
+                      <p class="text-sm text-slate-500">Customers</p>
+
+                      <p class="text-xl font-bold text-slate-800">
+                        <%= stats.customers || 0 %>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Pending -->
+
+                <div
+                  class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl"
+                >
+                  <div class="flex items-center gap-4">
+                    <div
+                      class="w-11 h-11 rounded-xl bg-orange-100 flex items-center justify-center"
+                    >
+                      <i class="fa-solid fa-clock text-orange-600"></i>
+                    </div>
+
+                    <div>
+                      <p class="text-sm text-slate-500">Active Orders</p>
+
+                      <p class="text-xl font-bold text-slate-800">
+                        <%= stats.pendingOrders || 0 %>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Low Stock -->
+
+                <div
+                  class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl"
+                >
+                  <div class="flex items-center gap-4">
+                    <div
+                      class="w-11 h-11 rounded-xl bg-red-100 flex items-center justify-center"
+                    >
+                      <i
+                        class="fa-solid fa-triangle-exclamation text-red-600"
+                      ></i>
+                    </div>
+
+                    <div>
+                      <p class="text-sm text-slate-500">Low Stock</p>
+
+                      <p class="text-xl font-bold text-slate-800">
+                        <%= stats.lowStock || 0 %>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     </main>
+
+    <!-- ===================================================== -->
+    <!-- CHART SCRIPT -->
+    <!-- ===================================================== -->
+
+    <script>
+
+      const productOrders =
+        <%- JSON.stringify(stats.productOrders || []) %>;
+
+
+      const chartElement =
+        document.getElementById(
+          "productOrdersChart"
+        );
+
+
+      if (
+        chartElement &&
+        productOrders.length > 0
+      ) {
+
+
+        const labels =
+          productOrders.map(
+            product => product.productName
+          );
+
+
+        const orderValues =
+          productOrders.map(
+            product => Number(
+              product.orders || 0
+            )
+          );
+
+
+        new Chart(
+          chartElement,
+          {
+
+            type: "bar",
+
+
+            data: {
+
+              labels: labels,
+
+
+              datasets: [
+
+                {
+
+                  label: "Orders Received",
+
+                  data: orderValues,
+
+                  backgroundColor:
+                    "rgba(79, 70, 229, 0.75)",
+
+                  hoverBackgroundColor:
+                    "rgba(79, 70, 229, 1)",
+
+                  borderRadius: 10,
+
+                  borderSkipped: false,
+
+                  maxBarThickness: 55,
+
+                }
+
+              ]
+
+            },
+
+
+            options: {
+
+              responsive: true,
+
+              maintainAspectRatio: false,
+
+
+              interaction: {
+
+                intersect: false,
+
+                mode: "index",
+
+              },
+
+
+              plugins: {
+
+                legend: {
+
+                  display: false,
+
+                },
+
+
+                tooltip: {
+
+                  backgroundColor: "#0f172a",
+
+                  padding: 12,
+
+                  callbacks: {
+
+                    title: function(context) {
+
+                      return context[0].label;
+
+                    },
+
+
+                    label: function(context) {
+
+                      const product =
+                        productOrders[
+                          context.dataIndex
+                        ];
+
+
+                      return [
+                        " Orders: " +
+                          product.orders,
+
+                        " Units Sold: " +
+                          product.quantitySold,
+
+                        " Revenue: ₹" +
+                          Number(
+                            product.revenue || 0
+                          ).toLocaleString("en-IN")
+                      ];
+
+                    }
+
+                  }
+
+                }
+
+              },
+
+
+              scales: {
+
+                x: {
+
+                  grid: {
+
+                    display: false,
+
+                  },
+
+
+                  ticks: {
+
+                    color: "#64748b",
+
+                    font: {
+
+                      size: 11,
+
+                    },
+
+                    maxRotation: 30,
+
+                    minRotation: 0,
+
+                  }
+
+                },
+
+
+                y: {
+
+                  beginAtZero: true,
+
+
+                  ticks: {
+
+                    precision: 0,
+
+                    color: "#64748b",
+
+                  },
+
+
+                  grid: {
+
+                    color:
+                      "rgba(148, 163, 184, 0.15)",
+
+                  },
+
+
+                  title: {
+
+                    display: true,
+
+                    text: "Number of Orders",
+
+                    color: "#64748b",
+
+                  }
+
+                }
+
+              }
+
+            }
+
+          }
+
+        );
+
+      }
+
+
+      /*
+      ============================================================
+      PRODUCT PROGRESS BARS
+      ============================================================
+      */
+
+      const progressBars =
+        document.querySelectorAll(
+          ".product-progress"
+        );
+
+
+      let maxOrders = 0;
+
+
+      productOrders.forEach(
+        product => {
+
+          const count =
+            Number(product.orders || 0);
+
+
+          if (count > maxOrders) {
+            maxOrders = count;
+          }
+
+        }
+      );
+
+
+      progressBars.forEach(
+        bar => {
+
+          const orders =
+            Number(
+              bar.dataset.orders || 0
+            );
+
+
+          const percentage =
+            maxOrders > 0
+              ? (orders / maxOrders) * 100
+              : 0;
+
+
+          bar.style.width =
+            percentage + "%";
+
+        }
+      );
+    </script>
   </body>
 </html>

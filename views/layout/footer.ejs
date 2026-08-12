@@ -178,4 +178,53 @@
       </div>
     </div>
   </div>
+  <div class="fixed bottom-6 right-6 z-50">
+    <button
+      id="chatbotToggle"
+      class="flex items-center gap-3 rounded-full bg-[#B68D40] px-4 py-3 text-white shadow-xl hover:bg-[#9C7834] transition"
+    >
+      <span class="text-lg">🤖</span>
+      <span class="font-semibold">AI Assistant</span>
+    </button>
+
+    <div
+      id="chatbotPanel"
+      class="hidden mt-3 w-[320px] rounded-3xl border border-stone-200 bg-white shadow-2xl overflow-hidden"
+    >
+      <div
+        class="flex items-center justify-between bg-[#B68D40] px-4 py-3 text-white"
+      >
+        <div>
+          <p class="font-semibold">POÈME AI</p>
+          <p class="text-xs text-stone-100">Ask me anything about the store</p>
+        </div>
+        <button id="chatbotClose" class="text-xl leading-none">×</button>
+      </div>
+
+      <div
+        id="chatbotMessages"
+        class="h-64 overflow-y-auto bg-[#FCFBF8] p-3"
+      ></div>
+
+      <div class="border-t border-stone-200 p-3">
+        <div class="flex gap-2">
+          <input
+            id="chatbotInput"
+            type="text"
+            placeholder="Ask about perfumes, orders..."
+            class="flex-1 rounded-full border text-black border-stone-300 px-3 py-2 text-sm outline-none focus:border-[#B68D40]"
+          />
+          <button
+            id="chatbotSend"
+            class="rounded-full bg-[#B68D40] px-3 py-2 text-white hover:bg-[#9C7834]"
+          >
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </footer>
+
+<script src="/js/chatbot-client.js"></script>
+<script src="/js/chatbot.js"></script>

@@ -1,0 +1,167 @@
+<aside
+  id="adminSidebar"
+  class="fixed inset-y-0 left-0 z-50 w-72 bg-[#0B1120] text-white border-r border-white/10 flex flex-col"
+>
+  <!-- BRAND -->
+  <div class="h-24 px-7 flex items-center border-b border-white/10">
+    <div
+      class="w-12 h-12 rounded-2xl bg-[#B68D40]/15 text-[#B68D40] flex items-center justify-center text-xl font-bold"
+    >
+      P
+    </div>
+
+    <div class="ml-4">
+      <p class="text-sm uppercase tracking-[0.3em] text-stone-400">POÈME</p>
+
+      <h1 class="text-lg font-semibold text-white">Owner Console</h1>
+    </div>
+  </div>
+
+  <!-- NAVIGATION -->
+
+  <nav class="flex-1 px-4 py-6 overflow-y-auto">
+    <!-- OVERVIEW -->
+
+    <p class="px-4 mb-3 text-[10px] uppercase tracking-[0.25em] text-stone-500">
+      Overview
+    </p>
+
+    <a
+      href="/poeme-perfumery/admin/dashboard"
+      class="group flex items-center gap-4 px-4 py-3.5 mb-2 rounded-2xl transition <%= currentPage === 'dashboard' ? 'bg-[#B68D40] text-[#0B1120] shadow-lg shadow-[#B68D40]/20' : 'text-stone-300 hover:bg-white/5 hover:text-white' %>"
+    >
+      <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+
+      <span class="font-medium"> Dashboard </span>
+    </a>
+
+    <!-- BUSINESS -->
+
+    <p
+      class="px-4 mt-7 mb-3 text-[10px] uppercase tracking-[0.25em] text-stone-500"
+    >
+      Business
+    </p>
+
+    <a
+      href="/poeme-perfumery/admin/orders"
+      class="group flex items-center gap-4 px-4 py-3.5 mb-2 rounded-2xl transition <%= currentPage === 'orders' ? 'bg-white/10 text-white' : 'text-stone-300 hover:bg-white/5 hover:text-white' %>"
+    >
+      <i class="fa-solid fa-cart-shopping w-5 text-center text-stone-400"></i>
+      <span>Orders</span>
+    </a>
+
+    <a
+      href="/poeme-perfumery/admin/payments"
+      class="group flex items-center gap-4 px-4 py-3.5 mb-2 rounded-2xl transition <%= currentPage === 'payments' ? 'bg-white/10 text-white' : 'text-stone-300 hover:bg-white/5 hover:text-white' %>"
+    >
+      <i class="fa-solid fa-credit-card w-5 text-center text-stone-400"></i>
+      <span>Payments</span>
+    </a>
+
+    <a
+      href="/poeme-perfumery/admin/analytics"
+      class="group flex items-center gap-4 px-4 py-3.5 mb-2 rounded-2xl transition <%= currentPage === 'analytics' ? 'bg-white/10 text-white' : 'text-stone-300 hover:bg-white/5 hover:text-white' %>"
+    >
+      <i class="fa-solid fa-chart-line w-5 text-center text-stone-400"></i>
+      <span>Analytics</span>
+    </a>
+
+    <!-- CATALOG -->
+
+    <p
+      class="px-4 mt-7 mb-3 text-[10px] uppercase tracking-[0.25em] text-stone-500"
+    >
+      Catalog
+    </p>
+
+    <a
+      href="/poeme-perfumery/admin/products"
+      class="group flex items-center gap-4 px-4 py-3.5 mb-2 rounded-2xl transition <%= currentPage === 'products' ? 'bg-white/10 text-white' : 'text-stone-300 hover:bg-white/5 hover:text-white' %>"
+    >
+      <i class="fa-solid fa-box w-5 text-center text-stone-400"></i>
+      <span>All Products</span>
+    </a>
+
+    <a
+      href="/poeme-perfumery/admin/categories"
+      class="group flex items-center gap-4 px-4 py-3.5 mb-2 rounded-2xl transition <%= currentPage === 'categories' ? 'bg-white/10 text-white' : 'text-stone-300 hover:bg-white/5 hover:text-white' %>"
+    >
+      <i class="fa-solid fa-layer-group w-5 text-center text-stone-400"></i>
+      <span>Categories</span>
+    </a>
+
+    <!-- PEOPLE -->
+
+    <p
+      class="px-4 mt-7 mb-3 text-[10px] uppercase tracking-[0.25em] text-stone-500"
+    >
+      People
+    </p>
+
+    <a
+      href="/poeme-perfumery/admin/customers"
+      class="group flex items-center gap-4 px-4 py-3.5 mb-2 rounded-2xl transition <%= currentPage === 'users' ? 'bg-white/10 text-white' : 'text-stone-300 hover:bg-white/5 hover:text-white' %>"
+    >
+      <i class="fa-solid fa-users w-5 text-center text-stone-400"></i>
+      <span>Customers</span>
+    </a>
+
+    <a
+      href="/poeme-perfumery/admin/sellers"
+      class="group flex items-center gap-4 px-4 py-3.5 mb-2 rounded-2xl transition <%= currentPage === 'sellers' ? 'bg-white/10 text-white' : 'text-stone-300 hover:bg-white/5 hover:text-white' %>"
+    >
+      <i class="fa-solid fa-store w-5 text-center text-stone-400"></i>
+      <span>Sellers</span>
+    </a>
+
+    <!-- SYSTEM -->
+
+    <p
+      class="px-4 mt-7 mb-3 text-[10px] uppercase tracking-[0.25em] text-stone-500"
+    >
+      System
+    </p>
+
+    <a
+      href="/poeme-perfumery/admin/settings"
+      class="group flex items-center gap-4 px-4 py-3.5 mb-2 rounded-2xl transition <%= currentPage === 'settings' ? 'bg-white/10 text-white' : 'text-stone-300 hover:bg-white/5 hover:text-white' %>"
+    >
+      <i class="fa-solid fa-gear w-5 text-center text-stone-400"></i>
+      <span>Settings</span>
+    </a>
+  </nav>
+
+  <!-- OWNER PROFILE -->
+
+  <div class="p-4 border-t border-white/10">
+    <div class="rounded-2xl bg-white/5 border border-white/10 p-4">
+      <div class="flex items-center gap-3">
+        <div
+          class="w-11 h-11 rounded-full bg-[#B68D40]/15 text-[#B68D40] flex items-center justify-center font-bold"
+        >
+          <%= admin?.name
+            ? admin.name.charAt(0).toUpperCase()
+            : "A"
+          %>
+        </div>
+
+        <div class="min-w-0">
+          <p class="font-semibold truncate">
+            <%= admin?.name || "Administrator" %>
+          </p>
+
+          <p class="text-xs text-stone-500">Business Owner</p>
+        </div>
+      </div>
+
+      <a
+        href="/poeme-perfumery/admin/logout"
+        class="mt-4 flex items-center gap-3 text-sm text-stone-400 hover:text-red-400 transition"
+      >
+        <i class="fa-solid fa-right-from-bracket"></i>
+        Logout
+      </a>
+    </div>
+  </div>
+</aside>

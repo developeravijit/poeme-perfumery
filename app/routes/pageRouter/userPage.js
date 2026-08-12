@@ -2,84 +2,124 @@ const express = require("express");
 const userPageController = require("../../controller/pageController/userPageController");
 const passport = require("passport");
 const pageAuth = require("../../middleware/pageAuth/pageAuthMiddleware");
+const optionalAuth = require("../../middleware/pageAuth/optionalAuth");
 
 const User = express.Router();
+const userAuth = pageAuth("/poeme-perfumery/login", ["user"]);
 
-// Auth Page and API
+/*
+ * =========================================================
+ * USER AUTH
+ * =========================================================
+ */
+
 User.get("/register", userPageController.registerpage);
+
 User.post("/register", userPageController.register);
+
 User.get("/verify", userPageController.verifyPage);
+
 User.post("/verify", userPageController.verify);
+
 User.get("/login", userPageController.loginPage);
+
 User.post("/login", userPageController.login);
 
-// Google Login
+/*
+ * =========================================================
+ * GOOGLE LOGIN
+ * =========================================================
+ */
+
 User.get(
   "/google",
   passport.authenticate("google", {
     scope: ["profile", "email"],
   })
 );
+
 User.get(
   "/google/callback",
   passport.authenticate("google", {
     failureRedirect: "/poeme-perfumery/login",
     session: true,
   }),
-
   userPageController.googleLogin
 );
 
-// Logout
+/*
+ * =========================================================
+ * USER LOGOUT
+ * =========================================================
+ */
+
+User.get("/logout", userAuth, userPageController.logout);
+
+/*
+ * =========================================================
+ * LANDING PAGE
+ * =========================================================
+ *
+ * Landing page can be accessed without login.
+ */
+
+User.get("/home", optionalAuth, userPageController.landingPage);
+
+/*
+ * =========================================================
+ * PERFUMES
+ * =========================================================
+ */
+
+User.get("/perfumes", userAuth, userPageController.perfumes);
+User.get("/product/:slug", optionalAuth, userPageController.viewProductPage);
+
+/*
+ * =========================================================
+ * CART
+ * =========================================================
+ */
+
+User.get("/cart", userAuth, userPageController.addToCartPage);
+
+User.get("/addToCart/:id", userAuth, userPageController.addToCart);
+
 User.get(
-  "/logout",
-  pageAuth("/poeme-perfumery/login"),
-  userPageController.logout
+  "/cart/increase/:id",
+  userAuth,
+  userPageController.increaseCartQuantity
 );
 
-/* ====================================================================================== */
-// Landing Page
-User.get("/home", userPageController.landingPage);
-
-// Perfumes Page
 User.get(
-  "/perfumes",
-  pageAuth("/poeme-perfumery/login"),
-  userPageController.perfumes
+  "/cart/decrease/:id",
+  userAuth,
+  userPageController.decreaseCartQuantity
 );
 
-// Add To Cart
-User.get(
-  "/cart",
-  pageAuth("/poeme-perfumery/login"),
-  userPageController.addToCartPage
-);
+User.get("/cart/remove/:id", userAuth, userPageController.removeCartItem);
 
-User.get(
-  "/addToCart/:id",
-  pageAuth("/poeme-perfumery/login"),
-  userPageController.addToCart
-);
+/*
+ * =========================================================
+ * ORDERS
+ * =========================================================
+ */
 
-// Orders
-User.get(
-  "/orders",
-  pageAuth("/poeme-perfumery/login"),
-  userPageController.orders
-);
+User.get("/orders", userAuth, userPageController.orders);
 
-// Settings
-User.get(
-  "/settings",
-  pageAuth("/poeme-perfumery/login"),
-  userPageController.settings
-);
+/*
+ * =========================================================
+ * SETTINGS
+ * =========================================================
+ */
 
-// Contact Us Chat Support
-User.get(
-  "/chat",
-  pageAuth("/poeme-perfumery/login"),
-  userPageController.chatSupport
-);
+User.get("/settings", userAuth, userPageController.settings);
+
+/*
+ * =========================================================
+ * CUSTOMER SUPPORT CHAT
+ * =========================================================
+ */
+
+User.get("/chat", userAuth, userPageController.chatSupport);
 
 module.exports = User;

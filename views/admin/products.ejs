@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Products | POÈME Owner Console</title>
+
+    <link
+        rel="stylesheet"
+        href="/css/output.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+</head>
+
+<body class="min-h-screen bg-[#0B1120] text-white">
+
+    <!-- SIDEBAR -->
+    <%- include("partials/sidebar.ejs") %>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="ml-72 min-h-screen">
+
+        <!-- NAVBAR -->
+        <%- include("partials/navbar.ejs") %>
+
+
+        <section class="p-6 lg:p-8">
+
+            <!-- ========================================= -->
+            <!-- HEADER -->
+            <!-- ========================================= -->
+
+            <div class="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-6 mb-8">
+
+                <div>
+
+                    <div class="flex items-center gap-3 mb-4">
+
+                        <div
+                            class="w-11 h-11 rounded-2xl bg-[#B68D40]/10 border border-[#B68D40]/20 flex items-center justify-center text-[#B68D40]"
+                        >
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                        </div>
+
+                        <span
+                            class="text-xs uppercase tracking-[0.28em] text-[#B68D40]"
+                        >
+                            Product Management
+                        </span>
+
+                    </div>
+
+
+                    <h1 class="text-3xl lg:text-4xl font-semibold tracking-tight">
+                        All Products
+                    </h1>
+
+
+                    <p class="mt-3 text-sm lg:text-base text-stone-400 max-w-2xl">
+                        Review and manage every product submitted by your sellers.
+                        Approve or reject products individually before they become available.
+                    </p>
+
+                </div>
+
+
+                <!-- TOTAL PRODUCTS -->
+
+                <div
+                    class="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#111B38] px-5 py-4"
+                >
+
+                    <div
+                        class="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center text-[#B68D40]"
+                    >
+                        <i class="fa-solid fa-cubes"></i>
+                    </div>
+
+                    <div>
+
+                        <p class="text-xs uppercase tracking-wider text-stone-500">
+                            Total Products
+                        </p>
+
+                        <p class="text-2xl font-semibold mt-1">
+                            <%= stats?.total || 0 %>
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ========================================= -->
+            <!-- STATUS SUMMARY -->
+            <!-- ========================================= -->
+
+            <div
+                class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+            >
+
+                <!-- TOTAL -->
+
+                <div
+                    class="rounded-2xl border border-white/10 bg-[#111B38] p-5"
+                >
+
+                    <div class="flex items-center justify-between">
+
+                        <div>
+
+                            <p class="text-xs uppercase tracking-wider text-stone-500">
+                                Total
+                            </p>
+
+                            <p class="text-2xl font-semibold mt-2">
+                                <%= stats?.total || 0 %>
+                            </p>
+
+                        </div>
+
+                        <div
+                            class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-stone-400"
+                        >
+                            <i class="fa-solid fa-box"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PENDING -->
+
+                <div
+                    class="rounded-2xl border border-amber-400/10 bg-amber-400/[0.04] p-5"
+                >
+
+                    <div class="flex items-center justify-between">
+
+                        <div>
+
+                            <p class="text-xs uppercase tracking-wider text-amber-300/60">
+                                Pending Review
+                            </p>
+
+                            <p class="text-2xl font-semibold text-amber-300 mt-2">
+                                <%= stats?.pending || 0 %>
+                            </p>
+
+                        </div>
+
+                        <div
+                            class="w-10 h-10 rounded-xl bg-amber-400/10 flex items-center justify-center text-amber-300"
+                        >
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- APPROVED -->
+
+                <div
+                    class="rounded-2xl border border-emerald-400/10 bg-emerald-400/[0.04] p-5"
+                >
+
+                    <div class="flex items-center justify-between">
+
+                        <div>
+
+                            <p class="text-xs uppercase tracking-wider text-emerald-300/60">
+                                Approved
+                            </p>
+
+                            <p class="text-2xl font-semibold text-emerald-300 mt-2">
+                                <%= stats?.approved || 0 %>
+                            </p>
+
+                        </div>
+
+                        <div
+                            class="w-10 h-10 rounded-xl bg-emerald-400/10 flex items-center justify-center text-emerald-300"
+                        >
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- REJECTED -->
+
+                <div
+                    class="rounded-2xl border border-red-400/10 bg-red-400/[0.04] p-5"
+                >
+
+                    <div class="flex items-center justify-between">
+
+                        <div>
+
+                            <p class="text-xs uppercase tracking-wider text-red-300/60">
+                                Rejected
+                            </p>
+
+                            <p class="text-2xl font-semibold text-red-300 mt-2">
+                                <%= stats?.rejected || 0 %>
+                            </p>
+
+                        </div>
+
+                        <div
+                            class="w-10 h-10 rounded-xl bg-red-400/10 flex items-center justify-center text-red-300"
+                        >
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ========================================= -->
+            <!-- SEARCH + FILTER -->
+            <!-- ========================================= -->
+
+            <div
+                class="rounded-2xl border border-white/10 bg-[#111B38] p-4 lg:p-5 mb-7"
+            >
+
+                <form
+                    method="GET"
+                    action="/poeme-perfumery/admin/products"
+                    class="flex flex-col xl:flex-row gap-3"
+                >
+
+                    <!-- SEARCH -->
+
+                    <div class="relative flex-1">
+
+                        <i
+                            class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-stone-500"
+                        ></i>
+
+                        <input
+                            type="text"
+                            name="search"
+                            value="<%= search || '' %>"
+                            placeholder="Search product, SKU, brand or seller..."
+                            class="w-full h-12 rounded-xl border border-white/10 bg-[#0B1120] pl-11 pr-4 text-sm text-white placeholder:text-stone-600 outline-none focus:border-[#B68D40] transition"
+                        >
+
+                    </div>
+
+
+                    <!-- APPROVAL -->
+
+                    <select
+                        name="status"
+                        class="h-12 xl:w-48 rounded-xl border border-white/10 bg-[#0B1120] px-4 text-sm text-white outline-none focus:border-[#B68D40]"
+                    >
+
+                        <option value="">
+                            All Status
+                        </option>
+
+                        <option
+                            value="pending"
+                            <%= status === "pending" ? "selected" : "" %>
+                        >
+                            Pending
+                        </option>
+
+                        <option
+                            value="approved"
+                            <%= status === "approved" ? "selected" : "" %>
+                        >
+                            Approved
+                        </option>
+
+                        <option
+                            value="rejected"
+                            <%= status === "rejected" ? "selected" : "" %>
+                        >
+                            Rejected
+                        </option>
+
+                    </select>
+
+
+                    <!-- STOCK -->
+
+                    <select
+                        name="stock"
+                        class="h-12 xl:w-48 rounded-xl border border-white/10 bg-[#0B1120] px-4 text-sm text-white outline-none focus:border-[#B68D40]"
+                    >
+
+                        <option value="">
+                            All Stock
+                        </option>
+
+                        <option
+                            value="in_stock"
+                            <%= stock === "in_stock" ? "selected" : "" %>
+                        >
+                            In Stock
+                        </option>
+
+                        <option
+                            value="out_of_stock"
+                            <%= stock === "out_of_stock" ? "selected" : "" %>
+                        >
+                            Out of Stock
+                        </option>
+
+                    </select>
+
+
+                    <!-- FILTER -->
+
+                    <button
+                        type="submit"
+                        class="h-12 px-6 rounded-xl bg-[#B68D40] text-[#0B1120] font-semibold hover:bg-[#c99f53] transition"
+                    >
+                        <i class="fa-solid fa-filter mr-2"></i>
+                        Apply
+                    </button>
+
+
+                    <!-- CLEAR -->
+
+                    <a
+                        href="/poeme-perfumery/admin/products"
+                        class="h-12 w-12 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-stone-400 hover:text-white hover:bg-white/10 transition"
+                        title="Clear filters"
+                    >
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </a>
+
+                </form>
+
+            </div>
+
+
+            <!-- ========================================= -->
+            <!-- RESULT HEADER -->
+            <!-- ========================================= -->
+
+            <div class="flex items-center justify-between mb-5">
+
+                <div>
+
+                    <h2 class="text-lg font-semibold">
+                        Seller Products
+                    </h2>
+
+                    <p class="text-sm text-stone-500 mt-1">
+                        Review each product individually.
+                    </p>
+
+                </div>
+
+
+                <span
+                    class="text-sm text-stone-500"
+                >
+                    <%= products?.length || 0 %> products shown
+                </span>
+
+            </div>
+
+
+            <!-- ========================================= -->
+            <!-- PRODUCTS -->
+            <!-- ========================================= -->
+
+            <% if (!products || products.length === 0) { %>
+
+                <!-- EMPTY -->
+
+                <div
+                    class="rounded-[26px] border border-white/10 bg-[#111B38] px-6 py-24 text-center"
+                >
+
+                    <div
+                        class="mx-auto w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center text-stone-600 text-3xl"
+                    >
+                        <i class="fa-solid fa-box-open"></i>
+                    </div>
+
+                    <h3 class="mt-6 text-xl font-semibold">
+                        No products found
+                    </h3>
+
+                    <p class="mt-2 text-sm text-stone-500">
+                        Try changing your search or filters.
+                    </p>
+
+                </div>
+
+            <% } else { %>
+
+
+                <!-- PRODUCT GRID -->
+
+                <div
+                    class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5"
+                >
+
+                    <% products.forEach(product => { %>
+
+                        <article
+                            class="group rounded-[24px] border border-white/10 bg-[#111B38] overflow-hidden hover:border-[#B68D40]/30 hover:shadow-2xl hover:shadow-black/20 transition duration-300"
+                        >
+
+                            <!-- IMAGE -->
+
+                            <div
+                                class="relative h-64 bg-[#0B1120] overflow-hidden"
+                            >
+
+                                <% if (product.images && product.images.length > 0) { %>
+
+                                    <img
+                                        src="<%= product.images[0].url %>"
+                                        alt="<%= product.productName %>"
+                                        class="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                                    >
+
+                                <% } else { %>
+
+                                    <div
+                                        class="w-full h-full flex items-center justify-center text-stone-700 text-4xl"
+                                    >
+                                        <i class="fa-solid fa-image"></i>
+                                    </div>
+
+                                <% } %>
+
+
+                                <!-- STATUS -->
+
+                                <div
+                                    class="absolute top-4 left-4"
+                                >
+
+                                    <% if (product.approvalStatus === "approved") { %>
+
+                                        <span
+                                            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#07130D]/90 border border-emerald-400/30 text-emerald-300 text-xs font-medium backdrop-blur"
+                                        >
+                                            <span
+                                                class="w-1.5 h-1.5 rounded-full bg-emerald-400"
+                                            ></span>
+
+                                            Approved
+                                        </span>
+
+                                    <% } else if (product.approvalStatus === "rejected") { %>
+
+                                        <span
+                                            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#170909]/90 border border-red-400/30 text-red-300 text-xs font-medium backdrop-blur"
+                                        >
+                                            <span
+                                                class="w-1.5 h-1.5 rounded-full bg-red-400"
+                                            ></span>
+
+                                            Rejected
+                                        </span>
+
+                                    <% } else { %>
+
+                                        <span
+                                            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#171207]/90 border border-amber-400/30 text-amber-300 text-xs font-medium backdrop-blur"
+                                        >
+                                            <span
+                                                class="w-1.5 h-1.5 rounded-full bg-amber-400"
+                                            ></span>
+
+                                            Pending Review
+                                        </span>
+
+                                    <% } %>
+
+                                </div>
+
+
+                                <!-- VIEW -->
+
+                                <a
+                                    href="/poeme-perfumery/admin/products/<%= product._id %>"
+                                    class="absolute top-4 right-4 w-10 h-10 rounded-xl bg-black/50 backdrop-blur border border-white/10 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition hover:bg-[#B68D40] hover:text-[#0B1120]"
+                                    title="View product"
+                                >
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+
+                            </div>
+
+
+                            <!-- CONTENT -->
+
+                            <div class="p-5">
+
+                                <!-- CATEGORY -->
+
+                                <div class="flex items-center justify-between gap-3 mb-3">
+
+                                    <span
+                                        class="text-[10px] uppercase tracking-[0.16em] text-[#B68D40]"
+                                    >
+                                        <%= product.category?.categoryName || "Uncategorized" %>
+                                    </span>
+
+                                    <span
+                                        class="text-[10px] text-stone-600"
+                                    >
+                                        <%= product.brand || "No Brand" %>
+                                    </span>
+
+                                </div>
+
+
+                                <!-- NAME -->
+
+                                <h3
+                                    class="font-semibold text-base text-white line-clamp-2 min-h-[48px]"
+                                    title="<%= product.productName %>"
+                                >
+                                    <%= product.productName %>
+                                </h3>
+
+
+                                <!-- SKU -->
+
+                                <div class="mt-2">
+
+                                    <span class="text-xs text-stone-600">
+                                        SKU
+                                    </span>
+
+                                    <span class="text-xs text-stone-400 ml-1">
+                                        <%= product.sku || "N/A" %>
+                                    </span>
+
+                                </div>
+
+
+                                <!-- SELLER -->
+
+                                <div
+                                    class="mt-5 pt-4 border-t border-white/5"
+                                >
+
+                                    <div class="flex items-center gap-3">
+
+                                        <div
+                                            class="w-9 h-9 rounded-xl bg-[#B68D40]/10 flex items-center justify-center text-[#B68D40] text-sm"
+                                        >
+                                            <i class="fa-solid fa-store"></i>
+                                        </div>
+
+                                        <div class="min-w-0">
+
+                                            <p class="text-xs text-stone-500">
+                                                Seller
+                                            </p>
+
+                                            <p
+                                                class="text-sm text-stone-200 truncate"
+                                                title="<%= product.seller?.name || '' %>"
+                                            >
+                                                <%= product.seller?.name || "Unknown Seller" %>
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <!-- PRICE + STOCK -->
+
+                                <div
+                                    class="grid grid-cols-2 gap-3 mt-4"
+                                >
+
+                                    <div
+                                        class="rounded-xl bg-[#0B1120] border border-white/5 p-3"
+                                    >
+
+                                        <p class="text-[10px] uppercase tracking-wider text-stone-600">
+                                            Price
+                                        </p>
+
+                                        <p class="text-lg font-semibold text-white mt-1">
+                                            ₹<%= Number(product.price || 0).toLocaleString("en-IN") %>
+                                        </p>
+
+                                    </div>
+
+
+                                    <div
+                                        class="rounded-xl bg-[#0B1120] border border-white/5 p-3"
+                                    >
+
+                                        <p class="text-[10px] uppercase tracking-wider text-stone-600">
+                                            Stock
+                                        </p>
+
+                                        <p class="text-lg font-semibold text-white mt-1">
+                                            <%= product.stock || 0 %>
+                                        </p>
+
+                                        <% if (product.stockStatus === "in_stock") { %>
+
+                                            <p class="text-[10px] text-emerald-400 mt-0.5">
+                                                In stock
+                                            </p>
+
+                                        <% } else { %>
+
+                                            <p class="text-[10px] text-red-400 mt-0.5">
+                                                Out of stock
+                                            </p>
+
+                                        <% } %>
+
+                                    </div>
+
+                                </div>
+
+
+                                <!-- APPROVAL CONTROL -->
+
+                                <div class="mt-5">
+
+                                    <p
+                                        class="text-[10px] uppercase tracking-[0.15em] text-stone-600 mb-2"
+                                    >
+                                        Product Approval
+                                    </p>
+
+
+                                    <form
+                                        method="POST"
+                                        action="/poeme-perfumery/admin/products/<%= product._id %>/status"
+                                    >
+
+                                        <div class="flex gap-2">
+
+                                            <select
+                                                name="approvalStatus"
+                                                onchange="this.form.submit()"
+                                                class="flex-1 h-11 rounded-xl border border-white/10 bg-[#0B1120] px-3 text-sm text-white outline-none focus:border-[#B68D40] cursor-pointer"
+                                            >
+
+                                                <option
+                                                    value="pending"
+                                                    <%= product.approvalStatus === "pending" ? "selected" : "" %>
+                                                >
+                                                    Pending
+                                                </option>
+
+                                                <option
+                                                    value="approved"
+                                                    <%= product.approvalStatus === "approved" ? "selected" : "" %>
+                                                >
+                                                    Approved
+                                                </option>
+
+                                                <option
+                                                    value="rejected"
+                                                    <%= product.approvalStatus === "rejected" ? "selected" : "" %>
+                                                >
+                                                    Rejected
+                                                </option>
+
+                                            </select>
+
+
+                                            <a
+                                                href="/poeme-perfumery/admin/products/<%= product._id %>"
+                                                class="w-11 h-11 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-stone-400 hover:text-white hover:bg-white/10 transition"
+                                                title="View details"
+                                            >
+                                                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                                            </a>
+
+                                        </div>
+
+                                    </form>
+
+                                </div>
+
+
+                                <!-- UPDATED -->
+
+                                <div
+                                    class="flex items-center justify-between mt-4 pt-4 border-t border-white/5"
+                                >
+
+                                    <span class="text-[11px] text-stone-600">
+                                        Updated
+                                    </span>
+
+                                    <span class="text-[11px] text-stone-400">
+
+                                        <%= product.updatedAt
+                                            ? new Date(product.updatedAt).toLocaleDateString(
+                                                "en-IN",
+                                                {
+                                                    day: "2-digit",
+                                                    month: "short",
+                                                    year: "numeric"
+                                                }
+                                            )
+                                            : "N/A"
+                                        %>
+
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </article>
+
+                    <% }) %>
+
+                </div>
+
+
+                <!-- ========================================= -->
+                <!-- PAGINATION -->
+                <!-- ========================================= -->
+
+                <% if (pagination && pagination.totalPages > 1) { %>
+
+                    <div
+                        class="mt-8 rounded-2xl border border-white/10 bg-[#111B38] px-5 py-4 flex flex-col sm:flex-row items-center justify-between gap-4"
+                    >
+
+                        <p class="text-sm text-stone-500">
+
+                            Showing
+
+                            <span class="text-stone-300">
+                                <%= pagination.start %>
+                            </span>
+
+                            -
+
+                            <span class="text-stone-300">
+                                <%= pagination.end %>
+                            </span>
+
+                            of
+
+                            <span class="text-stone-300">
+                                <%= pagination.total %>
+                            </span>
+
+                        </p>
+
+
+                        <div class="flex items-center gap-2">
+
+                            <% if (pagination.currentPage > 1) { %>
+
+                                <a
+                                    href="?page=<%= pagination.currentPage - 1 %>&search=<%= encodeURIComponent(search || '') %>&status=<%= status || '' %>&stock=<%= stock || '' %>"
+                                    class="w-10 h-10 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-stone-400 hover:text-white hover:bg-white/10 transition"
+                                >
+                                    <i class="fa-solid fa-chevron-left"></i>
+                                </a>
+
+                            <% } else { %>
+
+                                <span
+                                    class="w-10 h-10 rounded-xl border border-white/5 bg-white/[0.02] flex items-center justify-center text-stone-700"
+                                >
+                                    <i class="fa-solid fa-chevron-left"></i>
+                                </span>
+
+                            <% } %>
+
+
+                            <div
+                                class="h-10 min-w-10 px-3 rounded-xl bg-[#B68D40] text-[#0B1120] flex items-center justify-center text-sm font-semibold"
+                            >
+                                <%= pagination.currentPage %>
+                            </div>
+
+
+                            <% if (pagination.currentPage < pagination.totalPages) { %>
+
+                                <a
+                                    href="?page=<%= pagination.currentPage + 1 %>&search=<%= encodeURIComponent(search || '') %>&status=<%= status || '' %>&stock=<%= stock || '' %>"
+                                    class="w-10 h-10 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-stone-400 hover:text-white hover:bg-white/10 transition"
+                                >
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </a>
+
+                            <% } else { %>
+
+                                <span
+                                    class="w-10 h-10 rounded-xl border border-white/5 bg-white/[0.02] flex items-center justify-center text-stone-700"
+                                >
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </span>
+
+                            <% } %>
+
+                        </div>
+
+                    </div>
+
+                <% } %>
+
+            <% } %>
+
+        </section>
+
+    </main>
+
+</body>
+</html>

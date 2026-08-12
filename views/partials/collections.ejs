@@ -150,7 +150,7 @@
                   </p>
 
                   <h3 class="mt-1 text-4xl font-bold text-[#B68D40]">
-                    $<%= product.price.toLocaleString("en-US") %>
+                    ₹ <%= Number(product.price || 0).toLocaleString("en-IN") %>
                   </h3>
                 </div>
               </div>

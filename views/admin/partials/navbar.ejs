@@ -1,0 +1,54 @@
+<header
+  class="sticky top-0 z-40 h-20 bg-[#0B1120]/95 backdrop-blur-xl border-b border-white/10 px-8 flex items-center justify-between"
+>
+  <!-- LEFT -->
+
+  <div>
+    <p class="text-[10px] uppercase tracking-[0.3em] text-stone-500">
+      Owner Control Center
+    </p>
+
+    <h2 class="text-lg font-semibold text-white mt-1">
+      <%= pageTitle || "Dashboard" %>
+    </h2>
+  </div>
+
+  <!-- RIGHT -->
+
+  <div class="flex items-center gap-6">
+    <!-- SEARCH -->
+
+    <div class="hidden lg:block relative">
+      <input
+        type="text"
+        placeholder="Search anything..."
+        class="w-72 h-11 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder:text-stone-500 pl-11 pr-4 outline-none focus:border-[#B68D40]/50 focus:ring-4 focus:ring-[#B68D40]/10"
+      />
+
+      <i
+        class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-stone-500"
+      ></i>
+    </div>
+
+    <!-- ADMIN -->
+
+    <div class="flex items-center gap-3">
+      <div
+        class="w-10 h-10 rounded-full bg-[#B68D40]/15 border border-[#B68D40]/20 text-[#B68D40] flex items-center justify-center font-semibold"
+      >
+        <%= admin?.name
+          ? admin.name.charAt(0).toUpperCase()
+          : "A"
+        %>
+      </div>
+
+      <div class="hidden sm:block">
+        <p class="text-sm font-semibold text-white">
+          <%= admin?.name || "Administrator" %>
+        </p>
+
+        <p class="text-xs text-stone-500">Owner</p>
+      </div>
+    </div>
+  </div>
+</header>

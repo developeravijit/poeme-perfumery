@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>
+    Orders | POÈME Perfumery
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="/css/output.css"
+  />
+
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+  />
+
+</head>
+
+
+<body class="min-h-screen bg-[#0B1120] text-white">
+
+  <%- include("partials/sidebar.ejs") %>
+
+
+  <main class="ml-72 min-h-screen bg-[#0B1120]">
+
+
+    <%- include("partials/navbar.ejs") %>
+
+
+    <section class="p-8">
+
+
+      <!-- ================================================= -->
+      <!-- PAGE HEADER -->
+      <!-- ================================================= -->
+
+      <div
+        class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5"
+      >
+
+        <div>
+
+          <p
+            class="text-xs uppercase tracking-[0.3em] text-[#B68D40]"
+          >
+            Store Management
+          </p>
+
+          <h1
+            class="mt-2 text-3xl lg:text-4xl font-semibold"
+          >
+            Orders
+          </h1>
+
+          <p
+            class="mt-3 text-stone-500 max-w-2xl"
+          >
+            Monitor customer orders and track the current
+            fulfillment stage across the entire store.
+          </p>
+
+        </div>
+
+
+        <div
+          class="flex items-center gap-3"
+        >
+
+          <a
+            href="/poeme-perfumery/admin/dashboard"
+            class="px-5 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition"
+          >
+
+            <i
+              class="fa-solid fa-arrow-left mr-2"
+            ></i>
+
+            Dashboard
+
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <!-- ================================================= -->
+      <!-- FLASH SUCCESS -->
+      <!-- ================================================= -->
+
+      <% if (success && success.length > 0) { %>
+
+        <div
+          class="mt-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-5 py-4 text-emerald-300"
+        >
+
+          <i
+            class="fa-solid fa-circle-check mr-2"
+          ></i>
+
+          <%= success[0] %>
+
+        </div>
+
+      <% } %>
+
+
+      <!-- ================================================= -->
+      <!-- FLASH ERROR -->
+      <!-- ================================================= -->
+
+      <% if (error && error.length > 0) { %>
+
+        <div
+          class="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-red-300"
+        >
+
+          <i
+            class="fa-solid fa-circle-exclamation mr-2"
+          ></i>
+
+          <%= error[0] %>
+
+        </div>
+
+      <% } %>
+
+
+      <!-- ================================================= -->
+      <!-- STATISTICS -->
+      <!-- ================================================= -->
+
+      <div
+        class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-7"
+      >
+
+
+        <!-- TOTAL ORDERS -->
+
+        <div
+          class="rounded-2xl bg-[#111B38] border border-white/10 p-5"
+        >
+
+          <div
+            class="flex items-center justify-between"
+          >
+
+            <div>
+
+              <p
+                class="text-xs text-stone-500"
+              >
+                Total Orders
+              </p>
+
+              <p
+                class="mt-2 text-3xl font-semibold"
+              >
+                <%= statistics.total %>
+              </p>
+
+            </div>
+
+
+            <div
+              class="w-11 h-11 rounded-xl bg-[#B68D40]/10 text-[#B68D40] flex items-center justify-center"
+            >
+
+              <i
+                class="fa-solid fa-cart-shopping"
+              ></i>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- PENDING -->
+
+        <div
+          class="rounded-2xl bg-[#111B38] border border-white/10 p-5"
+        >
+
+          <div
+            class="flex items-center justify-between"
+          >
+
+            <div>
+
+              <p
+                class="text-xs text-stone-500"
+              >
+                Pending
+              </p>
+
+              <p
+                class="mt-2 text-3xl font-semibold text-amber-400"
+              >
+                <%= statistics.pending %>
+              </p>
+
+            </div>
+
+
+            <div
+              class="w-11 h-11 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center"
+            >
+
+              <i
+                class="fa-solid fa-clock"
+              ></i>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- PROCESSING -->
+
+        <div
+          class="rounded-2xl bg-[#111B38] border border-white/10 p-5"
+        >
+
+          <div
+            class="flex items-center justify-between"
+          >
+
+            <div>
+
+              <p
+                class="text-xs text-stone-500"
+              >
+                Processing
+              </p>
+
+              <p
+                class="mt-2 text-3xl font-semibold text-indigo-400"
+              >
+                <%= statistics.processing %>
+              </p>
+
+            </div>
+
+
+            <div
+              class="w-11 h-11 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center"
+            >
+
+              <i
+                class="fa-solid fa-box"
+              ></i>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- DELIVERED -->
+
+        <div
+          class="rounded-2xl bg-[#111B38] border border-white/10 p-5"
+        >
+
+          <div
+            class="flex items-center justify-between"
+          >
+
+            <div>
+
+              <p
+                class="text-xs text-stone-500"
+              >
+                Delivered
+              </p>
+
+              <p
+                class="mt-2 text-3xl font-semibold text-emerald-400"
+              >
+                <%= statistics.delivered %>
+              </p>
+
+            </div>
+
+
+            <div
+              class="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center"
+            >
+
+              <i
+                class="fa-solid fa-circle-check"
+              ></i>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- ================================================= -->
+      <!-- FILTERS -->
+      <!-- ================================================= -->
+
+      <div
+        class="mt-6 rounded-3xl bg-[#111B38] border border-white/10 p-5"
+      >
+
+        <form
+          method="GET"
+          action="/poeme-perfumery/admin/orders"
+          class="grid grid-cols-1 lg:grid-cols-[1fr_220px_220px_auto] gap-3"
+        >
+
+
+          <!-- SEARCH -->
+
+          <div
+            class="relative"
+          >
+
+            <i
+              class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-stone-500"
+            ></i>
+
+            <input
+              type="text"
+              name="search"
+              value="<%= search %>"
+              placeholder="Search customer, product or order ID..."
+              class="w-full h-12 rounded-xl bg-white/[0.04] border border-white/10 pl-11 pr-4 text-white placeholder:text-stone-600 outline-none focus:border-[#B68D40]/50"
+            />
+
+          </div>
+
+
+          <!-- ORDER STATUS -->
+
+          <select
+            name="status"
+            class="h-12 rounded-xl bg-[#0B1120] border border-white/10 px-4 text-white outline-none focus:border-[#B68D40]/50"
+          >
+
+            <option value="">
+              All Order Stages
+            </option>
+
+            <option
+              value="pending"
+              <%= status === "pending" ? "selected" : "" %>
+            >
+              Pending
+            </option>
+
+            <option
+              value="confirmed"
+              <%= status === "confirmed" ? "selected" : "" %>
+            >
+              Confirmed
+            </option>
+
+            <option
+              value="processing"
+              <%= status === "processing" ? "selected" : "" %>
+            >
+              Processing
+            </option>
+
+            <option
+              value="shipped"
+              <%= status === "shipped" ? "selected" : "" %>
+            >
+              Shipped
+            </option>
+
+            <option
+              value="delivered"
+              <%= status === "delivered" ? "selected" : "" %>
+            >
+              Delivered
+            </option>
+
+            <option
+              value="cancelled"
+              <%= status === "cancelled" ? "selected" : "" %>
+            >
+              Cancelled
+            </option>
+
+          </select>
+
+
+          <!-- PAYMENT -->
+
+          <select
+            name="paymentStatus"
+            class="h-12 rounded-xl bg-[#0B1120] border border-white/10 px-4 text-white outline-none focus:border-[#B68D40]/50"
+          >
+
+            <option value="">
+              All Payment Status
+            </option>
+
+            <option
+              value="pending"
+              <%= paymentStatus === "pending" ? "selected" : "" %>
+            >
+              Pending
+            </option>
+
+            <option
+              value="paid"
+              <%= paymentStatus === "paid" ? "selected" : "" %>
+            >
+              Paid
+            </option>
+
+            <option
+              value="failed"
+              <%= paymentStatus === "failed" ? "selected" : "" %>
+            >
+              Failed
+            </option>
+
+            <option
+              value="refunded"
+              <%= paymentStatus === "refunded" ? "selected" : "" %>
+            >
+              Refunded
+            </option>
+
+          </select>
+
+
+          <!-- FILTER -->
+
+          <button
+            type="submit"
+            class="h-12 px-6 rounded-xl bg-[#B68D40] text-[#0B1120] font-semibold hover:bg-[#c99f53] transition"
+          >
+
+            <i
+              class="fa-solid fa-filter mr-2"
+            ></i>
+
+            Filter
+
+          </button>
+
+        </form>
+
+      </div>
+
+
+      <!-- ================================================= -->
+      <!-- ORDERS -->
+      <!-- ================================================= -->
+
+      <div
+        class="mt-6 rounded-3xl bg-[#111B38] border border-white/10 overflow-hidden"
+      >
+
+
+        <!-- TABLE HEADER -->
+
+        <div
+          class="p-7 border-b border-white/10 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
+        >
+
+          <div>
+
+            <h2
+              class="text-xl font-semibold"
+            >
+              Customer Orders
+            </h2>
+
+            <p
+              class="text-sm text-stone-500 mt-1"
+            >
+              Showing
+              <%= pagination.start %>
+              -
+              <%= pagination.end %>
+              of
+              <%= pagination.total %>
+              orders
+            </p>
+
+          </div>
+
+
+          <div
+            class="flex items-center gap-2 text-sm text-stone-500"
+          >
+
+            <i
+              class="fa-solid fa-eye"
+            ></i>
+
+            View only
+
+          </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- TABLE -->
+        <!-- ================================================= -->
+
+        <div
+          class="overflow-x-auto"
+        >
+
+          <table
+            class="w-full min-w-[1250px]"
+          >
+
+            <thead>
+
+              <tr
+                class="text-left text-xs uppercase tracking-wider text-stone-500 border-b border-white/10"
+              >
+
+                <th
+                  class="px-7 py-4"
+                >
+                  Order
+                </th>
+
+                <th
+                  class="px-7 py-4"
+                >
+                  Customer
+                </th>
+
+                <th
+                  class="px-7 py-4"
+                >
+                  Products Ordered
+                </th>
+
+                <th
+                  class="px-7 py-4"
+                >
+                  Amount
+                </th>
+
+                <th
+                  class="px-7 py-4"
+                >
+                  Payment
+                </th>
+
+                <th
+                  class="px-7 py-4"
+                >
+                  Current Stage
+                </th>
+
+                <th
+                  class="px-7 py-4"
+                >
+                  Ordered On
+                </th>
+
+              </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+              <% if (orders && orders.length > 0) { %>
+
+
+                <% orders.forEach(order => { %>
+
+
+                  <tr
+                    class="border-b border-white/5 hover:bg-white/[0.02] transition align-top"
+                  >
+
+
+                    <!-- ================================= -->
+                    <!-- ORDER -->
+                    <!-- ================================= -->
+
+                    <td
+                      class="px-7 py-6"
+                    >
+
+                      <p
+                        class="font-semibold text-white"
+                      >
+                        #<%= order._id.toString().slice(-8).toUpperCase() %>
+                      </p>
+
+                      <p
+                        class="text-xs text-stone-600 mt-1"
+                      >
+                        <%= order._id %>
+                      </p>
+
+                    </td>
+
+
+                    <!-- ================================= -->
+                    <!-- CUSTOMER -->
+                    <!-- ================================= -->
+
+                    <td
+                      class="px-7 py-6"
+                    >
+
+                      <div
+                        class="flex items-start gap-3"
+                      >
+
+                        <div
+                          class="w-10 h-10 rounded-xl bg-[#B68D40]/10 text-[#B68D40] flex items-center justify-center flex-shrink-0"
+                        >
+
+                          <i
+                            class="fa-solid fa-user"
+                          ></i>
+
+                        </div>
+
+
+                        <div>
+
+                          <p
+                            class="font-semibold text-white"
+                          >
+                            <%= order.customer?.name || "Unknown Customer" %>
+                          </p>
+
+                          <p
+                            class="text-xs text-stone-500 mt-1"
+                          >
+                            <%= order.customer?.email || "No email" %>
+                          </p>
+
+                          <% if (order.customer?.phone) { %>
+
+                            <p
+                              class="text-xs text-stone-600 mt-1"
+                            >
+                              <%= order.customer.phone %>
+                            </p>
+
+                          <% } %>
+
+                        </div>
+
+                      </div>
+
+                    </td>
+
+
+                    <!-- ================================= -->
+                    <!-- PRODUCTS -->
+                    <!-- ================================= -->
+
+                    <td
+                      class="px-7 py-6"
+                    >
+
+                      <% if (
+                        order.items &&
+                        order.items.length > 0
+                      ) { %>
+
+
+                        <div
+                          class="space-y-3"
+                        >
+
+
+                          <% order.items.forEach(item => { %>
+
+
+                            <div
+                              class="flex items-center gap-3"
+                            >
+
+
+                              <!-- PRODUCT IMAGE -->
+
+                              <% if (item.image) { %>
+
+                                <img
+                                  src="<%= item.image %>"
+                                  alt="<%= item.productName %>"
+                                  class="w-11 h-11 rounded-xl object-cover border border-white/10"
+                                />
+
+                              <% } else { %>
+
+                                <div
+                                  class="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center text-stone-600"
+                                >
+
+                                  <i
+                                    class="fa-solid fa-box"
+                                  ></i>
+
+                                </div>
+
+                              <% } %>
+
+
+                              <!-- PRODUCT INFO -->
+
+                              <div>
+
+                                <p
+                                  class="text-sm font-medium text-white"
+                                >
+                                  <%= item.productName %>
+                                </p>
+
+                                <p
+                                  class="text-xs text-stone-500 mt-1"
+                                >
+                                  Qty:
+                                  <%= item.quantity %>
+                                  ×
+                                  ₹<%= Number(
+                                    item.price || 0
+                                  ).toLocaleString("en-IN") %>
+                                </p>
+
+                              </div>
+
+                            </div>
+
+
+                          <% }) %>
+
+
+                        </div>
+
+
+                      <% } else { %>
+
+                        <span
+                          class="text-sm text-stone-600"
+                        >
+                          No products
+                        </span>
+
+                      <% } %>
+
+                    </td>
+
+
+                    <!-- ================================= -->
+                    <!-- AMOUNT -->
+                    <!-- ================================= -->
+
+                    <td
+                      class="px-7 py-6"
+                    >
+
+                      <p
+                        class="text-lg font-semibold text-[#B68D40]"
+                      >
+                        ₹<%= Number(
+                          order.total || 0
+                        ).toLocaleString("en-IN") %>
+                      </p>
+
+                      <p
+                        class="text-xs text-stone-600 mt-1"
+                      >
+                        Subtotal:
+                        ₹<%= Number(
+                          order.subtotal || 0
+                        ).toLocaleString("en-IN") %>
+                      </p>
+
+                      <% if (order.shipping) { %>
+
+                        <p
+                          class="text-xs text-stone-600 mt-1"
+                        >
+                          Shipping:
+                          ₹<%= Number(
+                            order.shipping
+                          ).toLocaleString("en-IN") %>
+                        </p>
+
+                      <% } %>
+
+                    </td>
+
+
+                    <!-- ================================= -->
+                    <!-- PAYMENT -->
+                    <!-- ================================= -->
+
+                    <td
+                      class="px-7 py-6"
+                    >
+
+                      <% if (
+                        order.paymentStatus === "paid"
+                      ) { %>
+
+                        <span
+                          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs bg-emerald-500/10 text-emerald-400"
+                        >
+
+                          <i
+                            class="fa-solid fa-circle-check"
+                          ></i>
+
+                          Paid
+
+                        </span>
+
+                      <% } else if (
+                        order.paymentStatus === "failed"
+                      ) { %>
+
+                        <span
+                          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs bg-red-500/10 text-red-400"
+                        >
+
+                          <i
+                            class="fa-solid fa-circle-xmark"
+                          ></i>
+
+                          Failed
+
+                        </span>
+
+                      <% } else if (
+                        order.paymentStatus === "refunded"
+                      ) { %>
+
+                        <span
+                          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs bg-purple-500/10 text-purple-400"
+                        >
+
+                          <i
+                            class="fa-solid fa-rotate-left"
+                          ></i>
+
+                          Refunded
+
+                        </span>
+
+                      <% } else { %>
+
+                        <span
+                          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs bg-amber-500/10 text-amber-400"
+                        >
+
+                          <i
+                            class="fa-solid fa-clock"
+                          ></i>
+
+                          Pending
+
+                        </span>
+
+                      <% } %>
+
+
+                      <p
+                        class="text-xs text-stone-600 mt-2 capitalize"
+                      >
+
+                        <%= order.paymentMethod || "-" %>
+
+                      </p>
+
+                    </td>
+
+
+                    <!-- ================================= -->
+                    <!-- CURRENT ORDER STAGE -->
+                    <!-- ================================= -->
+
+                    <td
+                      class="px-7 py-6"
+                    >
+
+                      <% if (
+                        order.orderStatus === "pending"
+                      ) { %>
+
+                        <div
+                          class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/10 text-amber-400"
+                        >
+
+                          <i
+                            class="fa-solid fa-clock"
+                          ></i>
+
+                          <span
+                            class="text-xs font-medium"
+                          >
+                            Pending
+                          </span>
+
+                        </div>
+
+
+                      <% } else if (
+                        order.orderStatus === "confirmed"
+                      ) { %>
+
+                        <div
+                          class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-cyan-500/10 text-cyan-400"
+                        >
+
+                          <i
+                            class="fa-solid fa-circle-check"
+                          ></i>
+
+                          <span
+                            class="text-xs font-medium"
+                          >
+                            Confirmed
+                          </span>
+
+                        </div>
+
+
+                      <% } else if (
+                        order.orderStatus === "processing"
+                      ) { %>
+
+                        <div
+                          class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-500/10 text-indigo-400"
+                        >
+
+                          <i
+                            class="fa-solid fa-box"
+                          ></i>
+
+                          <span
+                            class="text-xs font-medium"
+                          >
+                            Processing
+                          </span>
+
+                        </div>
+
+
+                      <% } else if (
+                        order.orderStatus === "shipped"
+                      ) { %>
+
+                        <div
+                          class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-500/10 text-blue-400"
+                        >
+
+                          <i
+                            class="fa-solid fa-truck"
+                          ></i>
+
+                          <span
+                            class="text-xs font-medium"
+                          >
+                            Shipped
+                          </span>
+
+                        </div>
+
+
+                      <% } else if (
+                        order.orderStatus === "delivered"
+                      ) { %>
+
+                        <div
+                          class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-400"
+                        >
+
+                          <i
+                            class="fa-solid fa-circle-check"
+                          ></i>
+
+                          <span
+                            class="text-xs font-medium"
+                          >
+                            Delivered
+                          </span>
+
+                        </div>
+
+
+                      <% } else if (
+                        order.orderStatus === "cancelled"
+                      ) { %>
+
+                        <div
+                          class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/10 text-red-400"
+                        >
+
+                          <i
+                            class="fa-solid fa-ban"
+                          ></i>
+
+                          <span
+                            class="text-xs font-medium"
+                          >
+                            Cancelled
+                          </span>
+
+                        </div>
+
+
+                      <% } else { %>
+
+                        <div
+                          class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 text-stone-400"
+                        >
+
+                          <i
+                            class="fa-solid fa-circle-question"
+                          ></i>
+
+                          <span
+                            class="text-xs font-medium"
+                          >
+                            <%= order.orderStatus || "Unknown" %>
+                          </span>
+
+                        </div>
+
+                      <% } %>
+
+
+                      <!-- PROGRESS -->
+
+                      <div
+                        class="mt-4 w-40"
+                      >
+
+                        <div
+                          class="flex items-center justify-between text-[10px] text-stone-600"
+                        >
+
+                          <span>
+                            Order Progress
+                          </span>
+
+                          <span>
+                            <%
+                              let progress = 0;
+
+                              if (
+                                order.orderStatus === "pending"
+                              ) {
+                                progress = 15;
+                              } else if (
+                                order.orderStatus === "confirmed"
+                              ) {
+                                progress = 30;
+                              } else if (
+                                order.orderStatus === "processing"
+                              ) {
+                                progress = 50;
+                              } else if (
+                                order.orderStatus === "shipped"
+                              ) {
+                                progress = 75;
+                              } else if (
+                                order.orderStatus === "delivered"
+                              ) {
+                                progress = 100;
+                              } else if (
+                                order.orderStatus === "cancelled"
+                              ) {
+                                progress = 100;
+                              }
+                            %>
+
+                            <%= progress %>%
+
+                          </span>
+
+                        </div>
+
+
+                        <div
+                          class="mt-2 h-1.5 rounded-full bg-white/5 overflow-hidden"
+                        >
+
+                          <div
+                            class="h-full bg-[#B68D40] rounded-full"
+                            style="width: <%= progress %>%"
+                          ></div>
+
+                        </div>
+
+                      </div>
+
+                    </td>
+
+
+                    <!-- ================================= -->
+                    <!-- DATE -->
+                    <!-- ================================= -->
+
+                    <td
+                      class="px-7 py-6"
+                    >
+
+                      <p
+                        class="text-sm"
+                      >
+
+                        <%= order.createdAt
+                          ? new Date(
+                              order.createdAt
+                            ).toLocaleDateString(
+                              "en-IN",
+                              {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              }
+                            )
+                          : "-"
+                        %>
+
+                      </p>
+
+
+                      <p
+                        class="text-xs text-stone-600 mt-1"
+                      >
+
+                        <%= order.createdAt
+                          ? new Date(
+                              order.createdAt
+                            ).toLocaleTimeString(
+                              "en-IN",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )
+                          : ""
+                        %>
+
+                      </p>
+
+                    </td>
+
+
+                  </tr>
+
+
+                <% }) %>
+
+
+              <% } else { %>
+
+
+                <!-- ================================= -->
+                <!-- EMPTY -->
+                <!-- ================================= -->
+
+                <tr>
+
+                  <td
+                    colspan="7"
+                    class="px-7 py-20 text-center"
+                  >
+
+                    <div
+                      class="w-16 h-16 rounded-2xl bg-white/5 mx-auto flex items-center justify-center"
+                    >
+
+                      <i
+                        class="fa-solid fa-cart-shopping text-2xl text-stone-600"
+                      ></i>
+
+                    </div>
+
+
+                    <h3
+                      class="mt-5 text-lg font-semibold"
+                    >
+                      No Orders Found
+                    </h3>
+
+
+                    <p
+                      class="mt-2 text-sm text-stone-500"
+                    >
+                      No customer orders match the selected filters.
+                    </p>
+
+                  </td>
+
+                </tr>
+
+
+              <% } %>
+
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- PAGINATION -->
+        <!-- ================================================= -->
+
+        <% if (
+          pagination.totalPages > 1
+        ) { %>
+
+
+          <div
+            class="px-7 py-5 border-t border-white/10 flex items-center justify-between"
+          >
+
+
+            <p
+              class="text-sm text-stone-500"
+            >
+
+              Page
+              <%= pagination.currentPage %>
+              of
+              <%= pagination.totalPages %>
+
+            </p>
+
+
+            <div
+              class="flex items-center gap-2"
+            >
+
+
+              <% if (
+                pagination.currentPage > 1
+              ) { %>
+
+                <a
+                  href="?page=<%= pagination.currentPage - 1 %>&search=<%= encodeURIComponent(search) %>&status=<%= status %>&paymentStatus=<%= paymentStatus %>"
+                  class="w-10 h-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center"
+                >
+
+                  <i
+                    class="fa-solid fa-chevron-left"
+                  ></i>
+
+                </a>
+
+              <% } else { %>
+
+                <span
+                  class="w-10 h-10 rounded-xl border border-white/5 bg-white/[0.02] text-stone-700 flex items-center justify-center"
+                >
+
+                  <i
+                    class="fa-solid fa-chevron-left"
+                  ></i>
+
+                </span>
+
+              <% } %>
+
+
+              <span
+                class="w-10 h-10 rounded-xl bg-[#B68D40] text-[#0B1120] font-semibold flex items-center justify-center"
+              >
+
+                <%= pagination.currentPage %>
+
+              </span>
+
+
+              <% if (
+                pagination.currentPage <
+                pagination.totalPages
+              ) { %>
+
+                <a
+                  href="?page=<%= pagination.currentPage + 1 %>&search=<%= encodeURIComponent(search) %>&status=<%= status %>&paymentStatus=<%= paymentStatus %>"
+                  class="w-10 h-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center"
+                >
+
+                  <i
+                    class="fa-solid fa-chevron-right"
+                  ></i>
+
+                </a>
+
+              <% } else { %>
+
+                <span
+                  class="w-10 h-10 rounded-xl border border-white/5 bg-white/[0.02] text-stone-700 flex items-center justify-center"
+                >
+
+                  <i
+                    class="fa-solid fa-chevron-right"
+                  ></i>
+
+                </span>
+
+              <% } %>
+
+
+            </div>
+
+          </div>
+
+
+        <% } %>
+
+
+      </div>
+
+
+    </section>
+
+  </main>
+
+</body>
+
+</html>

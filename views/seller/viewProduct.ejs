@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>View Product</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+  </head>
+
+  <body class="bg-slate-100">
+    <%- include("partials/sidebar") %>
+
+    <main class="ml-72 min-h-screen">
+      <%- include("partials/navbar") %>
+
+      <section class="p-8">
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h1 class="text-3xl font-bold text-slate-800">View Product</h1>
+            <p class="text-slate-500 mt-2">Product details and status.</p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <a
+              href="/poeme-perfumery/seller/products"
+              class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-5 py-3 rounded-xl font-semibold"
+            >
+              <i class="fa-solid fa-arrow-left mr-2"></i>
+              Back to Products
+            </a>
+
+            <a
+              href="/poeme-perfumery/seller/edit-product/<%= product._id %>"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-semibold"
+            >
+              <i class="fa-solid fa-pen mr-2"></i>
+              Edit Product
+            </a>
+          </div>
+        </div>
+
+        <% if (success && success.length) { %>
+        <div class="mb-6 bg-green-100 border border-green-300 text-green-700 rounded-xl p-4">
+          <%= success[0] %>
+        </div>
+        <% } %>
+
+        <% if (error && error.length) { %>
+        <div class="mb-6 bg-red-100 border border-red-300 text-red-700 rounded-xl p-4">
+          <%= error[0] %>
+        </div>
+        <% } %>
+
+        <div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div class="bg-white rounded-3xl shadow p-8">
+            <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <div>
+                <div class="mb-6">
+                  <h2 class="text-2xl font-bold text-slate-800"><%= product.productName %></h2>
+                  <p class="text-slate-500 mt-2"><%= product.brand || "Brand not specified" %></p>
+                </div>
+
+                <div class="space-y-4 text-slate-700">
+                  <div>
+                    <h3 class="font-semibold text-slate-800">SKU</h3>
+                    <p><%= product.sku || "-" %></p>
+                  </div>
+
+                  <div>
+                    <h3 class="font-semibold text-slate-800">Category</h3>
+                    <p><%= product.category?.categoryName || "Uncategorized" %></p>
+                  </div>
+
+                  <div>
+                    <h3 class="font-semibold text-slate-800">Price</h3>
+                    <p class="text-indigo-600 font-bold text-xl">$<%= product.price.toFixed(2) %></p>
+                  </div>
+
+                  <div>
+                    <h3 class="font-semibold text-slate-800">Stock</h3>
+                    <p><%= product.stock %> item<%= product.stock === 1 ? "" : "s" %></p>
+                  </div>
+
+                  <div>
+                    <h3 class="font-semibold text-slate-800">Status</h3>
+                    <div class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold 
+                      <%= product.stock > 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700" %>">
+                      <span><%= product.stock > 0 ? "In Stock" : "Out of Stock" %></span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 class="font-semibold text-slate-800">Approval</h3>
+                    <div class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold 
+                      <%= product.isApproved ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700" %>">
+                      <span><%= product.isApproved ? "Approved" : "Pending Approval" %></span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 class="font-semibold text-slate-800">Tags</h3>
+                    <% if (product.tags && product.tags.length) { %>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                      <% product.tags.forEach((tag) => { %>
+                      <span class="bg-slate-100 text-slate-700 rounded-full px-3 py-1 text-sm"> <%= tag %> </span>
+                      <% }) %>
+                    </div>
+                    <% } else { %>
+                    <p class="text-slate-500">No tags assigned.</p>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+
+              <div class="rounded-3xl border border-slate-200 overflow-hidden bg-slate-50">
+                <% if (product.images && product.images.length) { %>
+                <div class="grid gap-4 p-4">
+                  <% product.images.forEach((image) => { %>
+                  <img src="<%= image.url %>" alt="<%= product.productName %>" class="h-56 w-full object-cover rounded-3xl" />
+                  <% }) %>
+                </div>
+                <% } else { %>
+                <div class="flex h-full min-h-[240px] items-center justify-center p-10 text-slate-500">
+                  No images uploaded for this product.
+                </div>
+                <% } %>
+              </div>
+            </div>
+
+            <div class="mt-8 bg-slate-50 rounded-3xl p-6">
+              <h3 class="text-xl font-semibold text-slate-800 mb-4">Description</h3>
+              <p class="text-slate-700 whitespace-pre-line"><%= product.description || "No description provided." %></p>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <div class="bg-white rounded-3xl shadow p-6">
+              <h3 class="text-xl font-semibold text-slate-800 mb-4">Product Overview</h3>
+              <dl class="space-y-4 text-slate-700">
+                <div class="grid grid-cols-2 gap-4">
+                  <dt class="font-semibold">Created At</dt>
+                  <dd><%= new Date(product.createdAt).toLocaleString() %></dd>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  <dt class="font-semibold">Last Updated</dt>
+                  <dd><%= new Date(product.updatedAt).toLocaleString() %></dd>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  <dt class="font-semibold">Visibility</dt>
+                  <dd><%= product.isActive ? "Active" : "Inactive" %></dd>
+                </div>
+              </dl>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow p-6">
+              <h3 class="text-xl font-semibold text-slate-800 mb-4">Quick Actions</h3>
+              <div class="grid gap-3">
+                <a
+                  href="/poeme-perfumery/seller/edit-product/<%= product._id %>"
+                  class="block rounded-2xl bg-indigo-600 text-white text-center py-3 font-semibold hover:bg-indigo-700"
+                >
+                  Edit Product
+                </a>
+                <a
+                  href="/poeme-perfumery/seller/products"
+                  class="block rounded-2xl bg-slate-200 text-slate-800 text-center py-3 font-semibold hover:bg-slate-300"
+                >
+                  Back to Product List
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

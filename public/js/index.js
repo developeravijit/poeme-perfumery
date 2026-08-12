@@ -24,6 +24,30 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ===========================
+      Mobile Menu
+  =========================== */
+
+  const menuBtn = document.getElementById("menuBtn");
+  const mobileMenu = document.getElementById("mobileMenu");
+
+  if (menuBtn && mobileMenu) {
+    menuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      mobileMenu.classList.toggle("hidden");
+    });
+
+    document.addEventListener("click", () => {
+      if (!mobileMenu.classList.contains("hidden")) {
+        mobileMenu.classList.add("hidden");
+      }
+    });
+
+    mobileMenu.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+  }
+
+  /* ===========================
       Swiper
   =========================== */
 

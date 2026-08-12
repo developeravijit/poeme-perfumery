@@ -34,6 +34,7 @@
 
           <div class="flex items-center gap-3">
             <!-- Deleted Products -->
+
             <a
               href="/poeme-perfumery/seller/deleted-products"
               class="bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-xl font-semibold"
@@ -43,6 +44,7 @@
             </a>
 
             <!-- Bulk Upload -->
+
             <a
               href="/poeme-perfumery/seller/bulk-upload"
               class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl font-semibold"
@@ -52,6 +54,7 @@
             </a>
 
             <!-- Create Product -->
+
             <a
               href="/poeme-perfumery/seller/create/product"
               class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-xl font-semibold"
@@ -95,23 +98,24 @@
             <h2 class="text-4xl font-bold mt-2"><%= products.length %></h2>
           </div>
 
-          <!-- Published -->
+          <!-- Approved -->
 
           <div class="bg-white rounded-2xl p-6 shadow">
-            <p class="text-slate-500">Published</p>
+            <p class="text-slate-500">Approved</p>
 
-            <h2 class="text-4xl font-bold mt-2">
-              <%= products.filter(p => p.status === "published").length %>
+            <h2 class="text-4xl font-bold mt-2 text-green-600">
+              <%= products.filter(p => p.approvalStatus === "approved").length
+              %>
             </h2>
           </div>
 
-          <!-- Draft -->
+          <!-- Pending -->
 
           <div class="bg-white rounded-2xl p-6 shadow">
-            <p class="text-slate-500">Draft</p>
+            <p class="text-slate-500">Pending</p>
 
-            <h2 class="text-4xl font-bold mt-2">
-              <%= products.filter(p => p.status === "draft").length %>
+            <h2 class="text-4xl font-bold mt-2 text-yellow-600">
+              <%= products.filter(p => p.approvalStatus === "pending").length %>
             </h2>
           </div>
 
@@ -180,36 +184,30 @@
                   </p>
                 </div>
 
-                <% if(product.stock <= 0){ %>
+                <!-- Approval Status Badge -->
 
-                <span
-                  class="bg-red-100 text-red-700 text-xs px-3 py-1 rounded-full"
-                >
-                  Out Of Stock
-                </span>
-
-                <% }else if(product.status === "published"){ %>
+                <% if(product.approvalStatus === "approved"){ %>
 
                 <span
                   class="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full"
                 >
-                  Published
+                  Approved
                 </span>
 
-                <% }else if(product.status === "draft"){ %>
+                <% }else if(product.approvalStatus === "rejected"){ %>
 
                 <span
-                  class="bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full"
+                  class="bg-red-100 text-red-700 text-xs px-3 py-1 rounded-full"
                 >
-                  Draft
+                  Rejected
                 </span>
 
                 <% }else{ %>
 
                 <span
-                  class="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full"
+                  class="bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full"
                 >
-                  <%= product.status %>
+                  Pending
                 </span>
 
                 <% } %>
@@ -224,8 +222,38 @@
                   <span class="text-slate-500"> Category </span>
 
                   <span class="font-semibold">
-                    <%= product.category.categoryName %>
+                    <%= product.category ? product.category.categoryName :
+                    "No-Category" %></span
+                  >
+                </div>
+
+                <!-- Approval Status -->
+
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-500"> Approval Status </span>
+
+                  <% if (product.approvalStatus === "approved") { %>
+
+                  <span class="font-semibold text-green-600">
+                    <i class="fa-solid fa-circle-check mr-1"></i>
+                    Approved
                   </span>
+
+                  <% } else if (product.approvalStatus === "rejected") { %>
+
+                  <span class="font-semibold text-red-600">
+                    <i class="fa-solid fa-circle-xmark mr-1"></i>
+                    Rejected
+                  </span>
+
+                  <% } else { %>
+
+                  <span class="font-semibold text-yellow-600">
+                    <i class="fa-solid fa-clock mr-1"></i>
+                    Pending
+                  </span>
+
+                  <% } %>
                 </div>
 
                 <!-- Price -->
@@ -324,7 +352,17 @@
 
               <!-- Action Buttons -->
 
-              <div class="flex gap-3 mt-8">
+              <div class="flex gap-3 mt-8 flex-wrap">
+                <!-- View -->
+
+                <a
+                  href="/poeme-perfumery/seller/product/view/<%= product._id %>"
+                  class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 rounded-xl text-center font-semibold"
+                >
+                  <i class="fa-solid fa-eye mr-2"></i>
+                  View
+                </a>
+
                 <!-- Edit -->
 
                 <a
@@ -332,11 +370,11 @@
                   class="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-700 py-3 rounded-xl text-center font-semibold"
                 >
                   <i class="fa-solid fa-pen mr-2"></i>
-
                   Edit
                 </a>
 
                 <!-- Delete Product -->
+
                 <form
                   action="/poeme-perfumery/seller/delete-product/<%= product._id %>"
                   method="POST"

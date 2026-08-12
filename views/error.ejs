@@ -1,14 +1,36 @@
+<%
+    const errorMessage =
+    typeof message !== "undefined" && message
+      ? message
+      : "An unexpected error occurred.";
+
+
+  const currentUser =
+    typeof user !== "undefined"
+      ? user
+      : null;
+
+
+  const currentAuthRole =
+    typeof authRole !== "undefined"
+      ? authRole
+      : null;
+%>
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>Error | POÈME Perfumery</title>
 
     <link rel="stylesheet" href="/css/output.css" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
 
     <link
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
@@ -17,18 +39,34 @@
   </head>
 
   <body class="bg-[#FCFBF8] min-h-screen">
-    <%- include("layout/navbar.ejs") %>
+    <!-- =====================================================
+       NAVBAR
+  ====================================================== -->
+
+    <%- include("layout/navbar.ejs", {
+    user: currentUser,
+    authRole: currentAuthRole
+  }) %>
+
+    <!-- =====================================================
+       ERROR CONTENT
+  ====================================================== -->
 
     <section class="min-h-screen flex items-center justify-center px-6 py-20">
       <div
         class="w-full max-w-lg bg-white rounded-[30px] shadow-2xl border border-stone-200 overflow-hidden"
       >
+        <!-- ERROR HEADER -->
+
         <div
           class="bg-gradient-to-r from-red-500 to-red-600 text-white text-center py-8"
         >
           <h1 class="text-4xl font-bold">Oops!</h1>
+
           <p class="mt-2 text-red-100">Something went wrong</p>
         </div>
+
+        <!-- ERROR BODY -->
 
         <div class="p-10 text-center">
           <div
@@ -39,9 +77,9 @@
 
           <h2 class="text-2xl font-semibold text-stone-800 mt-6">Error</h2>
 
-          <p class="mt-4 text-stone-600">
-            <%= message || "An unexpected error occurred." %>
-          </p>
+          <p class="mt-4 text-stone-600"><%= errorMessage %></p>
+
+          <!-- BUTTONS -->
 
           <div class="mt-8 flex justify-center gap-4">
             <a
@@ -61,6 +99,10 @@
         </div>
       </div>
     </section>
+
+    <!-- =====================================================
+       FOOTER
+  ====================================================== -->
 
     <%- include("layout/footer.ejs") %>
   </body>

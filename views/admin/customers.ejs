@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Customers | POÈME Perfumery</title>
+
+    <link rel="stylesheet" href="/css/output.css" />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+  </head>
+
+  <body class="min-h-screen bg-[#0B1120] text-white">
+    <!-- ========================================================= -->
+    <!-- SIDEBAR -->
+    <!-- ========================================================= -->
+
+    <%- include("partials/sidebar.ejs") %>
+
+    <!-- ========================================================= -->
+    <!-- MAIN -->
+    <!-- ========================================================= -->
+
+    <main class="ml-72 min-h-screen bg-[#0B1120]">
+      <!-- ===================================================== -->
+      <!-- NAVBAR -->
+      <!-- ===================================================== -->
+
+      <%- include("partials/navbar.ejs") %>
+
+      <!-- ===================================================== -->
+      <!-- CONTENT -->
+      <!-- ===================================================== -->
+
+      <section class="p-6 lg:p-8">
+        <!-- ================================================= -->
+        <!-- HEADER -->
+        <!-- ================================================= -->
+
+        <div
+          class="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-6 mb-8"
+        >
+          <div>
+            <div class="flex items-center gap-3 mb-4">
+              <div
+                class="w-11 h-11 rounded-2xl bg-[#B68D40]/10 border border-[#B68D40]/20 flex items-center justify-center text-[#B68D40]"
+              >
+                <i class="fa-solid fa-users"></i>
+              </div>
+
+              <span class="text-xs uppercase tracking-[0.28em] text-[#B68D40]">
+                Customer Management
+              </span>
+            </div>
+
+            <h1 class="text-3xl lg:text-4xl font-semibold tracking-tight">
+              Customers
+            </h1>
+
+            <p class="mt-3 text-sm lg:text-base text-stone-400 max-w-2xl">
+              View customers who have ordered products from your store and
+              monitor their purchase activity.
+            </p>
+          </div>
+
+          <!-- TOTAL CUSTOMERS -->
+
+          <div
+            class="flex items-center gap-4 px-5 py-4 rounded-2xl bg-[#111B38] border border-white/10"
+          >
+            <div
+              class="w-11 h-11 rounded-xl bg-[#B68D40]/10 text-[#B68D40] flex items-center justify-center"
+            >
+              <i class="fa-solid fa-user-group"></i>
+            </div>
+
+            <div>
+              <p class="text-xs uppercase tracking-wider text-stone-500">
+                Total Customers
+              </p>
+
+              <p class="text-2xl font-semibold mt-1">
+                <%= pagination && pagination.total ? pagination.total : 0 %>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================= -->
+        <!-- SEARCH -->
+        <!-- ================================================= -->
+
+        <div class="mb-8 rounded-3xl bg-[#111B38] border border-white/10 p-5">
+          <form
+            method="GET"
+            action="/poeme-perfumery/admin/users"
+            class="flex flex-col lg:flex-row gap-4"
+          >
+            <div class="relative flex-1">
+              <i
+                class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-stone-500"
+              ></i>
+
+              <input
+                type="text"
+                name="search"
+                value="<%= search || '' %>"
+                placeholder="Search customer by name, email or phone..."
+                class="w-full h-12 rounded-2xl bg-[#0B1120] border border-white/10 pl-11 pr-4 text-sm text-white placeholder:text-stone-600 outline-none focus:border-[#B68D40] transition"
+              />
+            </div>
+
+            <button
+              type="submit"
+              class="h-12 px-7 rounded-2xl bg-[#B68D40] text-[#0B1120] font-semibold hover:bg-[#c99f53] transition"
+            >
+              <i class="fa-solid fa-magnifying-glass mr-2"></i>
+
+              Search
+            </button>
+
+            <% if (search) { %>
+
+            <a
+              href="/poeme-perfumery/admin/users"
+              class="h-12 px-7 rounded-2xl border border-white/10 text-stone-300 hover:bg-white/5 hover:text-white transition flex items-center justify-center"
+            >
+              <i class="fa-solid fa-xmark mr-2"></i>
+
+              Clear
+            </a>
+
+            <% } %>
+          </form>
+        </div>
+
+        <!-- ================================================= -->
+        <!-- SECTION HEADER -->
+        <!-- ================================================= -->
+
+        <div
+          class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6"
+        >
+          <div>
+            <h2 class="text-xl font-semibold">Ordered Customers</h2>
+
+            <p class="text-sm text-stone-500 mt-1">
+              Customers who have placed orders
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2 text-sm text-stone-500">
+            <i class="fa-solid fa-eye"></i>
+
+            View only
+          </div>
+        </div>
+
+        <!-- ================================================= -->
+        <!-- CUSTOMER CARDS -->
+        <!-- ================================================= -->
+
+        <% if (customers && customers.length > 0) { %>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <% customers.forEach(function(customer, index) { %>
+
+          <!-- ===================================== -->
+          <!-- CUSTOMER CARD -->
+          <!-- ===================================== -->
+
+          <div
+            class="rounded-3xl bg-[#111B38] border border-white/10 overflow-hidden hover:border-[#B68D40]/30 transition duration-300"
+          >
+            <!-- ================================= -->
+            <!-- CUSTOMER INFO -->
+            <!-- ================================= -->
+
+            <div class="p-6">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex items-center gap-4 min-w-0">
+                  <div
+                    class="w-14 h-14 shrink-0 rounded-2xl bg-[#B68D40]/10 border border-[#B68D40]/20 text-[#B68D40] flex items-center justify-center"
+                  >
+                    <i class="fa-solid fa-user text-xl"></i>
+                  </div>
+
+                  <div class="min-w-0">
+                    <h3 class="font-semibold text-lg truncate">
+                      <%= customer.name || "Customer" %>
+                    </h3>
+
+                    <p class="text-sm text-stone-500 mt-1">Customer</p>
+                  </div>
+                </div>
+
+                <div
+                  class="w-8 h-8 shrink-0 rounded-xl bg-white/5 flex items-center justify-center text-xs text-stone-500"
+                >
+                  <%= index + 1 %>
+                </div>
+              </div>
+
+              <!-- ================================= -->
+              <!-- CONTACT -->
+              <!-- ================================= -->
+
+              <div class="mt-6 space-y-3">
+                <% if (customer.email) { %>
+
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-9 h-9 shrink-0 rounded-xl bg-white/5 flex items-center justify-center text-stone-500"
+                  >
+                    <i class="fa-solid fa-envelope"></i>
+                  </div>
+
+                  <div class="min-w-0">
+                    <p class="text-xs text-stone-600">Email</p>
+
+                    <p class="text-sm text-stone-300 truncate">
+                      <%= customer.email %>
+                    </p>
+                  </div>
+                </div>
+
+                <% } %>
+
+                <% if (customer.phone) { %>
+
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-9 h-9 shrink-0 rounded-xl bg-white/5 flex items-center justify-center text-stone-500"
+                  >
+                    <i class="fa-solid fa-phone"></i>
+                  </div>
+
+                  <div>
+                    <p class="text-xs text-stone-600">Phone</p>
+
+                    <p class="text-sm text-stone-300">
+                      <%= customer.phone %>
+                    </p>
+                  </div>
+                </div>
+
+                <% } %>
+              </div>
+            </div>
+
+            <!-- ================================= -->
+            <!-- ORDER STATISTICS -->
+            <!-- ================================= -->
+
+            <div class="px-6 py-5 border-t border-white/10 bg-[#0B1120]/40">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <p class="text-xs uppercase tracking-wider text-stone-600">
+                    Orders
+                  </p>
+
+                  <p class="text-xl font-semibold mt-1">
+                    <%= customer.totalOrders || 0 %>
+                  </p>
+                </div>
+
+                <div>
+                  <p class="text-xs uppercase tracking-wider text-stone-600">
+                    Products
+                  </p>
+
+                  <p class="text-xl font-semibold mt-1">
+                    <%= customer.productsOrdered || 0 %>
+                  </p>
+                </div>
+              </div>
+
+              <!-- ================================= -->
+              <!-- TOTAL SPENT -->
+              <!-- ================================= -->
+
+              <div class="mt-5 pt-5 border-t border-white/5">
+                <p class="text-xs uppercase tracking-wider text-stone-600">
+                  Total Spent
+                </p>
+
+                <p class="text-xl font-semibold text-[#B68D40] mt-1">
+                  ₹<%= Number(
+                                            customer.totalSpent || 0
+                                        ).toLocaleString("en-IN") %>
+                </p>
+              </div>
+            </div>
+
+            <!-- ================================= -->
+            <!-- LAST ORDER -->
+            <!-- ================================= -->
+
+            <div
+              class="px-6 py-4 border-t border-white/10 flex items-center justify-between"
+            >
+              <div class="flex items-center gap-2">
+                <i class="fa-regular fa-calendar text-stone-600"></i>
+
+                <span class="text-xs text-stone-500"> Last order </span>
+              </div>
+
+              <span class="text-xs text-stone-400">
+                <% if (customer.lastOrder) { %>
+
+                <%= new Date(
+                                            customer.lastOrder
+                                        ).toLocaleDateString(
+                                            "en-IN",
+                                            {
+                                                day: "2-digit",
+                                                month: "short",
+                                                year: "numeric"
+                                            }
+                                        ) %>
+
+                <% } else { %>
+
+                N/A
+
+                <% } %>
+              </span>
+            </div>
+          </div>
+
+          <% }); %>
+        </div>
+
+        <% } else { %>
+
+        <!-- ================================================= -->
+        <!-- EMPTY STATE -->
+        <!-- ================================================= -->
+
+        <div
+          class="rounded-3xl bg-[#111B38] border border-white/10 py-20 px-6 text-center"
+        >
+          <div
+            class="mx-auto w-16 h-16 rounded-2xl bg-[#B68D40]/10 border border-[#B68D40]/20 text-[#B68D40] flex items-center justify-center text-2xl"
+          >
+            <i class="fa-solid fa-user-group"></i>
+          </div>
+
+          <h3 class="text-xl font-semibold mt-5">No customers found</h3>
+
+          <p class="mt-2 text-sm text-stone-500 max-w-md mx-auto">
+            <% if (search) { %>
+
+            No customers matched "<%= search %>".
+
+            <% } else { %>
+
+            Customers will appear here after customers place orders.
+
+            <% } %>
+          </p>
+
+          <% if (search) { %>
+
+          <a
+            href="/poeme-perfumery/admin/users"
+            class="inline-flex items-center gap-2 mt-6 px-5 py-3 rounded-xl bg-[#B68D40] text-[#0B1120] font-semibold hover:bg-[#c99f53] transition"
+          >
+            <i class="fa-solid fa-arrow-left"></i>
+
+            View All Customers
+          </a>
+
+          <% } %>
+        </div>
+
+        <% } %>
+
+        <!-- ================================================= -->
+        <!-- PAGINATION -->
+        <!-- ================================================= -->
+
+        <% if ( pagination && pagination.totalPages && pagination.totalPages > 1
+        ) { %>
+
+        <div
+          class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4"
+        >
+          <p class="text-sm text-stone-500">
+            Showing
+
+            <span class="text-stone-300 font-medium">
+              <%= pagination.start %>
+            </span>
+
+            -
+
+            <span class="text-stone-300 font-medium">
+              <%= pagination.end %>
+            </span>
+
+            of
+
+            <span class="text-stone-300 font-medium">
+              <%= pagination.total %>
+            </span>
+
+            customers
+          </p>
+
+          <div class="flex items-center gap-2">
+            <% if (pagination.currentPage > 1) { %>
+
+            <a
+              href="/poeme-perfumery/admin/users?page=<%= pagination.currentPage - 1 %>&search=<%= search || '' %>"
+              class="w-10 h-10 rounded-xl border border-white/10 bg-[#111B38] flex items-center justify-center text-stone-400 hover:text-white hover:border-[#B68D40]/30 transition"
+            >
+              <i class="fa-solid fa-chevron-left"></i>
+            </a>
+
+            <% } else { %>
+
+            <span
+              class="w-10 h-10 rounded-xl border border-white/5 bg-[#111B38]/50 flex items-center justify-center text-stone-700"
+            >
+              <i class="fa-solid fa-chevron-left"></i>
+            </span>
+
+            <% } %>
+
+            <div
+              class="px-4 h-10 rounded-xl bg-[#B68D40] text-[#0B1120] flex items-center justify-center font-semibold text-sm"
+            >
+              <%= pagination.currentPage %>
+
+              /
+
+              <%= pagination.totalPages %>
+            </div>
+
+            <% if (
+                            pagination.currentPage <
+                            pagination.totalPages
+                        ) { %>
+
+            <a
+              href="/poeme-perfumery/admin/users?page=<%= pagination.currentPage + 1 %>&search=<%= search || '' %>"
+              class="w-10 h-10 rounded-xl border border-white/10 bg-[#111B38] flex items-center justify-center text-stone-400 hover:text-white hover:border-[#B68D40]/30 transition"
+            >
+              <i class="fa-solid fa-chevron-right"></i>
+            </a>
+
+            <% } else { %>
+
+            <span
+              class="w-10 h-10 rounded-xl border border-white/5 bg-[#111B38]/50 flex items-center justify-center text-stone-700"
+            >
+              <i class="fa-solid fa-chevron-right"></i>
+            </span>
+
+            <% } %>
+          </div>
+        </div>
+
+        <% } %>
+      </section>
+    </main>
+  </body>
+</html>

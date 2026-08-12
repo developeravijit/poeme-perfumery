@@ -28,14 +28,14 @@ const cookieParser = require("cookie-parser");
 const flash = require("connect-flash");
 const http = require("http");
 const socket = require("./app/socket/socket");
+const admin = require("./app/utils/admin");
 
 require("./app/config/passport");
 require("./app/cron/deleteUser");
 
 const app = express();
 
-// Database Connection
-DbConnect();
+const PORT = process.env.PORT || 4500;
 
 // Body Parser
 app.use(express.json());
@@ -81,15 +81,29 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).send("Internal Server Error");
 });
 
-// HTTP Server
-const server = http.createServer(app);
+// Start Application
+const startServer = async () => {
+  try {
+    // 1. Connect MongoDB
+    await DbConnect();
 
-// Socket.IO
-socket(server);
+    // 2. Create/check admin
+    await admin();
 
-// Port
-const PORT = process.env.PORT || 4500;
+    // 3. Create HTTP server
+    const server = http.createServer(app);
 
-server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+    // 4. Initialize Socket.IO
+    socket(server);
+
+    // 5. Start server
+    server.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Server startup failed:", error);
+    process.exit(1);
+  }
+};
+
+startServer();
