@@ -1,4 +1,12 @@
 <div align="center">
+<img
+  src="./public/assets/poeme-readme-animation.gif"
+  alt="POÈME Perfumery"
+  width="100%"
+/>
+</div>
+
+<div align="center">
 
 <svg width="100%" height="220" viewBox="0 0 1200 220" xmlns="http://www.w3.org/2000/svg">
 
