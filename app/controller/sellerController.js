@@ -1,41 +1,32 @@
-const Otp = require("../../model/otp");
-const Role = require("../../model/role");
-const User = require("../../model/user");
-const httpCodes = require("../../utils/httpCodes");
-const { otpEmail } = require("../../utils/sendEmail");
-const {
-  generateAccessToken,
-  generateRefreshToken,
-} = require("../../utils/token");
+const { default: mongoose } = require("mongoose");
+const User = require("../model/user");
 const {
   registerValidation,
   loginSchema,
-} = require("../../validation/authValidation");
+} = require("../validation/authValidation");
+const { otpEmail } = require("../utils/sendEmail");
+const Role = require("../model/role");
 const bcrypt = require("bcrypt");
+const Otp = require("../model/otp");
+const { generateAccessToken, generateRefreshToken } = require("../utils/token");
+const Product = require("../model/products");
+const Order = require("../model/order");
+const httpCodes = require("../utils/httpCodes");
 const {
   categoryValidation,
   productValidation,
-} = require("../../validation/productValidation");
+} = require("../validation/productValidation");
+const Category = require("../model/category");
+const { imageCleaner, csvCleaner } = require("../utils/fileCleaner");
 const slugify = require("slugify");
-const Category = require("../../model/category");
-const Product = require("../../model/products");
-const mongoose = require("mongoose");
-const csv = require("csvtojson");
-const { Parser } = require("json2csv");
-const generateProductTemplate = require("../../utils/csvTemplate");
-const { csvCleaner, imageCleaner } = require("../../utils/fileCleaner");
-const ImageLibrary = require("../../model/imageLibrary");
-const cloudinary = require("../../config/cloudinary");
-const Order = require("../../model/order");
+const ImageLibrary = require("../model/imageLibrary");
+const generateProductTemplate = require("../utils/csvTemplate");
+const cloudinary = require("../config/cloudinary");
 
-class sellerPageController {
-  // Register Page
-  async registerPage(req, res) {
-    return res.render("seller/register", {
-      error: req.flash("error"),
-      success: req.flash("success"),
-    });
-  }
+class sellerController {
+  /*======================================================*/
+  //                        Authentication
+  /*======================================================*/
 
   // Seller Register
   async register(req, res) {
@@ -43,176 +34,153 @@ class sellerPageController {
       const { error, value } = registerValidation.validate(req.body);
 
       if (error) {
-        req.flash("error", error.details[0].message);
-        return res.redirect("/poeme-perfumery/seller/register");
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: error.details[0].message,
+        });
       }
 
       const { name, phone, email, password } = value;
 
-      // Check existing seller
+      // Check existing seller/user
       const existingSeller = await User.findOne({ email });
 
       if (existingSeller) {
         if (existingSeller.isVerified) {
-          req.flash("error", "Account already exists. Please login.");
-          return res.redirect("/poeme-perfumery/seller/login");
+          return res.status(httpCodes.conflict).json({
+            success: false,
+            message: "Account already exists. Please login.",
+          });
         }
 
+        // Delete old OTP
         await Otp.deleteMany({
           userID: existingSeller._id,
         });
 
+        // Send new OTP
         await otpEmail(existingSeller);
 
-        req.session.email = existingSeller.email;
-
-        req.flash(
-          "success",
-          "Your account already exists but is not verified. A new OTP has been sent."
-        );
-
-        return req.session.save((err) => {
-          if (err) {
-            console.error(err);
-            req.flash("error", "Session error");
-            return res.redirect("/poeme-perfumery/seller/register");
-          }
-
-          return res.redirect("/poeme-perfumery/seller/verify");
+        return res.status(httpCodes.ok).json({
+          success: true,
+          message:
+            "Account already exists but is not verified. A new OTP has been sent.",
+          email: existingSeller.email,
         });
       }
-      console.log("All Roles:", await Role.find());
 
+      // Find seller role
       let roleData = await Role.findOne({
         role: "seller",
       });
 
+      // Create role if it doesn't exist
       if (!roleData) {
         roleData = await Role.create({
           role: "seller",
         });
       }
 
+      // Hash password
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
+      // Create seller
       const seller = new User({
         name,
         phone,
         email,
         password: hashedPassword,
         role: roleData._id,
+        isVerified: false,
       });
 
       await seller.save();
 
+      // Send OTP
       await otpEmail(seller);
 
-      req.session.email = seller.email;
-
-      req.flash(
-        "success",
-        "Registration successful. Please verify your email."
-      );
-
-      return req.session.save((err) => {
-        if (err) {
-          console.error(err);
-          req.flash("error", "Session error");
-          return res.redirect("/poeme-perfumery/seller/register");
-        }
-
-        return res.redirect("/poeme-perfumery/seller/verify");
+      return res.status(httpCodes.created).json({
+        success: true,
+        message: "Registration successful. Please verify your email.",
+        email: seller.email,
       });
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      console.error("Seller registration error:", error);
+
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
     }
   }
 
-  /*======================================================*/
-
-  // Verify Page
-  async verifyPage(req, res) {
-    return res.render("seller/verify", {
-      error: req.flash("error"),
-      success: req.flash("success"),
-    });
-  }
-
-  // Verify User
+  // Verify Seller Registration
   async verify(req, res) {
     try {
-      const { otp } = req.body;
+      const { email, otp } = req.body;
 
-      if (!otp) {
-        req.flash("error", "OTP is required");
-        return res.redirect("/poeme-perfumery/seller/verify");
-      }
-
-      // Get email from session
-      const email = req.session.email;
-
-      if (!email) {
-        req.flash("error", "Session expired. Please register again.");
-        return res.redirect("/poeme-perfumery/seller/register");
+      if (!email || !otp) {
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Email and OTP are required.",
+        });
       }
 
       const seller = await User.findOne({ email });
 
       if (!seller) {
-        req.flash("error", "User not found");
-        return res.redirect("/poeme-perfumery/seller/register");
+        return res.status(httpCodes.not_found).json({
+          success: false,
+          message: "Seller not found.",
+        });
       }
 
       if (seller.isVerified) {
-        req.flash("error", "Account already verified");
-        return res.redirect("/poeme-perfumery/seller/login");
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Account already verified.",
+        });
       }
 
-      const otpData = await Otp.findOne({ userID: seller._id });
+      const otpData = await Otp.findOne({
+        userID: seller._id,
+      });
 
       if (!otpData) {
-        req.flash("error", "OTP expired");
-        return res.redirect("/poeme-perfumery/seller/register");
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "OTP expired. Please request a new OTP.",
+        });
       }
 
       if (otpData.otp !== otp) {
-        req.flash("error", "Invalid OTP");
-        return res.redirect("/poeme-perfumery/seller/verify");
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Invalid OTP.",
+        });
       }
 
       seller.isVerified = true;
+
       await seller.save();
 
-      await Otp.deleteOne({ _id: otpData._id });
+      await Otp.deleteOne({
+        _id: otpData._id,
+      });
 
-      delete req.session.email;
-
-      req.flash("success", "Account verified successfully");
-      return res.redirect("/poeme-perfumery/seller/login");
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Account verified successfully. You can now login.",
+      });
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      console.error("Seller verification error:", error);
+
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
     }
-  }
-
-  /*======================================================*/
-
-  // Login Page
-  async loginPage(req, res) {
-    const showOtp = req.session.showOtp || false;
-
-    return res.render("seller/login", {
-      error: req.flash("error"),
-      success: req.flash("success"),
-      email: req.session.email || "",
-      showOtp,
-    });
   }
 
   // Seller Login
@@ -221,95 +189,171 @@ class sellerPageController {
       const { error, value } = loginSchema.validate(req.body);
 
       if (error) {
-        return res.status(httpCodes.bad_request).render("error", {
+        return res.status(httpCodes.bad_request).json({
           success: false,
           message: error.details[0].message,
         });
       }
-      const { email, password } = value;
-      const remember = req.body.remember;
 
-      const seller = await User.findOne({ email });
+      const { email, password } = value;
+
+      const seller = await User.findOne({ email }).populate("role");
+
       if (!seller) {
-        req.flash("error", "Invalid email id");
-        return res.redirect("/poeme-perfumery/seller/login");
+        return res.status(httpCodes.unauthorized).json({
+          success: false,
+          message: "Invalid email or password.",
+        });
+      }
+
+      // Make sure the account belongs to seller role
+      const roleName = seller.role?.role || seller.role;
+
+      if (roleName !== "seller") {
+        return res.status(httpCodes.forbidden).json({
+          success: false,
+          message: "This account is not registered as a seller.",
+        });
       }
 
       if (!seller.isVerified) {
-        req.flash("error", "Please verify your email first");
-        return res.redirect("/poeme-perfumery/seller/verify");
+        return res.status(httpCodes.forbidden).json({
+          success: false,
+          message: "Please verify your email first.",
+        });
       }
 
       const isMatch = await bcrypt.compare(password, seller.password);
 
       if (!isMatch) {
-        req.flash("error", "Invalid Password");
-        return res.redirect("/poeme-perfumery/seller/login");
+        return res.status(httpCodes.unauthorized).json({
+          success: false,
+          message: "Invalid email or password.",
+        });
       }
 
+      // Generate tokens
       const sellerAccessToken = generateAccessToken(seller);
       const sellerRefreshToken = generateRefreshToken(seller);
 
+      // Store refresh token
       seller.refreshToken = sellerRefreshToken;
+
       await seller.save();
 
-      const rememberMe = remember === "on";
-
-      const accessMaxAge = rememberMe
-        ? 30 * 24 * 60 * 60 * 1000
-        : 30 * 60 * 1000;
-
-      const refreshMaxAge = rememberMe
-        ? 30 * 24 * 60 * 60 * 1000
-        : 7 * 24 * 60 * 60 * 1000;
-
-      res.cookie("sellerAccessToken", sellerAccessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: accessMaxAge,
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Seller login successful.",
+        accessToken: sellerAccessToken,
+        refreshToken: sellerRefreshToken,
+        user: {
+          id: seller._id,
+          name: seller.name,
+          email: seller.email,
+          phone: seller.phone,
+          role: roleName,
+        },
       });
-
-      res.cookie("sellerRefreshToken", sellerRefreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: refreshMaxAge,
-      });
-
-      return res.redirect("/poeme-perfumery/seller/dashboard");
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      console.error("Seller login error:", error);
+
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
     }
   }
 
-  // Verify Login
+  // Send Seller Login OTP
+  async loginWithOtp(req, res) {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Email is required.",
+        });
+      }
+
+      const seller = await User.findOne({ email }).populate("role");
+
+      if (!seller) {
+        return res.status(httpCodes.unauthorized).json({
+          success: false,
+          message: "Invalid email.",
+        });
+      }
+
+      const roleName = seller.role?.role || seller.role;
+
+      if (roleName !== "seller") {
+        return res.status(httpCodes.forbidden).json({
+          success: false,
+          message: "This account is not registered as a seller.",
+        });
+      }
+
+      if (!seller.isVerified) {
+        return res.status(httpCodes.forbidden).json({
+          success: false,
+          message: "Please verify your account first.",
+        });
+      }
+
+      // Remove old OTP
+      await Otp.deleteMany({
+        userID: seller._id,
+      });
+
+      // Generate and send OTP
+      await otpEmail(seller);
+
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Login OTP has been sent to your email.",
+        email: seller.email,
+      });
+    } catch (error) {
+      console.error("Seller login OTP error:", error);
+
+      return res.status(httpCodes.server_error).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Verify Seller Login OTP
   async verifyLogin(req, res) {
     try {
-      const { otp } = req.body;
+      const { email, otp } = req.body;
 
-      if (!otp) {
-        req.session.showOtp = true;
-
-        req.flash("error", "OTP is required");
-
-        return res.redirect("/poeme-perfumery/seller/login");
+      if (!email || !otp) {
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Email and OTP are required.",
+        });
       }
 
       const seller = await User.findOne({
-        email: req.session.email,
-      });
+        email,
+      }).populate("role");
 
       if (!seller) {
-        delete req.session.showOtp;
-        delete req.session.email;
+        return res.status(httpCodes.not_found).json({
+          success: false,
+          message: "Seller not found.",
+        });
+      }
 
-        req.flash("error", "Seller not found");
+      const roleName = seller.role?.role || seller.role;
 
-        return res.redirect("/poeme-perfumery/seller/login");
+      if (roleName !== "seller") {
+        return res.status(httpCodes.forbidden).json({
+          success: false,
+          message: "This account is not registered as a seller.",
+        });
       }
 
       const otpData = await Otp.findOne({
@@ -317,114 +361,78 @@ class sellerPageController {
       });
 
       if (!otpData) {
-        req.session.showOtp = true;
-
-        req.flash("error", "OTP expired");
-
-        return res.redirect("/poeme-perfumery/seller/login");
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "OTP expired. Please request a new OTP.",
+        });
       }
 
       if (otpData.otp !== otp) {
-        req.session.showOtp = true;
-
-        req.flash("error", "Invalid OTP");
-
-        return res.redirect("/poeme-perfumery/seller/login");
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Invalid OTP.",
+        });
       }
 
+      // OTP is valid
       await Otp.deleteOne({
         _id: otpData._id,
       });
 
+      // Generate tokens
       const sellerAccessToken = generateAccessToken(seller);
       const sellerRefreshToken = generateRefreshToken(seller);
 
+      // Store refresh token
       seller.refreshToken = sellerRefreshToken;
 
       await seller.save();
 
-      res.cookie("sellerAccessToken", accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 30 * 60 * 1000,
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Seller login successful.",
+        accessToken: sellerAccessToken,
+        refreshToken: sellerRefreshToken,
+        user: {
+          id: seller._id,
+          name: seller.name,
+          email: seller.email,
+          phone: seller.phone,
+          role: roleName,
+        },
       });
-
-      res.cookie("sellerRefreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-
-      delete req.session.showOtp;
-      delete req.session.email;
-
-      return res.redirect("/poeme-perfumery/seller/dashboard");
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      console.error("Seller OTP login error:", error);
+
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
     }
   }
 
-  // Send Login OTP
-  async loginWithOtp(req, res) {
-    try {
-      const { email } = req.body;
-
-      const seller = await User.findOne({ email });
-
-      if (!seller) {
-        req.flash("error", "Invalid email id");
-        return res.redirect("/poeme-perfumery/seller/login");
-      }
-
-      if (!seller.isVerified) {
-        req.flash("error", "Please verify your account first");
-        return res.redirect("/poeme-perfumery/seller/verify");
-      }
-
-      await Otp.deleteMany({
-        userID: seller._id,
-      });
-
-      await otpEmail(seller);
-
-      req.session.email = email;
-      req.session.showOtp = true;
-
-      return req.session.save((err) => {
-        if (err) {
-          console.error(err);
-          req.flash("error", "Something went wrong");
-          return res.redirect("/poeme-perfumery/seller/login");
-        }
-
-        return res.redirect("/poeme-perfumery/seller/login");
-      });
-    } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
-        success: false,
-        message: error.message,
-      });
-    }
-  }
-
-  // Logout
+  // Seller Logout
   async logout(req, res) {
     try {
-      if (req.user) {
-        await User.findByIdAndUpdate(req.user._id, {
-          refreshToken: "",
+      if (!req.user) {
+        return res.status(httpCodes.unauthorized).json({
+          success: false,
+          message: "Authentication required.",
         });
       }
 
-      res.clearCookie("sellerAccessToken");
-      res.clearCookie("sellerRefreshToken");
+      await User.findByIdAndUpdate(req.user._id, {
+        refreshToken: "",
+      });
 
-      return res.redirect("/poeme-perfumery/seller/login");
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Seller logged out successfully.",
+      });
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      console.error("Seller logout error:", error);
+
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
@@ -432,18 +440,21 @@ class sellerPageController {
   }
 
   /*======================================================*/
+  //                        Poeme Perfumery
   /*======================================================*/
 
   // Seller Dashboard
   async dashboard(req, res) {
     try {
-      const sellerId = new mongoose.Types.ObjectId(req.user.id);
+      const sellerId = new mongoose.Types.ObjectId(req.user._id);
 
       // Get seller
-      const seller = await User.findById(sellerId).lean();
+      const seller = await User.findById(sellerId)
+        .select("-password -refreshToken")
+        .lean();
 
       if (!seller) {
-        return res.status(httpCodes.not_found).render("error", {
+        return res.status(httpCodes.not_found).json({
           success: false,
           message: "Seller not found",
         });
@@ -478,51 +489,32 @@ class sellerPageController {
     ============================================================
     3. PRODUCT-WISE ORDER ANALYTICS
     ============================================================
-
-    Only PAID orders are counted.
-
-    We:
-    Order
-      ↓
-    items
-      ↓
-    Product
-      ↓
-    sellerId
     */
 
       const productOrders = await Order.aggregate([
-        // Only successful payments
         {
           $match: {
             paymentStatus: "paid",
           },
         },
 
-        // Separate every product inside an order
         {
           $unwind: "$items",
         },
 
-        // Find the actual Product document
         {
           $lookup: {
             from: "products",
-
             localField: "items.productId",
-
             foreignField: "_id",
-
             as: "product",
           },
         },
 
-        // Convert product array into object
         {
           $unwind: "$product",
         },
 
-        // Only products belonging to current seller
         {
           $match: {
             "product.sellerId": sellerId,
@@ -530,7 +522,6 @@ class sellerPageController {
           },
         },
 
-        // Group by product
         {
           $group: {
             _id: "$items.productId",
@@ -553,26 +544,19 @@ class sellerPageController {
           },
         },
 
-        // Highest order count first
         {
           $sort: {
             orders: -1,
           },
         },
 
-        // Clean response
         {
           $project: {
             _id: 0,
-
             productId: "$_id",
-
             productName: 1,
-
             orders: 1,
-
             quantitySold: 1,
-
             revenue: 1,
           },
         },
@@ -580,11 +564,8 @@ class sellerPageController {
 
       /*
     ============================================================
-    4. TOTAL SELLER ORDERS
+    4. SELLER ORDERS
     ============================================================
-
-    Important:
-    We count unique orders, not individual products.
     */
 
       const sellerOrders = await Order.aggregate([
@@ -601,11 +582,8 @@ class sellerPageController {
         {
           $lookup: {
             from: "products",
-
             localField: "items.productId",
-
             foreignField: "_id",
-
             as: "product",
           },
         },
@@ -620,7 +598,6 @@ class sellerPageController {
           },
         },
 
-        // One record per order
         {
           $group: {
             _id: "$_id",
@@ -669,12 +646,6 @@ class sellerPageController {
     ============================================================
     7. PENDING ORDERS
     ============================================================
-
-    pending
-    confirmed
-    processing
-
-    are considered active/pending seller orders.
     */
 
       const pendingSellerOrders = await Order.aggregate([
@@ -695,11 +666,8 @@ class sellerPageController {
         {
           $lookup: {
             from: "products",
-
             localField: "items.productId",
-
             foreignField: "_id",
-
             as: "product",
           },
         },
@@ -725,106 +693,38 @@ class sellerPageController {
 
       /*
     ============================================================
-    8. FINAL STATS OBJECT
+    8. RESPONSE
     ============================================================
     */
 
-      const stats = {
-        totalProducts,
+      return res.status(httpCodes.ok).json({
+        success: true,
 
-        totalOrders,
+        message: "Seller dashboard data fetched successfully.",
 
-        revenue,
+        seller: {
+          id: seller._id,
+          name: seller.name,
+          email: seller.email,
+          phone: seller.phone,
+          role: seller.role,
+        },
 
-        customers,
-
-        pendingOrders,
-
-        lowStock,
+        stats: {
+          totalProducts,
+          totalOrders,
+          revenue,
+          customers,
+          pendingOrders,
+          lowStock,
+        },
 
         productOrders,
-      };
-
-      /*
-    ============================================================
-    9. RENDER DASHBOARD
-    ============================================================
-    */
-
-      return res.render("seller/dashboard", {
-        seller,
-
-        stats,
-
-        currentPage: "dashboard",
       });
     } catch (error) {
-      console.error("SELLER DASHBOARD ERROR:", error);
+      console.error("SELLER DASHBOARD API ERROR:", error);
 
-      return res.status(httpCodes.server_error).render("error", {
-        success: false,
-
-        message: error.message,
-      });
-    }
-  }
-
-  /*======================================================*/
-
-  // Seller Chat Support
-  async chatSupport(req, res) {
-    try {
-      const seller = await User.findById(req.user.id);
-
-      return res.render("seller/chat", {
-        seller,
-        currentPage: "chat",
-      });
-    } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
-        success: false,
-        message: error.message,
-      });
-    }
-  }
-
-  // Categories Page
-  async categories(req, res) {
-    try {
-      const seller = await User.findById(req.user.id);
-
-      const categories = await Category.find({
-        sellerId: req.user.id,
-      }).sort({ createdAt: -1 });
-
-      res.render("seller/categories", {
-        seller,
-        categories,
-        success: req.flash("success"),
-        error: req.flash("error"),
-        currentPage: "categories",
-      });
-    } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
-        success: false,
-        message: error.message,
-      });
-    }
-  }
-
-  // Create Category Page
-  async createCategoryPage(req, res) {
-    try {
-      const seller = await User.findById(req.user.id);
-
-      return res.render("seller/createCategory", {
-        seller,
-        error: req.flash("error"),
-        success: req.flash("success"),
-        currentPage: "categories",
-      });
-    } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
@@ -837,110 +737,110 @@ class sellerPageController {
       const { error, value } = categoryValidation.validate(req.body);
 
       if (error) {
-        req.flash("error", error.details[0].message);
-        return res.redirect("/poeme-perfumery/seller/create/category");
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: error.details[0].message,
+        });
       }
 
       const { categoryName } = value;
 
-      const sellerId = req.user.id;
+      // Auth middleware provides the authenticated seller
+      const sellerId = req.user._id;
 
+      // Generate slug
       const slug = slugify(categoryName, {
         lower: true,
         strict: true,
       });
 
+      // Check if category already exists for this seller
       const existingCategory = await Category.findOne({
         sellerId,
         slug,
       });
 
       if (existingCategory) {
-        req.flash("error", "Category is already exist");
-        return res.redirect("/poeme-perfumery/seller/create/category");
+        return res.status(httpCodes.conflict).json({
+          success: false,
+          message: "Category already exists.",
+        });
       }
 
-      const data = new Category({
+      // Create category
+      const category = new Category({
         sellerId,
         categoryName,
         slug,
       });
 
-      await data.save();
+      await category.save();
 
-      req.flash("success", "Category created successfully");
-      return res.redirect("/poeme-perfumery/seller/categories");
+      return res.status(httpCodes.created).json({
+        success: true,
+        message: "Category created successfully.",
+        category: {
+          id: category._id,
+          sellerId: category.sellerId,
+          categoryName: category.categoryName,
+          slug: category.slug,
+          createdAt: category.createdAt,
+        },
+      });
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      console.error("CREATE CATEGORY API ERROR:", error);
+
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
     }
   }
 
-  /*======================================================*/
-
-  // Product Page
-  async products(req, res) {
+  // Seller Categories
+  async categories(req, res) {
     try {
-      const seller = await User.findById(req.user.id);
+      const sellerId = new mongoose.Types.ObjectId(req.user._id);
 
-      const products = await Product.aggregate([
-        {
-          $match: {
-            sellerId: new mongoose.Types.ObjectId(req.user.id),
-            isActive: true,
-          },
-        },
-        {
-          $lookup: {
-            from: "categories",
-            localField: "categoryId",
-            foreignField: "_id",
-            as: "category",
-          },
-        },
-        {
-          $unwind: {
-            path: "$category",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-      ]);
+      // Get seller
+      const seller = await User.findById(sellerId)
+        .select("-password -refreshToken")
+        .lean();
 
-      res.render("seller/product", {
-        seller,
-        products,
-        success: req.flash("success"),
-        error: req.flash("error"),
-        currentPage: "product",
-      });
-    } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
-        success: false,
-        message: error.message,
-      });
-    }
-  }
+      if (!seller) {
+        return res.status(httpCodes.not_found).json({
+          success: false,
+          message: "Seller not found",
+        });
+      }
 
-  // Create Product Page
-  async createProductPage(req, res) {
-    try {
-      const seller = await User.findById(req.user.id);
-
+      // Get seller categories
       const categories = await Category.find({
-        sellerId: req.user.id,
-      }).sort({ categoryName: 1 });
+        sellerId,
+      })
+        .sort({
+          createdAt: -1,
+        })
+        .lean();
 
-      return res.render("seller/createProduct", {
-        seller,
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Seller categories fetched successfully.",
+
+        seller: {
+          id: seller._id,
+          name: seller.name,
+          email: seller.email,
+          phone: seller.phone,
+          role: seller.role,
+        },
+
         categories,
-        error: req.flash("error"),
-        success: req.flash("success"),
-        currentPage: "product",
       });
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      console.error("SELLER CATEGORIES API ERROR:", error);
+
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
@@ -953,8 +853,14 @@ class sellerPageController {
       const { error, value } = productValidation.validate(req.body);
 
       if (error) {
-        req.flash("error", error.details[0].message);
-        return res.redirect("/poeme-perfumery/seller/create/product");
+        if (Array.isArray(req.files)) {
+          await Promise.all(req.files.map(imageCleaner));
+        }
+
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: error.details[0].message,
+        });
       }
 
       const {
@@ -968,41 +874,48 @@ class sellerPageController {
         tags,
       } = value;
 
-      const sellerId = req.user.id;
+      const sellerId = req.user._id;
 
       const slug = slugify(productName, {
         lower: true,
         strict: true,
       });
 
+      // Check duplicate product
       const existingProduct = await Product.findOne({
         sellerId,
         $or: [{ slug }, { sku }],
       });
 
       if (existingProduct) {
-        await cleanupImages(req.files);
-        req.flash("error", "Product is already exist");
-        return res.redirect("/poeme-perfumery/seller/create/product");
+        if (Array.isArray(req.files)) {
+          await Promise.all(req.files.map(imageCleaner));
+        }
+
+        return res.status(httpCodes.conflict).json({
+          success: false,
+          message: "Product already exists.",
+        });
       }
 
-      const cleanupImages = async (files) => {
-        if (Array.isArray(files) && files.length > 0) {
-          await Promise.all(files.map(imageCleaner));
-        }
-      };
-
+      // Store uploaded images
       const images = [];
 
       if (req.files?.length) {
         for (const file of req.files) {
           const image = await ImageLibrary.create({
             sellerId,
+
             imageCode: `IMG${Date.now()}${Math.floor(Math.random() * 1000)}`,
+
             originalName: file.originalname,
+
             url: file.path,
+
             publicId: file.filename,
+
             size: file.size,
+
             format: file.mimetype.split("/")[1],
           });
 
@@ -1014,7 +927,7 @@ class sellerPageController {
         }
       }
 
-      const data = new Product({
+      const product = new Product({
         sellerId,
         categoryId,
         productName,
@@ -1025,119 +938,270 @@ class sellerPageController {
         sku,
         brand,
         tags,
-        stockStatus: stock > 0 ? "in_stock" : "out_of_stock",
+
+        stockStatus: Number(stock) > 0 ? "in_stock" : "out_of_stock",
+
         images,
       });
 
-      await data.save();
+      await product.save();
 
-      req.flash("success", "Product created successfully");
-
-      return res.redirect("/poeme-perfumery/seller/products");
+      return res.status(httpCodes.created).json({
+        success: true,
+        message: "Product created successfully.",
+        product,
+      });
     } catch (error) {
-      await cleanupImages(req.files);
-      return res.status(httpCodes.server_error).render("error", {
+      console.error("CREATE PRODUCT API ERROR:", error);
+
+      // Clean Cloudinary images if product creation fails
+      if (Array.isArray(req.files)) {
+        await Promise.all(req.files.map(imageCleaner));
+      }
+
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
     }
   }
 
-  // Increased Stock
+  // Seller Products
+  async products(req, res) {
+    try {
+      const sellerId = new mongoose.Types.ObjectId(req.user._id);
+
+      const seller = await User.findById(sellerId)
+        .select("-password -refreshToken")
+        .lean();
+
+      if (!seller) {
+        return res.status(httpCodes.not_found).json({
+          success: false,
+          message: "Seller not found.",
+        });
+      }
+
+      const products = await Product.aggregate([
+        {
+          $match: {
+            sellerId,
+            isActive: true,
+          },
+        },
+
+        {
+          $lookup: {
+            from: "categories",
+
+            localField: "categoryId",
+
+            foreignField: "_id",
+
+            as: "category",
+          },
+        },
+
+        {
+          $unwind: {
+            path: "$category",
+
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+
+        {
+          $sort: {
+            createdAt: -1,
+          },
+        },
+      ]);
+
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Seller products fetched successfully.",
+
+        seller: {
+          id: seller._id,
+          name: seller.name,
+          email: seller.email,
+          phone: seller.phone,
+          role: seller.role,
+        },
+
+        products,
+      });
+    } catch (error) {
+      console.error("SELLER PRODUCTS API ERROR:", error);
+
+      return res.status(httpCodes.server_error).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Increase Product Stock
   async increaseStock(req, res) {
     try {
-      await Product.findOneAndUpdate(
+      const { id } = req.params;
+
+      const product = await Product.findOneAndUpdate(
         {
-          _id: req.params.id,
-          sellerId: req.user.id,
+          _id: id,
+          sellerId: req.user._id,
+          isActive: true,
         },
         {
-          $inc: { stock: 1 },
+          $inc: {
+            stock: 1,
+          },
+        },
+        {
+          new: true,
         }
       );
 
-      return res.redirect("/poeme-perfumery/seller/products");
-    } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
-        success: false,
-        message: error.message,
-      });
-    }
-  }
-
-  // Decrease Stock
-  async decreaseStock(req, res) {
-    try {
-      const product = await Product.findOne({
-        _id: req.params.id,
-        sellerId: req.user.id,
-      });
-
       if (!product) {
-        req.flash("error", "Product not found");
-        return res.redirect("/poeme-perfumery/seller/products");
+        return res.status(httpCodes.not_found).json({
+          success: false,
+          message: "Product not found.",
+        });
       }
 
-      if (product.stock > 0) {
-        product.stock--;
-      }
-
-      if (product.stock === 0) {
-        product.status = "out_of_stock";
-      }
+      // Keep stock status synchronized
+      product.stockStatus = product.stock > 0 ? "in_stock" : "out_of_stock";
 
       await product.save();
 
-      return res.redirect("/poeme-perfumery/seller/products");
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Product stock increased successfully.",
+
+        product: {
+          id: product._id,
+          productName: product.productName,
+          stock: product.stock,
+          stockStatus: product.stockStatus,
+        },
+      });
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      console.error("INCREASE STOCK API ERROR:", error);
+
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
     }
   }
 
-  // Out of stock
+  // Decrease Product Stock
+  async decreaseStock(req, res) {
+    try {
+      const { id } = req.params;
+
+      const product = await Product.findOne({
+        _id: id,
+        sellerId: req.user._id,
+        isActive: true,
+      });
+
+      if (!product) {
+        return res.status(httpCodes.not_found).json({
+          success: false,
+          message: "Product not found.",
+        });
+      }
+
+      // Prevent negative stock
+      if (product.stock > 0) {
+        product.stock -= 1;
+      }
+
+      // Update stock status
+      product.stockStatus = product.stock > 0 ? "in_stock" : "out_of_stock";
+
+      await product.save();
+
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Product stock decreased successfully.",
+
+        product: {
+          id: product._id,
+          productName: product.productName,
+          stock: product.stock,
+          stockStatus: product.stockStatus,
+        },
+      });
+    } catch (error) {
+      console.error("DECREASE STOCK API ERROR:", error);
+
+      return res.status(httpCodes.server_error).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Mark Product Out Of Stock
   async outOfStock(req, res) {
     try {
-      await Product.findOneAndUpdate(
+      const { id } = req.params;
+
+      const product = await Product.findOneAndUpdate(
         {
-          _id: req.params.id,
-          sellerId: req.user.id,
+          _id: id,
+          sellerId: req.user._id,
+          isActive: true,
         },
         {
-          stock: 0,
-          status: "out_of_stock",
+          $set: {
+            stock: 0,
+            stockStatus: "out_of_stock",
+          },
+        },
+        {
+          new: true,
         }
       );
 
-      return res.redirect("/poeme-perfumery/seller/products");
+      if (!product) {
+        return res.status(httpCodes.not_found).json({
+          success: false,
+          message: "Product not found.",
+        });
+      }
+
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Product marked as out of stock.",
+
+        product: {
+          id: product._id,
+          productName: product.productName,
+          stock: product.stock,
+          stockStatus: product.stockStatus,
+        },
+      });
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      console.error("OUT OF STOCK API ERROR:", error);
+
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
     }
-  }
-
-  // Bulk Upload Page
-  async bulkUploadPage(req, res) {
-    const seller = await User.findById(req.user.id);
-
-    res.render("seller/bulkUpload", {
-      seller,
-      error: req.flash("error"),
-      success: req.flash("success"),
-      currentPage: "product",
-    });
   }
 
   // Bulk CSV Upload
   async bulkUpload(req, res) {
     try {
       if (!req.file) {
-        req.flash("error", "Please upload a CSV file.");
-        return res.redirect("/poeme-perfumery/seller/bulk-upload");
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Please upload a CSV file.",
+        });
       }
 
       const products = await csv().fromFile(req.file.path);
@@ -1145,11 +1209,13 @@ class sellerPageController {
       if (!products.length) {
         await csvCleaner(req.file);
 
-        req.flash("error", "CSV file is empty.");
-        return res.redirect("/poeme-perfumery/seller/bulk-upload");
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "CSV file is empty.",
+        });
       }
 
-      const sellerId = req.user.id;
+      const sellerId = req.user._id;
 
       let successCount = 0;
       let duplicateCount = 0;
@@ -1199,7 +1265,7 @@ class sellerPageController {
           uploadedSKUs.add(sku);
           uploadedProducts.add(productName.toLowerCase());
 
-          // Find Category (case-insensitive)
+          // Find category
           const category = await Category.findOne({
             sellerId,
             categoryName: {
@@ -1217,7 +1283,9 @@ class sellerPageController {
           const existingProduct = await Product.findOne({
             sellerId,
             $or: [
-              { sku },
+              {
+                sku,
+              },
               {
                 productName: {
                   $regex: new RegExp(`^${escapeRegex(productName)}$`, "i"),
@@ -1239,6 +1307,7 @@ class sellerPageController {
 
           let images = [];
 
+          // Image codes
           const imageCodes = [
             item.Image1,
             item.Image2,
@@ -1251,22 +1320,27 @@ class sellerPageController {
 
           const uniqueCodes = [...new Set(imageCodes)];
 
+          // Duplicate image codes
           if (uniqueCodes.length !== imageCodes.length) {
             failedCount++;
             validationFailed++;
             continue;
           }
 
+          // Maximum 5 images
           if (imageCodes.length > 5) {
             failedCount++;
             validationFailed++;
             continue;
           }
 
+          // Find images from seller's image library
           if (imageCodes.length) {
             const libraryImages = await ImageLibrary.find({
               sellerId,
-              imageCode: { $in: uniqueCodes },
+              imageCode: {
+                $in: uniqueCodes,
+              },
               isActive: true,
             });
 
@@ -1287,6 +1361,7 @@ class sellerPageController {
             });
           }
 
+          // Create product
           await Product.create({
             sellerId,
             categoryId: category._id,
@@ -1297,12 +1372,15 @@ class sellerPageController {
             stock,
             sku,
             brand,
+
             tags: item.Tags
               ? item.Tags.split(",")
                   .map((tag) => tag.trim())
                   .filter(Boolean)
               : [],
+
             images,
+
             status: "draft",
           });
 
@@ -1317,65 +1395,61 @@ class sellerPageController {
         }
       }
 
+      // Remove uploaded CSV
       await csvCleaner(req.file);
 
-      req.flash(
-        "success",
-        `${successCount} product(s) uploaded successfully. ${duplicateCount} duplicate(s) skipped. ${categoryFailed} category not found. ${validationFailed} invalid row(s).`
-      );
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Bulk product upload completed.",
 
-      return res.redirect("/poeme-perfumery/seller/bulk-upload");
+        summary: {
+          successCount,
+          duplicateCount,
+          categoryFailed,
+          validationFailed,
+          failedCount,
+          totalRows: products.length,
+        },
+      });
     } catch (error) {
+      console.error("BULK UPLOAD API ERROR:", error);
+
       if (req.file) {
         await csvCleaner(req.file);
       }
 
-      return res.status(httpCodes.server_error).render("error", {
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
     }
   }
 
-  // Download Template
+  // Download Product Template
   async downloadTemplate(req, res) {
     try {
       const categories = await Category.find({
-        sellerId: req.user.id,
-      });
+        sellerId: req.user._id,
+      })
+        .select("categoryName")
+        .lean();
 
       const category = categories.length > 0 ? categories[0].categoryName : "";
 
-      const csv = generateProductTemplate(category);
+      const csvData = generateProductTemplate(category);
 
       res.setHeader("Content-Type", "text/csv");
+
       res.setHeader(
         "Content-Disposition",
         'attachment; filename="product-template.csv"'
       );
 
-      return res.send(csv);
+      return res.send(csvData);
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
-        success: false,
-        message: error.message,
-      });
-    }
-  }
+      console.error("DOWNLOAD TEMPLATE API ERROR:", error);
 
-  // Upload Image Page
-  async uploadImagePage(req, res) {
-    try {
-      const seller = await User.findById(req.user.id);
-
-      return res.render("seller/uploadImage", {
-        seller,
-        error: req.flash("error"),
-        success: req.flash("success"),
-        currentPage: "image-library",
-      });
-    } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
@@ -1386,18 +1460,24 @@ class sellerPageController {
   async uploadImage(req, res) {
     try {
       if (!req.files || req.files.length === 0) {
-        req.flash("error", "Please select at least one image.");
-        return res.redirect("/poeme-perfumery/seller/upload-image");
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Please select at least one image.",
+        });
       }
 
-      const sellerId = req.user.id;
+      const sellerId = req.user._id;
 
       let uploaded = 0;
+
+      const uploadedImages = [];
 
       for (const file of req.files) {
         const lastImage = await ImageLibrary.findOne({
           sellerId,
-        }).sort({ createdAt: -1 });
+        }).sort({
+          createdAt: -1,
+        });
 
         let nextNumber = 1;
 
@@ -1417,12 +1497,10 @@ class sellerPageController {
         });
 
         if (exists) {
-          req.flash("error", "Image code already exists. Please upload again.");
-
-          return res.redirect("/poeme-perfumery/seller/upload-image");
+          continue;
         }
 
-        await ImageLibrary.create({
+        const image = await ImageLibrary.create({
           sellerId,
           imageCode,
           originalName: file.originalname,
@@ -1433,32 +1511,49 @@ class sellerPageController {
         });
 
         uploaded++;
+
+        uploadedImages.push({
+          id: image._id,
+          imageCode: image.imageCode,
+          originalName: image.originalName,
+          url: image.url,
+          publicId: image.publicId,
+          size: image.size,
+          format: image.format,
+        });
       }
 
-      req.flash("success", `${uploaded} image(s) uploaded successfully.`);
-
-      return res.redirect("/poeme-perfumery/seller/image-library");
+      return res.status(httpCodes.created).json({
+        success: true,
+        message: `${uploaded} image(s) uploaded successfully.`,
+        uploaded,
+        images: uploadedImages,
+      });
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      console.error("UPLOAD IMAGE API ERROR:", error);
+
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
     }
   }
 
-  // Image Library
+  // Seller Image Library
   async imageLibrary(req, res) {
     try {
-      const seller = await User.findById(req.user.id);
+      const sellerId = new mongoose.Types.ObjectId(req.user._id);
 
-      const page = Number(req.query.page) || 1;
+      const page = Math.max(Number(req.query.page) || 1, 1);
+
       const limit = 12;
+
       const skip = (page - 1) * limit;
 
       const search = (req.query.search || "").trim();
 
       const query = {
-        sellerId: req.user.id,
+        sellerId,
         isActive: true,
       };
 
@@ -1486,54 +1581,58 @@ class sellerPageController {
       const totalPages = Math.ceil(totalImages / limit);
 
       const images = await ImageLibrary.find(query)
-        .sort({ createdAt: -1 })
+        .sort({
+          createdAt: -1,
+        })
         .skip(skip)
-        .limit(limit);
+        .limit(limit)
+        .lean();
 
-      return res.render("seller/imageLibrary", {
-        seller,
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Image library fetched successfully.",
+
         images,
-        search,
-        currentPage: "image-library",
-        success: req.flash("success"),
-        error: req.flash("error"),
-        totalPages: 1,
-        currentPageNumber: 1,
 
         pagination: {
           currentPage: page,
           totalPages,
           totalImages,
+          limit,
           hasPrev: page > 1,
           hasNext: page < totalPages,
         },
       });
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      console.error("IMAGE LIBRARY API ERROR:", error);
+
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
     }
   }
 
-  // Delete Image - Hard Delete
+  // Delete Image
   async deleteImage(req, res) {
     try {
-      const sellerId = req.user.id;
+      const sellerId = req.user._id;
       const imageId = req.params.id;
 
-      // Find image
+      // Find seller's image
       const image = await ImageLibrary.findOne({
         _id: imageId,
         sellerId,
       });
 
       if (!image) {
-        req.flash("error", "Image not found.");
-        return res.redirect("/poeme-perfumery/seller/image-library");
+        return res.status(httpCodes.not_found).json({
+          success: false,
+          message: "Image not found.",
+        });
       }
 
-      // Check if image is assigned to any product
+      // Check whether image is assigned to a product
       const product = await Product.findOne({
         sellerId,
         isActive: true,
@@ -1541,11 +1640,11 @@ class sellerPageController {
       });
 
       if (product) {
-        req.flash(
-          "error",
-          "This image is already assigned to a product and cannot be deleted."
-        );
-        return res.redirect("/poeme-perfumery/seller/image-library");
+        return res.status(httpCodes.conflict).json({
+          success: false,
+          message:
+            "This image is already assigned to a product and cannot be deleted.",
+        });
       }
 
       // Delete from Cloudinary
@@ -1558,43 +1657,116 @@ class sellerPageController {
       // Hard delete from MongoDB
       await ImageLibrary.findByIdAndDelete(image._id);
 
-      req.flash("success", "Image deleted successfully.");
-      return res.redirect("/poeme-perfumery/seller/image-library");
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Image deleted successfully.",
+        imageId,
+      });
     } catch (error) {
-      console.error("Delete Image Error:", error);
+      console.error("DELETE IMAGE API ERROR:", error);
 
-      req.flash("error", "Unable to delete image.");
-      return res.redirect("/poeme-perfumery/seller/image-library");
+      return res.status(httpCodes.server_error).json({
+        success: false,
+        message: error.message,
+      });
     }
   }
 
-  // Edit Product Page
-  async editPorductPage(req, res) {
+  // View Product
+  async viewProductPage(req, res) {
     try {
-      const sellerId = req.user.id;
-      const productId = req.params.id;
-      const seller = await User.findById(sellerId);
-      const product = await Product.findOne({ _id: productId, sellerId });
+      const { id } = req.params;
 
-      if (!product) {
-        req.flash("error", "Product not found");
-        return res.redirect("/poeme-perfumery/seller/products");
+      const sellerId = new mongoose.Types.ObjectId(req.user._id);
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Invalid product ID",
+        });
       }
 
-      const categories = await Category.find({ sellerId }).sort({
-        categoryName: 1,
-      });
+      const productId = new mongoose.Types.ObjectId(id);
 
-      return res.render("seller/editProduct", {
-        seller,
-        product,
-        categories,
-        error: req.flash("error"),
-        success: req.flash("success"),
-        currentPage: "product",
+      const products = await Product.aggregate([
+        {
+          $match: {
+            _id: productId,
+            sellerId,
+            isActive: true,
+          },
+        },
+
+        {
+          $lookup: {
+            from: "categories",
+
+            localField: "categoryId",
+
+            foreignField: "_id",
+
+            as: "category",
+          },
+        },
+
+        {
+          $unwind: {
+            path: "$category",
+
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+
+        {
+          $project: {
+            _id: 1,
+            sellerId: 1,
+            categoryId: 1,
+
+            productName: 1,
+            slug: 1,
+            description: 1,
+
+            price: 1,
+            stock: 1,
+            stockStatus: 1,
+
+            sku: 1,
+            brand: 1,
+            tags: 1,
+
+            images: 1,
+
+            isActive: 1,
+
+            createdAt: 1,
+            updatedAt: 1,
+
+            category: {
+              _id: "$category._id",
+              categoryName: "$category.categoryName",
+            },
+          },
+        },
+      ]);
+
+      if (!products.length) {
+        return res.status(httpCodes.not_found).json({
+          success: false,
+          message: "Product not found",
+        });
+      }
+
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Product fetched successfully",
+
+        product: products[0],
       });
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      console.error("VIEW PRODUCT API ERROR:", error);
+
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
@@ -1604,10 +1776,16 @@ class sellerPageController {
   // Edit Product
   async editProduct(req, res) {
     try {
-      const sellerId = req.user.id;
+      const sellerId = req.user._id;
       const productId = req.params.id;
 
-      // Get form data
+      if (!mongoose.Types.ObjectId.isValid(productId)) {
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Invalid product ID",
+        });
+      }
+
       const {
         categoryId,
         productName,
@@ -1619,38 +1797,46 @@ class sellerPageController {
         tags,
       } = req.body;
 
-      // Check product exists and belongs to logged-in seller
+      // Check product
       const product = await Product.findOne({
         _id: productId,
         sellerId,
       });
 
       if (!product) {
-        req.flash("error", "Product not found");
-        return res.redirect("/poeme-perfumery/seller/products");
+        return res.status(httpCodes.not_found).json({
+          success: false,
+          message: "Product not found",
+        });
       }
 
-      // Check category exists and belongs to logged-in seller
+      // Check category
       const category = await Category.findOne({
         _id: categoryId,
         sellerId,
       });
 
       if (!category) {
-        req.flash("error", "Invalid category");
-
-        return res.redirect(
-          `/poeme-perfumery/seller/edit/product/${productId}`
-        );
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Invalid category",
+        });
       }
 
-      // Generate slug from product name
+      // Validate product name
+      if (!productName || !productName.trim()) {
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Product name is required",
+        });
+      }
+
       const slug = slugify(productName, {
         lower: true,
         strict: true,
       });
 
-      // Check if another product has same slug or SKU
+      // Check duplicate slug / SKU
       const existingProduct = await Product.findOne({
         sellerId,
 
@@ -1658,40 +1844,39 @@ class sellerPageController {
           $ne: productId,
         },
 
-        $or: [{ slug }, { sku }],
+        $or: [
+          {
+            slug,
+          },
+          {
+            sku,
+          },
+        ],
       });
 
       if (existingProduct) {
-        req.flash(
-          "error",
-          "Another product with this name or SKU already exists"
-        );
-
-        return res.redirect(
-          `/poeme-perfumery/seller/edit/product/${productId}`
-        );
+        return res.status(httpCodes.conflict).json({
+          success: false,
+          message: "Another product with this name or SKU already exists",
+        });
       }
 
-      // Convert price and stock to numbers
+      // Convert price and stock
       const priceNumber = Number(price);
       const stockNumber = Number(stock);
 
-      // Validate price
       if (Number.isNaN(priceNumber) || priceNumber < 0) {
-        req.flash("error", "Please enter a valid price");
-
-        return res.redirect(
-          `/poeme-perfumery/seller/edit/product/${productId}`
-        );
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Please enter a valid price",
+        });
       }
 
-      // Validate stock
       if (Number.isNaN(stockNumber) || stockNumber < 0) {
-        req.flash("error", "Please enter a valid stock quantity");
-
-        return res.redirect(
-          `/poeme-perfumery/seller/edit/product/${productId}`
-        );
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Please enter a valid stock quantity",
+        });
       }
 
       // Format tags
@@ -1702,14 +1887,15 @@ class sellerPageController {
           .split(",")
           .map((tag) => tag.trim())
           .filter(Boolean);
+      } else if (Array.isArray(tags)) {
+        formattedTags = tags.map((tag) => String(tag).trim()).filter(Boolean);
       }
 
-      // Product data to update
       const productData = {
         categoryId,
-        productName,
+        productName: productName.trim(),
         slug,
-        description,
+        description: description || "",
         price: priceNumber,
         stock: stockNumber,
         sku,
@@ -1719,15 +1905,16 @@ class sellerPageController {
         stockStatus: stockNumber > 0 ? "in_stock" : "out_of_stock",
       };
 
-      // Update product
       const updatedProduct = await Product.findOneAndUpdate(
         {
           _id: productId,
           sellerId,
         },
+
         {
           $set: productData,
         },
+
         {
           new: true,
           runValidators: true,
@@ -1735,114 +1922,22 @@ class sellerPageController {
       );
 
       if (!updatedProduct) {
-        req.flash("error", "Unable to update product");
-
-        return res.redirect(
-          `/poeme-perfumery/seller/edit/product/${productId}`
-        );
+        return res.status(httpCodes.server_error).json({
+          success: false,
+          message: "Unable to update product",
+        });
       }
 
-      req.flash("success", "Product updated successfully");
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Product updated successfully",
 
-      return res.redirect("/poeme-perfumery/seller/products");
-    } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
-        success: false,
-        message: error.message,
-      });
-    }
-  }
-
-  // View Product Page
-  async viewProductPage(req, res) {
-    try {
-      const { id } = req.params;
-      const sellerId = req.user.id;
-
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        req.flash("error", "Invalid product ID");
-        return res.redirect("/poeme-perfumery/seller/products");
-      }
-
-      const product = await Product.findOne({
-        _id: id,
-        sellerId,
-        isActive: true,
-      })
-        .populate({
-          path: "categoryId",
-          select: "categoryName",
-        })
-        .lean();
-
-      if (!product) {
-        req.flash("error", "Product not found");
-        return res.redirect("/poeme-perfumery/seller/products");
-      }
-
-      product.category = product.categoryId;
-
-      const seller = await User.findById(sellerId);
-
-      return res.render("seller/viewProduct", {
-        seller,
-        product,
-        success: req.flash("success"),
-        error: req.flash("error"),
-        currentPage: "product",
+        product: updatedProduct,
       });
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
-        success: false,
-        message: error.message,
-      });
-    }
-  }
+      console.error("EDIT PRODUCT API ERROR:", error);
 
-  // Deleted Products Page
-  async deletedProductsPage(req, res) {
-    try {
-      const sellerId = req.user.id;
-
-      const seller = await User.findById(sellerId);
-
-      const products = await Product.aggregate([
-        {
-          $match: {
-            sellerId: new mongoose.Types.ObjectId(sellerId),
-            isActive: false,
-          },
-        },
-        {
-          $lookup: {
-            from: "categories",
-            localField: "categoryId",
-            foreignField: "_id",
-            as: "category",
-          },
-        },
-        {
-          $unwind: {
-            path: "$category",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $sort: {
-            updatedAt: -1,
-          },
-        },
-      ]);
-
-      return res.render("seller/deletedProducts", {
-        seller,
-        products,
-        success: req.flash("success"),
-        error: req.flash("error"),
-        currentPage: "product",
-      });
-    } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
@@ -1853,23 +1948,33 @@ class sellerPageController {
   async deleteProduct(req, res) {
     try {
       const { id } = req.params;
-      const sellerId = req.user.id;
+      const sellerId = req.user._id;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Invalid product ID",
+        });
+      }
 
       const product = await Product.findOne({
         _id: id,
         sellerId,
+        isActive: true,
       });
 
       if (!product) {
-        req.flash("error", "Product not found");
-        return res.redirect("/poeme-perfumery/seller/products");
+        return res.status(httpCodes.not_found).json({
+          success: false,
+          message: "Product not found",
+        });
       }
 
-      // Soft delete product
       const deletedProduct = await Product.findOneAndUpdate(
         {
           _id: id,
           sellerId,
+          isActive: true,
         },
         {
           $set: {
@@ -1883,43 +1988,116 @@ class sellerPageController {
       );
 
       if (!deletedProduct) {
-        req.flash("error", "Unable to delete product");
-
-        return res.redirect("/poeme-perfumery/seller/products");
+        return res.status(httpCodes.server_error).json({
+          success: false,
+          message: "Unable to delete product",
+        });
       }
 
-      req.flash("success", "Product deleted successfully");
-
-      return res.redirect("/poeme-perfumery/seller/products");
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Product deleted successfully",
+        product: {
+          id: deletedProduct._id,
+          productName: deletedProduct.productName,
+          isActive: deletedProduct.isActive,
+        },
+      });
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      console.error("DELETE PRODUCT API ERROR:", error);
+
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
     }
   }
 
-  // Delete Product - Soft Delete
+  // Deleted Products
+  async deletedProductsPage(req, res) {
+    try {
+      const sellerId = new mongoose.Types.ObjectId(req.user._id);
+
+      const products = await Product.aggregate([
+        {
+          $match: {
+            sellerId,
+            isActive: false,
+          },
+        },
+
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categoryId",
+            foreignField: "_id",
+            as: "category",
+          },
+        },
+
+        {
+          $unwind: {
+            path: "$category",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+
+        {
+          $sort: {
+            updatedAt: -1,
+          },
+        },
+      ]);
+
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Deleted products fetched successfully",
+        products,
+      });
+    } catch (error) {
+      console.error("DELETED PRODUCTS API ERROR:", error);
+
+      return res.status(httpCodes.server_error).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Restore Product - Soft Restore
   async restoreProduct(req, res) {
     try {
       const { id } = req.params;
-      const sellerId = req.user.id;
+      const sellerId = req.user._id;
 
+      // Validate product ID
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Invalid product ID",
+        });
+      }
+
+      // Check product belongs to logged-in seller
       const product = await Product.findOne({
         _id: id,
         sellerId,
+        isActive: false,
       });
 
       if (!product) {
-        req.flash("error", "Product not found");
-        return res.redirect("/poeme-perfumery/seller/products");
+        return res.status(httpCodes.not_found).json({
+          success: false,
+          message: "Deleted product not found",
+        });
       }
 
-      // Soft delete product
-      const restoreProduct = await Product.findOneAndUpdate(
+      // Restore product
+      const restoredProduct = await Product.findOneAndUpdate(
         {
           _id: id,
           sellerId,
+          isActive: false,
         },
         {
           $set: {
@@ -1932,37 +2110,37 @@ class sellerPageController {
         }
       );
 
-      if (!restoreProduct) {
-        req.flash("error", "Unable to delete product");
-
-        return res.redirect("/poeme-perfumery/seller/products");
+      if (!restoredProduct) {
+        return res.status(httpCodes.server_error).json({
+          success: false,
+          message: "Unable to restore product",
+        });
       }
 
-      req.flash("success", "Product deleted successfully");
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Product restored successfully",
 
-      return res.redirect("/poeme-perfumery/seller/products");
+        product: {
+          id: restoredProduct._id,
+          productName: restoredProduct.productName,
+          isActive: restoredProduct.isActive,
+        },
+      });
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      console.error("RESTORE PRODUCT API ERROR:", error);
+
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
     }
   }
 
-  // ============================================================
-  // ORDERS PAGE
-  // ============================================================
-
+  // Seller Orders
   async orders(req, res) {
     try {
       const sellerId = new mongoose.Types.ObjectId(req.user.id);
-
-      const seller = await User.findById(sellerId).lean();
-
-      if (!seller) {
-        req.flash("error", "Seller not found");
-        return res.redirect("/poeme-perfumery/seller/login");
-      }
 
       const search = (req.query.search || "").trim();
       const status = (req.query.status || "").trim();
@@ -1987,6 +2165,12 @@ class sellerPageController {
       if (allowedStatuses.includes(status)) {
         orderMatch.orderStatus = status;
       }
+
+      // ============================================================
+      // SEARCH REGEX
+      // ============================================================
+
+      const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
       // ============================================================
       // ORDERS PIPELINE
@@ -2051,35 +2235,39 @@ class sellerPageController {
                   $or: [
                     {
                       "customer.name": {
-                        $regex: search,
+                        $regex: escapeRegex(search),
                         $options: "i",
                       },
                     },
+
                     {
                       "customer.email": {
-                        $regex: search,
+                        $regex: escapeRegex(search),
                         $options: "i",
                       },
                     },
+
                     {
                       "customer.phone": {
-                        $regex: search,
+                        $regex: escapeRegex(search),
                         $options: "i",
                       },
                     },
+
                     {
                       "items.productName": {
-                        $regex: search,
+                        $regex: escapeRegex(search),
                         $options: "i",
                       },
                     },
+
                     {
                       $expr: {
                         $regexMatch: {
                           input: {
                             $toString: "$_id",
                           },
-                          regex: search,
+                          regex: escapeRegex(search),
                           options: "i",
                         },
                       },
@@ -2111,8 +2299,7 @@ class sellerPageController {
               },
             },
 
-            // IMPORTANT:
-            // Your EJS expects sellerItems
+            // Products belonging to this seller
             sellerItems: {
               $push: {
                 productId: "$items.productId",
@@ -2124,8 +2311,7 @@ class sellerPageController {
               },
             },
 
-            // IMPORTANT:
-            // Your EJS expects sellerSubtotal
+            // Seller's portion of this order
             sellerSubtotal: {
               $sum: "$items.totalPrice",
             },
@@ -2214,6 +2400,7 @@ class sellerPageController {
           $unwind: "$product",
         },
 
+        // Only this seller's products
         {
           $match: {
             "product.sellerId": sellerId,
@@ -2235,6 +2422,7 @@ class sellerPageController {
           },
         },
 
+        // Calculate statistics
         {
           $group: {
             _id: null,
@@ -2336,37 +2524,37 @@ class sellerPageController {
       };
 
       // ============================================================
-      // RENDER
+      // API RESPONSE
       // ============================================================
 
-      return res.render("seller/orders", {
-        seller,
-        orders,
+      return res.status(httpCodes.ok).json({
+        success: true,
 
-        search,
-        status,
+        message: "Seller orders fetched successfully",
+
+        filters: {
+          search,
+          status,
+        },
 
         statistics,
 
-        success: req.flash("success"),
-        error: req.flash("error"),
-
-        currentPage: "orders",
+        orders,
       });
     } catch (error) {
-      console.error("SELLER ORDERS ERROR:", error);
+      console.error("SELLER ORDERS API ERROR:", error);
 
-      return res.status(httpCodes.server_error).render("error", {
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
     }
   }
-  
+
+  // Update Order Status
   async updateOrderStatus(req, res) {
     try {
       const sellerId = new mongoose.Types.ObjectId(req.user.id);
-
       const { id } = req.params;
       const { orderStatus } = req.body;
 
@@ -2375,8 +2563,10 @@ class sellerPageController {
       // --------------------------------------------------------
 
       if (!mongoose.Types.ObjectId.isValid(id)) {
-        req.flash("error", "Invalid order ID");
-        return res.redirect("/poeme-perfumery/seller/orders");
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Invalid order ID",
+        });
       }
 
       // --------------------------------------------------------
@@ -2393,21 +2583,22 @@ class sellerPageController {
       ];
 
       if (!allowedStatuses.includes(orderStatus)) {
-        req.flash("error", "Invalid order status");
-        return res.redirect("/poeme-perfumery/seller/orders");
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Invalid order status",
+        });
       }
 
+      const orderId = new mongoose.Types.ObjectId(id);
+
       // --------------------------------------------------------
-      // Find order containing a product owned by this seller
-      //
-      // This is important. A seller cannot update an order that
-      // does not contain one of their products.
+      // Find order belonging to this seller
       // --------------------------------------------------------
 
       const sellerOrder = await Order.aggregate([
         {
           $match: {
-            _id: new mongoose.Types.ObjectId(id),
+            _id: orderId,
             paymentStatus: "paid",
           },
         },
@@ -2448,27 +2639,24 @@ class sellerPageController {
       ]);
 
       if (!sellerOrder.length) {
-        req.flash(
-          "error",
-          "Order not found or this order does not belong to your products."
-        );
-
-        return res.redirect("/poeme-perfumery/seller/orders");
+        return res.status(httpCodes.not_found).json({
+          success: false,
+          message:
+            "Order not found or this order does not belong to your products.",
+        });
       }
 
       const currentStatus = sellerOrder[0].orderStatus;
 
       // --------------------------------------------------------
-      // Prevent changing a completed/cancelled order
+      // Prevent changing completed/cancelled orders
       // --------------------------------------------------------
 
       if (currentStatus === "delivered" || currentStatus === "cancelled") {
-        req.flash(
-          "error",
-          `This order is already ${currentStatus} and cannot be changed.`
-        );
-
-        return res.redirect("/poeme-perfumery/seller/orders");
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: `This order is already ${currentStatus} and cannot be changed.`,
+        });
       }
 
       // --------------------------------------------------------
@@ -2490,12 +2678,10 @@ class sellerPageController {
       };
 
       if (!statusFlow[currentStatus]?.includes(orderStatus)) {
-        req.flash(
-          "error",
-          `You cannot change order status from "${currentStatus}" to "${orderStatus}".`
-        );
-
-        return res.redirect("/poeme-perfumery/seller/orders");
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: `You cannot change order status from "${currentStatus}" to "${orderStatus}".`,
+        });
       }
 
       // --------------------------------------------------------
@@ -2504,8 +2690,21 @@ class sellerPageController {
 
       const updatedOrder = await Order.findOneAndUpdate(
         {
-          _id: new mongoose.Types.ObjectId(id),
+          _id: orderId,
+
           orderStatus: currentStatus,
+
+          paymentStatus: "paid",
+
+          items: {
+            $elemMatch: {
+              productId: {
+                $in: await Product.find({
+                  sellerId,
+                }).distinct("_id"),
+              },
+            },
+          },
         },
         {
           $set: {
@@ -2519,18 +2718,31 @@ class sellerPageController {
       );
 
       if (!updatedOrder) {
-        req.flash("error", "Order status could not be updated.");
-
-        return res.redirect("/poeme-perfumery/seller/orders");
+        return res.status(httpCodes.conflict).json({
+          success: false,
+          message:
+            "Order status could not be updated. The order may have changed.",
+        });
       }
 
-      req.flash("success", `Order status changed to ${orderStatus}.`);
+      // --------------------------------------------------------
+      // Success
+      // --------------------------------------------------------
 
-      return res.redirect("/poeme-perfumery/seller/orders");
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: `Order status changed to ${orderStatus}.`,
+        order: {
+          _id: updatedOrder._id,
+          orderStatus: updatedOrder.orderStatus,
+          paymentStatus: updatedOrder.paymentStatus,
+          updatedAt: updatedOrder.updatedAt,
+        },
+      });
     } catch (error) {
-      console.error("SELLER UPDATE ORDER STATUS ERROR:", error);
+      console.error("SELLER UPDATE ORDER STATUS API ERROR:", error);
 
-      return res.status(httpCodes.server_error).render("error", {
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
@@ -2538,4 +2750,4 @@ class sellerPageController {
   }
 }
 
-module.exports = new sellerPageController();
+module.exports = new sellerController();

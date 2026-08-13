@@ -1,74 +1,60 @@
-const httpCodes = require("../../utils/httpCodes");
-const User = require("../../model/user");
-const Role = require("../../model/role");
-const Product = require("../../model/products");
-const Order = require("../../model/order");
-const { loginSchema } = require("../../validation/authValidation");
+const { default: mongoose } = require("mongoose");
+const Category = require("../model/category");
+const Order = require("../model/order");
+const Product = require("../model/products");
+const Role = require("../model/role");
+const User = require("../model/user");
+const httpCodes = require("../utils/httpCodes");
+const { generateAccessToken, generateRefreshToken } = require("../utils/token");
+const { loginSchema } = require("../validation/authValidation");
 const bcrypt = require("bcrypt");
-const {
-  generateAccessToken,
-  generateRefreshToken,
-} = require("../../utils/token");
-const { getCookieOptions } = require("../../utils/cookieHelpers");
-const Category = require("../../model/category");
 
-class adminPageController {
-  // =========================================================
-  //  LOGIN & Logout
-  // =========================================================
-
-  async loginPage(req, res) {
-    try {
-      return res.render("admin/login", {
-        error: null,
-        success: null,
-      });
-    } catch (error) {
-      console.error("Admin login page error:", error);
-
-      return res.status(httpCodes.server_error).render("error", {
-        success: false,
-        message: error.message,
-      });
-    }
-  }
-
-  // Login
+class adminController {
+  // Admin Login
   async login(req, res) {
     try {
       const { error, value } = loginSchema.validate(req.body);
 
       if (error) {
-        return res.status(httpCodes.bad_request).render("error", {
+        return res.status(httpCodes.bad_request).json({
           success: false,
           message: error.details[0].message,
         });
       }
 
       const { email, password } = value;
-      const remember = req.body.remember;
+
+      const rememberMe = req.body.remember === true;
 
       const admin = await User.findOne({ email }).populate("role");
+
       if (!admin) {
-        req.flash("error", "Invalid email id");
-        return res.redirect("/poeme-perfumery/admin/login");
+        return res.status(httpCodes.unauthorized).json({
+          success: false,
+          message: "Invalid email or password",
+        });
       }
 
+      // Check password
       const isMatch = await bcrypt.compare(password, admin.password || "");
 
+      // Check admin role
       if (!isMatch || admin.role?.role !== "admin") {
-        req.flash("error", "Invalid email or password");
-        return res.redirect("/poeme-perfumery/admin/login");
+        return res.status(httpCodes.unauthorized).json({
+          success: false,
+          message: "Invalid email or password",
+        });
       }
 
+      // Generate tokens
       const adminAccessToken = generateAccessToken(admin);
       const adminRefreshToken = generateRefreshToken(admin);
 
+      // Save refresh token
       admin.refreshToken = adminRefreshToken;
       await admin.save();
 
-      const rememberMe = remember === "on";
-
+      // Token expiration
       const accessMaxAge = rememberMe
         ? 30 * 24 * 60 * 60 * 1000
         : 30 * 60 * 1000;
@@ -77,27 +63,49 @@ class adminPageController {
         ? 30 * 24 * 60 * 60 * 1000
         : 7 * 24 * 60 * 60 * 1000;
 
+      // Set cookies
       res.cookie(
         "adminAccessToken",
         adminAccessToken,
-        getCookieOptions(req, { maxAge: accessMaxAge })
+        getCookieOptions(req, {
+          maxAge: accessMaxAge,
+        })
       );
+
       res.cookie(
         "adminRefreshToken",
         adminRefreshToken,
-        getCookieOptions(req, { maxAge: refreshMaxAge })
+        getCookieOptions(req, {
+          maxAge: refreshMaxAge,
+        })
       );
 
-      return res.redirect("/poeme-perfumery/admin/dashboard");
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Admin login successful",
+        data: {
+          admin: {
+            id: admin._id,
+            name: admin.name,
+            email: admin.email,
+            role: admin.role?.role,
+          },
+          accessToken: adminAccessToken,
+          refreshToken: adminRefreshToken,
+          rememberMe,
+        },
+      });
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      console.error("ADMIN LOGIN ERROR:", error);
+
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
     }
   }
 
-  // Logout
+  // Admin Logout
   async logout(req, res) {
     try {
       if (req.user) {
@@ -106,37 +114,47 @@ class adminPageController {
         });
       }
 
+      // Clear cookies
       res.clearCookie("adminAccessToken");
       res.clearCookie("adminRefreshToken");
 
-      return res.redirect("/poeme-perfumery/admin/login");
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message: "Admin logout successful",
+      });
     } catch (error) {
-      return res.status(httpCodes.server_error).render("error", {
+      console.error("ADMIN LOGOUT ERROR:", error);
+
+      return res.status(httpCodes.server_error).json({
         success: false,
         message: error.message,
       });
     }
   }
 
-  // =========================================================
-  // ADMIN DASHBOARD
-  // =========================================================
-
+  // Admin Dashboard API
   async dashboard(req, res) {
     try {
       const adminId = req.user?._id;
 
+      // Validate authenticated admin
+
       if (!adminId) {
-        return res.redirect("/poeme-perfumery/admin/login");
+        return res.status(httpCodes.unauthorized).json({
+          success: false,
+          message: "Authentication required.",
+        });
       }
 
-      // Get admin using aggregation
+      // Get Admin
+
       const adminResult = await User.aggregate([
         {
           $match: {
             _id: adminId,
           },
         },
+
         {
           $lookup: {
             from: "roles",
@@ -145,14 +163,17 @@ class adminPageController {
             as: "roleData",
           },
         },
+
         {
           $unwind: "$roleData",
         },
+
         {
           $match: {
             "roleData.role": "admin",
           },
         },
+
         {
           $project: {
             _id: 1,
@@ -161,6 +182,7 @@ class adminPageController {
             phone: 1,
             isActive: 1,
             isVerified: 1,
+
             role: {
               _id: "$roleData._id",
               role: "$roleData.role",
@@ -172,11 +194,13 @@ class adminPageController {
       const admin = adminResult[0];
 
       if (!admin) {
-        return res.status(httpCodes.forbidden).render("error", {
+        return res.status(httpCodes.forbidden).json({
           success: false,
           message: "You are not authorized to access the admin dashboard.",
         });
       }
+
+      // Get Roles
 
       const roles = await Role.aggregate([
         {
@@ -186,6 +210,7 @@ class adminPageController {
             },
           },
         },
+
         {
           $project: {
             _id: 1,
@@ -211,6 +236,8 @@ class adminPageController {
           adminRoleId = role._id;
         }
       }
+
+      // USER STATISTICS
 
       const userStats = await User.aggregate([
         {
@@ -283,6 +310,8 @@ class adminPageController {
         }
       }
 
+      // PENDING SELLERS
+
       let pendingSellers = 0;
 
       if (sellerRoleId) {
@@ -293,6 +322,7 @@ class adminPageController {
               isVerified: false,
             },
           },
+
           {
             $count: "count",
           },
@@ -300,6 +330,8 @@ class adminPageController {
 
         pendingSellers = result[0]?.count || 0;
       }
+
+      // PRODUCT STATISTICS
 
       const productStatsResult = await Product.aggregate([
         {
@@ -386,6 +418,8 @@ class adminPageController {
       const lowStockProducts = productStats.lowStock || 0;
       const outOfStockProducts = productStats.outOfStock || 0;
 
+      // ORDER STATISTICS
+
       const orderStatsResult = await Order.aggregate([
         {
           $group: {
@@ -457,18 +491,23 @@ class adminPageController {
       const cancelledOrders = orderStats.cancelled || 0;
       const paidOrders = orderStats.paid || 0;
 
+      // TOTAL REVENUE
+
       const revenueResult = await Order.aggregate([
         {
           $match: {
             paymentStatus: "paid",
+
             orderStatus: {
               $ne: "cancelled",
             },
           },
         },
+
         {
           $group: {
             _id: null,
+
             revenue: {
               $sum: "$total",
             },
@@ -478,12 +517,15 @@ class adminPageController {
 
       const totalRevenue = revenueResult[0]?.revenue || 0;
 
+      // RECENT ORDERS
+
       const recentOrders = await Order.aggregate([
         {
           $sort: {
             createdAt: -1,
           },
         },
+
         {
           $limit: 8,
         },
@@ -570,11 +612,13 @@ class adminPageController {
                     1,
                   ],
                 },
+
                 {
                   name: {
                     $arrayElemAt: ["$sellerData.name", 0],
                   },
                 },
+
                 {
                   name: "Multiple Sellers",
                 },
@@ -582,18 +626,25 @@ class adminPageController {
             },
 
             totalAmount: "$total",
+
             status: "$orderStatus",
+
             paymentStatus: 1,
+
             paymentMethod: 1,
+
             createdAt: 1,
           },
         },
       ]);
 
+      // TOP SELLERS
+
       const topSellerData = await Order.aggregate([
         {
           $match: {
             paymentStatus: "paid",
+
             orderStatus: {
               $ne: "cancelled",
             },
@@ -663,8 +714,11 @@ class adminPageController {
         {
           $project: {
             _id: 1,
+
             name: 1,
+
             email: 1,
+
             revenue: 1,
 
             orders: {
@@ -689,6 +743,8 @@ class adminPageController {
         orders: seller.orders,
         revenue: seller.revenue,
       }));
+
+      // REVENUE CHART - LAST 30 DAYS
 
       const chartDays = 30;
 
@@ -773,6 +829,8 @@ class adminPageController {
         values: chartValues,
       };
 
+      // CALCULATED METRICS
+
       const sellerActivity =
         totalSellers > 0 ? Math.round((activeSellers / totalSellers) * 100) : 0;
 
@@ -793,56 +851,63 @@ class adminPageController {
       const notificationCount =
         pendingSellers + pendingProducts + pendingOrders + lowStockProducts;
 
+      // FINAL STATS
+
       const stats = {
         revenue: totalRevenue,
+
         orders: totalOrders,
+
         customers: totalCustomers,
+
         sellers: activeSellers,
+
         products: totalProducts,
 
         pendingSellers,
+
         pendingOrders,
+
         pendingProducts,
 
         lowStock: lowStockProducts,
+
         outOfStock: outOfStockProducts,
 
         paidOrders,
+
         deliveredOrders,
+
         cancelledOrders,
 
         sellerActivity,
+
         orderFulfillment,
+
         productHealth,
       };
 
-      return res.render("admin/dashboard", {
-        admin,
+      return res.status(httpCodes.ok).json({
+        success: true,
 
-        currentPage: "dashboard",
+        message: "Admin dashboard data fetched successfully.",
 
-        pageTitle: "Dashboard",
-
-        notificationCount,
-
-        pendingSellers,
-
-        stats,
-
-        revenueData,
-
-        recentOrders,
-
-        topSellers,
+        data: {
+          admin,
+          notificationCount,
+          pendingSellers,
+          stats,
+          revenueData,
+          recentOrders,
+          topSellers,
+        },
       });
     } catch (error) {
-      console.error("=================================");
-      console.error("ADMIN DASHBOARD ERROR");
+      console.error("ADMIN DASHBOARD API ERROR");
       console.error("Message:", error.message);
       console.error("Stack:", error.stack);
-      console.error("=================================");
 
-      return res.status(httpCodes.server_error).render("error", {
+      return res.status(httpCodes.server_error).json({
         success: false,
         message:
           process.env.NODE_ENV === "development"
@@ -852,23 +917,19 @@ class adminPageController {
     }
   }
 
-  // ADMIN PRODUCTS
+  // ADMIN PRODUCTS API
 
   async products(req, res) {
     try {
       const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
-
       const limit = 12;
-
       const skip = (page - 1) * limit;
 
       const search = (req.query.search || "").trim();
       const status = (req.query.status || "").trim();
       const stock = (req.query.stock || "").trim();
 
-      // ==========================================
       // PRODUCT MATCH
-      // ==========================================
 
       const match = {};
 
@@ -880,9 +941,7 @@ class adminPageController {
         match.stockStatus = stock;
       }
 
-      // ==========================================
       // SEARCH
-      // ==========================================
 
       let searchMatch = null;
 
@@ -891,27 +950,35 @@ class adminPageController {
 
         searchMatch = {
           $or: [
-            { productName: searchRegex },
-            { sku: searchRegex },
-            { brand: searchRegex },
-            { "seller.name": searchRegex },
-            { "seller.email": searchRegex },
+            {
+              productName: searchRegex,
+            },
+            {
+              sku: searchRegex,
+            },
+            {
+              brand: searchRegex,
+            },
+            {
+              "seller.name": searchRegex,
+            },
+            {
+              "seller.email": searchRegex,
+            },
           ],
         };
       }
 
-      // ==========================================
       // PRODUCT AGGREGATION
-      // ==========================================
 
       const pipeline = [
         {
           $match: match,
         },
 
-        // ========================================
+        // ----------------------------------------------------------
         // SELLER LOOKUP
-        // ========================================
+        // ----------------------------------------------------------
 
         {
           $lookup: {
@@ -929,9 +996,9 @@ class adminPageController {
           },
         },
 
-        // ========================================
+        // ----------------------------------------------------------
         // CATEGORY LOOKUP
-        // ========================================
+        // ----------------------------------------------------------
 
         {
           $lookup: {
@@ -950,9 +1017,7 @@ class adminPageController {
         },
       ];
 
-      // ==========================================
       // SEARCH AFTER LOOKUP
-      // ==========================================
 
       if (searchMatch) {
         pipeline.push({
@@ -960,9 +1025,7 @@ class adminPageController {
         });
       }
 
-      // ==========================================
       // SORT
-      // ==========================================
 
       pipeline.push({
         $sort: {
@@ -970,9 +1033,7 @@ class adminPageController {
         },
       });
 
-      // ==========================================
       // FACET
-      // ==========================================
 
       pipeline.push({
         $facet: {
@@ -988,35 +1049,20 @@ class adminPageController {
             {
               $project: {
                 _id: 1,
-
                 productName: 1,
-
                 slug: 1,
-
                 description: 1,
-
                 price: 1,
-
                 stock: 1,
-
                 sku: 1,
-
                 brand: 1,
-
                 tags: 1,
-
                 images: 1,
-
                 approvalStatus: 1,
-
                 stockStatus: 1,
-
                 isApproved: 1,
-
                 isActive: 1,
-
                 createdAt: 1,
-
                 updatedAt: 1,
 
                 seller: {
@@ -1059,9 +1105,7 @@ class adminPageController {
 
       const total = result?.total?.[0]?.count || 0;
 
-      // ==========================================
       // STATUS COUNTS
-      // ==========================================
 
       let pending = 0;
       let approved = 0;
@@ -1081,9 +1125,7 @@ class adminPageController {
         }
       }
 
-      // ==========================================
       // PENDING SELLERS
-      // ==========================================
 
       const pendingSellerResult = await User.aggregate([
         {
@@ -1101,64 +1143,61 @@ class adminPageController {
 
       const pendingSellers = pendingSellerResult[0]?.count || 0;
 
-      // ==========================================
       // PAGINATION
-      // ==========================================
 
       const totalPages = Math.max(Math.ceil(total / limit), 1);
 
       const currentPage = Math.min(page, totalPages);
 
-      const start = total === 0 ? 0 : skip + 1;
+      const actualSkip = (currentPage - 1) * limit;
 
-      const end = total === 0 ? 0 : Math.min(skip + products.length, total);
+      const start = total === 0 ? 0 : actualSkip + 1;
 
-      // ==========================================
-      // RENDER
-      // ==========================================
+      const end =
+        total === 0 ? 0 : Math.min(actualSkip + products.length, total);
 
-      return res.render("admin/products", {
-        admin: req.user,
+      // API RESPONSE
 
-        products,
+      return res.status(httpCodes.ok).json({
+        success: true,
 
-        search,
+        message: "Products fetched successfully",
 
-        status,
+        data: {
+          products,
 
-        stock,
+          filters: {
+            search,
+            status,
+            stock,
+          },
 
-        pendingSellers,
+          pendingSellers,
 
-        stats: {
-          total,
-          pending,
-          approved,
-          rejected,
+          stats: {
+            total,
+            pending,
+            approved,
+            rejected,
+          },
+
+          pagination: {
+            currentPage,
+            totalPages,
+            total,
+            limit,
+            start,
+            end,
+            hasNextPage: currentPage < totalPages,
+            hasPreviousPage: currentPage > 1,
+          },
         },
-
-        pagination: {
-          currentPage,
-          totalPages,
-          total,
-          start,
-          end,
-        },
-
-        currentPage: "products",
-
-        pageTitle: "Products",
-
-        success: req.flash("success"),
-
-        error: req.flash("error"),
       });
     } catch (error) {
-      console.error("Admin products error:", error);
+      console.error("Admin products API error:", error);
 
-      return res.status(httpCodes.server_error).render("error", {
+      return res.status(httpCodes.server_error).json({
         success: false,
-
         message:
           process.env.NODE_ENV === "development"
             ? error.message
@@ -1167,41 +1206,35 @@ class adminPageController {
     }
   }
 
-  // UPDATE PRODUCT APPROVAL STATUS
+  // UPDATE PRODUCT APPROVAL STATUS API
 
   async updateProductStatus(req, res) {
     try {
       const { id } = req.params;
-
       const { approvalStatus } = req.body;
 
-      // ==========================================
       // VALIDATE PRODUCT ID
-      // ==========================================
-
-      const mongoose = require("mongoose");
 
       if (!mongoose.Types.ObjectId.isValid(id)) {
-        req.flash("error", "Invalid product ID.");
-
-        return res.redirect("/poeme-perfumery/admin/products");
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Invalid product ID.",
+        });
       }
 
-      // ==========================================
       // VALIDATE STATUS
-      // ==========================================
 
       const allowedStatuses = ["pending", "approved", "rejected"];
 
       if (!allowedStatuses.includes(approvalStatus)) {
-        req.flash("error", "Invalid approval status.");
-
-        return res.redirect("/poeme-perfumery/admin/products");
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Invalid approval status.",
+          allowedStatuses,
+        });
       }
 
-      // ==========================================
       // UPDATE
-      // ==========================================
 
       const isApproved = approvalStatus === "approved";
 
@@ -1217,40 +1250,54 @@ class adminPageController {
           new: true,
           runValidators: true,
         }
-      );
+      ).lean();
+
+      // PRODUCT NOT FOUND
 
       if (!updatedProduct) {
-        req.flash("error", "Product not found.");
-
-        return res.redirect("/poeme-perfumery/admin/products");
+        return res.status(httpCodes.not_found).json({
+          success: false,
+          message: "Product not found.",
+        });
       }
 
-      // ==========================================
-      // SUCCESS
-      // ==========================================
+      // SUCCESS MESSAGE
+
+      let message = "Product approval status updated successfully.";
 
       if (approvalStatus === "approved") {
-        req.flash("success", "Product approved successfully.");
-      } else if (approvalStatus === "rejected") {
-        req.flash("success", "Product rejected successfully.");
-      } else {
-        req.flash("success", "Product moved back to pending.");
+        message = "Product approved successfully.";
       }
 
-      return res.redirect(
-        req.get("referer") || "/poeme-perfumery/admin/products"
-      );
+      if (approvalStatus === "rejected") {
+        message = "Product rejected successfully.";
+      }
+
+      if (approvalStatus === "pending") {
+        message = "Product moved back to pending.";
+      }
+
+      // API RESPONSE
+
+      return res.status(httpCodes.ok).json({
+        success: true,
+        message,
+
+        data: {
+          product: updatedProduct,
+        },
+      });
     } catch (error) {
-      console.error("Admin product status update error:", error);
+      console.error("Admin product status update API error:", error);
 
-      req.flash("error", "Unable to update product status.");
-
-      return res.redirect("/poeme-perfumery/admin/products");
+      return res.status(httpCodes.server_error).json({
+        success: false,
+        message: "Unable to update product status.",
+      });
     }
   }
 
-  // ORDERS
-
+  // Get Orders
   async orders(req, res) {
     try {
       const page = Math.max(Number(req.query.page) || 1, 1);
@@ -1262,9 +1309,7 @@ class adminPageController {
       const status = (req.query.status || "").trim();
       const paymentStatus = (req.query.paymentStatus || "").trim();
 
-      // =====================================================
       // BASE MATCH
-      // =====================================================
 
       const match = {};
 
@@ -1287,9 +1332,7 @@ class adminPageController {
         match.paymentStatus = paymentStatus;
       }
 
-      // =====================================================
       // ESCAPE SEARCH REGEX
-      // =====================================================
 
       const escapeRegex = (text) => {
         return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -1297,19 +1340,14 @@ class adminPageController {
 
       const safeSearch = escapeRegex(search);
 
-      // =====================================================
       // ORDER PIPELINE
-      // =====================================================
 
       const pipeline = [
         {
           $match: match,
         },
 
-        // ===================================================
-        // GET CUSTOMER
-        // ===================================================
-
+        // Customer lookup
         {
           $lookup: {
             from: "users",
@@ -1326,10 +1364,7 @@ class adminPageController {
           },
         },
 
-        // ===================================================
-        // SEARCH
-        // ===================================================
-
+        // Search
         ...(search
           ? [
               {
@@ -1341,21 +1376,18 @@ class adminPageController {
                         $options: "i",
                       },
                     },
-
                     {
                       "customer.email": {
                         $regex: safeSearch,
                         $options: "i",
                       },
                     },
-
                     {
                       "items.productName": {
                         $regex: safeSearch,
                         $options: "i",
                       },
                     },
-
                     {
                       $expr: {
                         $regexMatch: {
@@ -1373,20 +1405,14 @@ class adminPageController {
             ]
           : []),
 
-        // ===================================================
-        // SORT
-        // ===================================================
-
+        // Sort
         {
           $sort: {
             createdAt: -1,
           },
         },
 
-        // ===================================================
-        // PAGINATION + TOTAL
-        // ===================================================
-
+        // Pagination
         {
           $facet: {
             orders: [
@@ -1426,7 +1452,6 @@ class adminPageController {
                   shippingAddress: 1,
 
                   razorpayOrderId: 1,
-
                   razorpayPaymentId: 1,
 
                   createdAt: 1,
@@ -1454,9 +1479,7 @@ class adminPageController {
 
       const currentPage = Math.min(page, totalPages);
 
-      // =====================================================
       // ORDER STATISTICS
-      // =====================================================
 
       const statisticsResult = await Order.aggregate([
         {
@@ -1560,52 +1583,48 @@ class adminPageController {
 
       const end = total === 0 ? 0 : Math.min(skip + orders.length, total);
 
-      // =====================================================
-      // RENDER
-      // =====================================================
+      // API RESPONSE
 
-      return res.render("admin/orders", {
-        admin: req.user,
+      return res.status(httpCodes.success).json({
+        success: true,
+        message: "Orders fetched successfully",
 
-        orders,
+        data: {
+          orders,
 
-        search,
-        status,
-        paymentStatus,
+          filters: {
+            search,
+            status,
+            paymentStatus,
+          },
 
-        statistics: {
-          total: statistics.total || 0,
-          pending: statistics.pending || 0,
-          confirmed: statistics.confirmed || 0,
-          processing: statistics.processing || 0,
-          shipped: statistics.shipped || 0,
-          delivered: statistics.delivered || 0,
-          cancelled: statistics.cancelled || 0,
-          paid: statistics.paid || 0,
+          statistics: {
+            total: statistics.total || 0,
+            pending: statistics.pending || 0,
+            confirmed: statistics.confirmed || 0,
+            processing: statistics.processing || 0,
+            shipped: statistics.shipped || 0,
+            delivered: statistics.delivered || 0,
+            cancelled: statistics.cancelled || 0,
+            paid: statistics.paid || 0,
+          },
+
+          pagination: {
+            currentPage,
+            totalPages,
+            total,
+            limit,
+            start,
+            end,
+            hasPreviousPage: currentPage > 1,
+            hasNextPage: currentPage < totalPages,
+          },
         },
-
-        pagination: {
-          currentPage,
-          totalPages,
-          total,
-          start,
-          end,
-        },
-
-        currentPage: "orders",
-        pageTitle: "Orders",
-
-        success: req.flash("success"),
-        error: req.flash("error"),
       });
     } catch (error) {
-      console.error("=================================");
-      console.error("ADMIN ORDERS ERROR");
-      console.error("Message:", error.message);
-      console.error("Stack:", error.stack);
-      console.error("=================================");
+      console.error("ADMIN ORDERS API ERROR:", error);
 
-      return res.status(httpCodes.server_error).render("error", {
+      return res.status(httpCodes.server_error).json({
         success: false,
         message:
           process.env.NODE_ENV === "development"
@@ -1615,8 +1634,7 @@ class adminPageController {
     }
   }
 
-  // CATEGORIES
-
+  // Get Categories
   async categories(req, res) {
     try {
       const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
@@ -1627,16 +1645,11 @@ class adminPageController {
 
       const search = (req.query.search || "").trim();
 
-      // =====================================================
-      // SEARCH
-      // =====================================================
+      // CATEGORY PIPELINE
 
       const pipeline = [];
 
-      // =====================================================
-      // SELLER LOOKUP
-      // =====================================================
-
+      // Seller lookup
       pipeline.push({
         $lookup: {
           from: "users",
@@ -1653,16 +1666,14 @@ class adminPageController {
         },
       });
 
-      // =====================================================
-      // PRODUCT COUNT
-      // =====================================================
-
+      // Product count
       pipeline.push({
         $lookup: {
           from: "products",
           let: {
             categoryId: "$_id",
           },
+
           pipeline: [
             {
               $match: {
@@ -1671,17 +1682,17 @@ class adminPageController {
                 },
               },
             },
+
             {
               $count: "count",
             },
           ],
+
           as: "productStats",
         },
       });
 
-      // =====================================================
-      // SEARCH AFTER LOOKUPS
-      // =====================================================
+      // SEARCH
 
       if (search) {
         const searchRegex = new RegExp(
@@ -1709,9 +1720,7 @@ class adminPageController {
         });
       }
 
-      // =====================================================
-      // FORMAT CATEGORY DATA
-      // =====================================================
+      // FORMAT DATA
 
       pipeline.push({
         $project: {
@@ -1742,26 +1751,21 @@ class adminPageController {
         },
       });
 
-      // =====================================================
-      // SORT
-      // =====================================================
-
+      // Sort
       pipeline.push({
         $sort: {
           createdAt: -1,
         },
       });
 
-      // =====================================================
-      // PAGINATION + TOTAL
-      // =====================================================
-
+      // Pagination
       pipeline.push({
         $facet: {
           categories: [
             {
               $skip: skip,
             },
+
             {
               $limit: limit,
             },
@@ -1781,17 +1785,17 @@ class adminPageController {
 
       const total = result?.total?.[0]?.count || 0;
 
-      // =====================================================
-      // OVERALL CATEGORY STATISTICS
-      // =====================================================
+      // CATEGORY STATISTICS
 
       const categoryStatsResult = await Category.aggregate([
         {
           $lookup: {
             from: "products",
+
             let: {
               categoryId: "$_id",
             },
+
             pipeline: [
               {
                 $match: {
@@ -1800,10 +1804,12 @@ class adminPageController {
                   },
                 },
               },
+
               {
                 $count: "count",
               },
             ],
+
             as: "productStats",
           },
         },
@@ -1862,9 +1868,7 @@ class adminPageController {
 
       const categoryStats = categoryStatsResult[0] || {};
 
-      // =====================================================
       // PAGINATION
-      // =====================================================
 
       const totalPages = Math.max(Math.ceil(total / limit), 1);
 
@@ -1874,48 +1878,43 @@ class adminPageController {
 
       const end = total === 0 ? 0 : Math.min(skip + categories.length, total);
 
-      // =====================================================
-      // RENDER
-      // =====================================================
+      // API RESPONSE
 
-      return res.render("admin/categories", {
-        admin: req.user,
+      return res.status(httpCodes.success).json({
+        success: true,
+        message: "Categories fetched successfully",
 
-        categories,
+        data: {
+          categories,
 
-        search,
+          search,
 
-        stats: {
-          total: categoryStats.totalCategories || 0,
-          withProducts: categoryStats.categoriesWithProducts || 0,
-          empty: categoryStats.emptyCategories || 0,
-          products: categoryStats.totalProductsAssigned || 0,
+          stats: {
+            total: categoryStats.totalCategories || 0,
+
+            withProducts: categoryStats.categoriesWithProducts || 0,
+
+            empty: categoryStats.emptyCategories || 0,
+
+            products: categoryStats.totalProductsAssigned || 0,
+          },
+
+          pagination: {
+            currentPage,
+            totalPages,
+            total,
+            limit,
+            start,
+            end,
+            hasPreviousPage: currentPage > 1,
+            hasNextPage: currentPage < totalPages,
+          },
         },
-
-        pagination: {
-          currentPage,
-          totalPages,
-          total,
-          start,
-          end,
-        },
-
-        currentPage: "categories",
-
-        pageTitle: "Categories",
-
-        success: req.flash("success"),
-
-        error: req.flash("error"),
       });
     } catch (error) {
-      console.error("=================================");
-      console.error("ADMIN CATEGORIES ERROR");
-      console.error("Message:", error.message);
-      console.error("Stack:", error.stack);
-      console.error("=================================");
+      console.error("ADMIN CATEGORIES API ERROR:", error);
 
-      return res.status(httpCodes.server_error).render("error", {
+      return res.status(httpCodes.server_error).json({
         success: false,
         message:
           process.env.NODE_ENV === "development"
@@ -1925,22 +1924,20 @@ class adminPageController {
     }
   }
 
-  // CUSTOMERS WHO HAVE ORDERED PRODUCTS
-
+  // Customers Who Have Ordered Products
   async customers(req, res) {
     try {
-      const page = Number(req.query.page) || 1;
+      const page = Math.max(Number(req.query.page) || 1, 1);
+
       const limit = 12;
+
       const skip = (page - 1) * limit;
 
       const search = (req.query.search || "").trim();
 
       const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-      // ---------------------------------------------------------
       // PENDING SELLERS
-      // Required by the admin sidebar
-      // ---------------------------------------------------------
 
       const sellerRole = await Role.findOne({
         role: "seller",
@@ -1957,6 +1954,7 @@ class adminPageController {
               isActive: false,
             },
           },
+
           {
             $count: "count",
           },
@@ -1965,28 +1963,25 @@ class adminPageController {
         pendingSellers = pendingSellerResult[0]?.count || 0;
       }
 
-      // ---------------------------------------------------------
       // CUSTOMER PIPELINE
-      // ---------------------------------------------------------
 
       const customerPipeline = [
-        // Only real paid orders
+        // Only paid orders
         {
           $match: {
             paymentStatus: "paid",
+
             orderStatus: {
               $ne: "cancelled",
             },
+
             "items.0": {
               $exists: true,
             },
           },
         },
 
-        // -------------------------------------------------------
-        // CUSTOMER LOOKUP
-        // -------------------------------------------------------
-
+        // Customer lookup
         {
           $lookup: {
             from: "users",
@@ -2003,6 +1998,7 @@ class adminPageController {
           },
         },
 
+        // Role lookup
         {
           $lookup: {
             from: "roles",
@@ -2019,6 +2015,7 @@ class adminPageController {
           },
         },
 
+        // Exclude admin and seller
         {
           $match: {
             "customerRole.role": {
@@ -2026,6 +2023,8 @@ class adminPageController {
             },
           },
         },
+
+        // SEARCH
 
         ...(search
           ? [
@@ -2058,11 +2057,14 @@ class adminPageController {
             ]
           : []),
 
+        // Latest order first
         {
           $sort: {
             createdAt: -1,
           },
         },
+
+        // GROUP BY CUSTOMER
 
         {
           $group: {
@@ -2104,16 +2106,15 @@ class adminPageController {
           },
         },
 
-        // -------------------------------------------------------
-        // SORT CUSTOMERS
-        // -------------------------------------------------------
-
+        // Sort customers
         {
           $sort: {
             lastOrder: -1,
           },
         },
       ];
+
+      // GET CUSTOMERS
 
       const customers = await Order.aggregate([
         ...customerPipeline,
@@ -2127,6 +2128,8 @@ class adminPageController {
         },
       ]);
 
+      // TOTAL CUSTOMERS
+
       const totalResult = await Order.aggregate([
         ...customerPipeline,
 
@@ -2137,9 +2140,7 @@ class adminPageController {
 
       const total = totalResult[0]?.count || 0;
 
-      // ---------------------------------------------------------
       // PAGINATION
-      // ---------------------------------------------------------
 
       const totalPages = Math.max(Math.ceil(total / limit), 1);
 
@@ -2149,35 +2150,35 @@ class adminPageController {
 
       const end = total === 0 ? 0 : Math.min(skip + customers.length, total);
 
-      return res.render("admin/customers", {
-        admin: req.user,
+      // API RESPONSE
 
-        customers,
+      return res.status(httpCodes.success).json({
+        success: true,
+        message: "Customers fetched successfully",
 
-        search,
+        data: {
+          customers,
 
-        pendingSellers,
+          search,
 
-        pagination: {
-          currentPage,
-          totalPages,
-          total,
-          start,
-          end,
+          pendingSellers,
+
+          pagination: {
+            currentPage,
+            totalPages,
+            total,
+            limit,
+            start,
+            end,
+            hasPreviousPage: currentPage > 1,
+            hasNextPage: currentPage < totalPages,
+          },
         },
-
-        currentPage: "users",
-
-        pageTitle: "Customers",
-
-        success: req.flash("success"),
-
-        error: req.flash("error"),
       });
     } catch (error) {
-      console.error("Admin customers error:", error);
+      console.error("ADMIN CUSTOMERS API ERROR:", error);
 
-      return res.status(httpCodes.server_error).render("error", {
+      return res.status(httpCodes.server_error).json({
         success: false,
         message:
           process.env.NODE_ENV === "development"
@@ -2198,9 +2199,7 @@ class adminPageController {
 
       const search = (req.query.search || "").trim();
 
-      // =====================================================
       // GET SELLER ROLE
-      // =====================================================
 
       const sellerRole = await Role.aggregate([
         {
@@ -2217,30 +2216,30 @@ class adminPageController {
       ]);
 
       if (!sellerRole.length) {
-        return res.render("admin/sellers", {
-          admin: req.user,
-          sellers: [],
-          search,
-          pendingSellers: 0,
-          pagination: {
-            currentPage: 1,
-            totalPages: 1,
-            total: 0,
-            start: 0,
-            end: 0,
+        return res.status(httpCodes.success).json({
+          success: true,
+          message: "Seller role not found.",
+          data: {
+            sellers: [],
+            search,
+            pendingSellers: 0,
+            pagination: {
+              currentPage: 1,
+              totalPages: 1,
+              total: 0,
+              limit,
+              start: 0,
+              end: 0,
+              hasPreviousPage: false,
+              hasNextPage: false,
+            },
           },
-          currentPage: "sellers",
-          pageTitle: "Sellers",
-          success: req.flash("success"),
-          error: req.flash("error"),
         });
       }
 
       const sellerRoleId = sellerRole[0]._id;
 
-      // =====================================================
-      // SEARCH REGEX
-      // =====================================================
+      // SEARCH
 
       let searchMatch = {};
 
@@ -2264,9 +2263,7 @@ class adminPageController {
         };
       }
 
-      // =====================================================
       // SELLER PIPELINE
-      // =====================================================
 
       const sellerPipeline = [
         {
@@ -2276,16 +2273,16 @@ class adminPageController {
           },
         },
 
-        // ===================================================
         // PRODUCT COUNT
-        // ===================================================
 
         {
           $lookup: {
             from: "products",
+
             let: {
               sellerId: "$_id",
             },
+
             pipeline: [
               {
                 $match: {
@@ -2294,12 +2291,15 @@ class adminPageController {
                   },
                 },
               },
+
               {
                 $group: {
                   _id: null,
+
                   total: {
                     $sum: 1,
                   },
+
                   active: {
                     $sum: {
                       $cond: [
@@ -2314,13 +2314,12 @@ class adminPageController {
                 },
               },
             ],
+
             as: "productStats",
           },
         },
 
-        // ===================================================
         // FORMAT PRODUCT COUNT
-        // ===================================================
 
         {
           $set: {
@@ -2344,9 +2343,7 @@ class adminPageController {
           },
         },
 
-        // ===================================================
         // PROJECT SELLER DATA
-        // ===================================================
 
         {
           $project: {
@@ -2363,9 +2360,7 @@ class adminPageController {
           },
         },
 
-        // ===================================================
         // SORT
-        // ===================================================
 
         {
           $sort: {
@@ -2374,12 +2369,11 @@ class adminPageController {
         },
       ];
 
-      // =====================================================
       // TOTAL SELLERS
-      // =====================================================
 
       const totalResult = await User.aggregate([
         ...sellerPipeline,
+
         {
           $count: "count",
         },
@@ -2387,9 +2381,7 @@ class adminPageController {
 
       const total = totalResult.length ? totalResult[0].count : 0;
 
-      // =====================================================
       // PAGINATED SELLERS
-      // =====================================================
 
       const sellers = await User.aggregate([
         ...sellerPipeline,
@@ -2403,9 +2395,7 @@ class adminPageController {
         },
       ]);
 
-      // =====================================================
       // PAGINATION
-      // =====================================================
 
       const totalPages = Math.max(Math.ceil(total / limit), 1);
 
@@ -2415,9 +2405,7 @@ class adminPageController {
 
       const end = total === 0 ? 0 : Math.min(skip + sellers.length, total);
 
-      // =====================================================
       // PENDING SELLERS
-      // =====================================================
 
       const pendingSellerResult = await User.aggregate([
         {
@@ -2426,6 +2414,7 @@ class adminPageController {
             isVerified: false,
           },
         },
+
         {
           $count: "count",
         },
@@ -2435,39 +2424,37 @@ class adminPageController {
         ? pendingSellerResult[0].count
         : 0;
 
-      // =====================================================
-      // RENDER
-      // =====================================================
+      // API RESPONSE
 
-      return res.render("admin/sellers", {
-        admin: req.user,
+      return res.status(httpCodes.success).json({
+        success: true,
+        message: "Sellers fetched successfully.",
 
-        sellers,
+        data: {
+          sellers,
 
-        search,
+          search,
 
-        pendingSellers,
+          pendingSellers,
 
-        pagination: {
-          currentPage,
-          totalPages,
-          total,
-          start,
-          end,
+          pagination: {
+            currentPage,
+            totalPages,
+            total,
+            limit,
+            start,
+            end,
+
+            hasPreviousPage: currentPage > 1,
+
+            hasNextPage: currentPage < totalPages,
+          },
         },
-
-        currentPage: "sellers",
-
-        pageTitle: "Sellers",
-
-        success: req.flash("success"),
-
-        error: req.flash("error"),
       });
     } catch (error) {
-      console.error("ADMIN SELLERS ERROR:", error);
+      console.error("ADMIN SELLERS API ERROR:", error);
 
-      return res.status(httpCodes.server_error).render("error", {
+      return res.status(httpCodes.server_error).json({
         success: false,
         message:
           process.env.NODE_ENV === "development"
@@ -2477,15 +2464,21 @@ class adminPageController {
     }
   }
 
-  // DELETE SELLER
-
+  // Delete Seller
   async deleteSeller(req, res) {
     try {
       const { id } = req.params;
 
-      // =====================================================
+      // VALIDATE SELLER ID
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Invalid seller ID.",
+        });
+      }
+
       // GET SELLER ROLE
-      // =====================================================
 
       const sellerRole = await Role.aggregate([
         {
@@ -2493,6 +2486,7 @@ class adminPageController {
             role: "seller",
           },
         },
+
         {
           $project: {
             _id: 1,
@@ -2501,16 +2495,15 @@ class adminPageController {
       ]);
 
       if (!sellerRole.length) {
-        req.flash("error", "Seller role not found.");
-
-        return res.redirect("/poeme-perfumery/admin/sellers");
+        return res.status(httpCodes.not_found).json({
+          success: false,
+          message: "Seller role not found.",
+        });
       }
 
       const sellerRoleId = sellerRole[0]._id;
 
-      // =====================================================
       // CHECK SELLER
-      // =====================================================
 
       const seller = await User.aggregate([
         {
@@ -2519,6 +2512,7 @@ class adminPageController {
             role: sellerRoleId,
           },
         },
+
         {
           $project: {
             _id: 1,
@@ -2530,47 +2524,66 @@ class adminPageController {
       ]);
 
       if (!seller.length) {
-        req.flash("error", "Seller not found.");
-
-        return res.redirect("/poeme-perfumery/admin/sellers");
+        return res.status(httpCodes.not_found).json({
+          success: false,
+          message: "Seller not found.",
+        });
       }
 
-      // =====================================================
       // SOFT DELETE
-      // =====================================================
 
       const deletedSeller = await User.findOneAndUpdate(
         {
           _id: new mongoose.Types.ObjectId(id),
           role: sellerRoleId,
         },
+
         {
           $set: {
             isActive: false,
           },
         },
+
         {
           new: true,
+          runValidators: true,
         }
       );
 
       if (!deletedSeller) {
-        req.flash("error", "Unable to delete seller.");
-
-        return res.redirect("/poeme-perfumery/admin/sellers");
+        return res.status(httpCodes.bad_request).json({
+          success: false,
+          message: "Unable to delete seller.",
+        });
       }
 
-      req.flash("success", "Seller deleted successfully.");
+      // SUCCESS
 
-      return res.redirect("/poeme-perfumery/admin/sellers");
+      return res.status(httpCodes.success).json({
+        success: true,
+        message: "Seller deleted successfully.",
+
+        data: {
+          seller: {
+            _id: deletedSeller._id,
+            name: deletedSeller.name,
+            email: deletedSeller.email,
+            isActive: deletedSeller.isActive,
+          },
+        },
+      });
     } catch (error) {
-      console.error("ADMIN DELETE SELLER ERROR:", error);
+      console.error("ADMIN DELETE SELLER API ERROR:", error);
 
-      req.flash("error", "Unable to delete seller.");
-
-      return res.redirect("/poeme-perfumery/admin/sellers");
+      return res.status(httpCodes.server_error).json({
+        success: false,
+        message:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : "Unable to delete seller.",
+      });
     }
   }
 }
 
-module.exports = new adminPageController();
+module.exports = new adminController();
