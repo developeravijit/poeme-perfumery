@@ -53,6 +53,81 @@ const allowedTopics = [
   "website",
 ];
 
+/**
+ * @swagger
+ * /api/chatbot:
+ *   post:
+ *     tags:
+ *       - Chatbot
+ *     summary: Ask POÈME AI Assistant
+ *     description: |
+ *       Sends a customer question to the POÈME AI Assistant.
+ *
+ *       The assistant only handles questions related to POÈME Perfumery,
+ *       including perfumes, products, orders, shipping, returns, payments,
+ *       discounts, coupons, cart, checkout and website support.
+ *
+ *       Questions outside the supported POÈME Perfumery topics are rejected.
+ *
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - message
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 description: Customer's question.
+ *                 example: What perfumes do you have for men?
+ *
+ *     responses:
+ *       200:
+ *         description: AI assistant response generated successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 reply:
+ *                   type: string
+ *                   example: POÈME Perfumery offers a range of fragrances for men...
+ *
+ *       400:
+ *         description: Message is missing.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 reply:
+ *                   type: string
+ *                   example: Please enter a question.
+ *
+ *       500:
+ *         description: Gemini API key is missing or an internal server error occurred.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 reply:
+ *                   type: string
+ *                   example: Something went wrong.
+ *
+ *       403:
+ *         description: Question is outside the supported POÈME Perfumery topics.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 reply:
+ *                   type: string
+ *                   example: I'm POÈME AI Assistant. I can only answer questions related to POÈME Perfumery.
+ */
 router.post("/chatbot", async (req, res) => {
   try {
     const { message } = req.body;

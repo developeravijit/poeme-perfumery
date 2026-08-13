@@ -1,0 +1,69 @@
+{
+    "definition": {
+        "openapi": "3.0.0",
+        "info": {
+            "title": "FINAL_YEAR_PROJECT(Poeme_Perfumery)",
+            "version": "1.0.0",
+            "description": "I made a API and EJS websites where I can showcase my Perfume Brand along with the AI chatBot and Customer Support system.",
+            "contact": {
+                "name": "Avijit Roy",
+                "phone": "8910806300",
+                "email": "roysidharth1996@gmail.com"
+            }
+        },
+        "servers": [
+            {
+                "url": "http://localhost:4500",
+                "description": "Local Development Server"
+            },
+            {
+                "url": "https://poeme-perfumery.onrender.com",
+                "description": "Production Server (Render)"
+            }
+        ],
+        "tags": [
+            {
+                "name": "Token",
+                "description": "Token Generate"
+            },
+            {
+                "name": "User",
+                "description": "User APIs"
+            },
+            {
+                "name": "Seller",
+                "description": "Seller APIs"
+            },
+            {
+                "name": "Admin",
+                "description": "Admin APIs"
+            },
+            {
+                "name": "Payment",
+                "description": "Razorpay Payment APIs"
+            },
+            {
+                "name": "Chatbot",
+                "description": "Chatbot APIs"
+            }
+        ],
+        "components": {
+            "securitySchemes": {
+                "bearerAuth": {
+                    "type": "http",
+                    "scheme": "bearer",
+                    "bearerFormat": "JWT"
+                }
+            }
+        },
+        "security": [
+            {
+                "bearerAuth": []
+            }
+        ]
+    },
+    "apis": [
+        "./app/routes/*.js",
+        "./app/routes/**/*.js"
+    ]
+}

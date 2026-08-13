@@ -29,6 +29,10 @@ const flash = require("connect-flash");
 const http = require("http");
 const socket = require("./app/socket/socket");
 const admin = require("./app/utils/admin");
+const swaggerOptions = require("./swagger.json");
+const swaggerJSDoc = require("swagger-jsdoc");
+const swaggerDocument = swaggerJSDoc(swaggerOptions);
+const swaggerUi = require("swagger-ui-express");
 
 require("./app/config/passport");
 require("./app/cron/deleteUser");
@@ -80,6 +84,13 @@ app.use((err, req, res, next) => {
 
   res.status(err.status || 500).send("Internal Server Error");
 });
+
+// Swagger Define
+app.use(
+  "/poeme-perfumery/swagger",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument)
+);
 
 // Start Application
 const startServer = async () => {
