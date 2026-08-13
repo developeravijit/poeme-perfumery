@@ -3,14 +3,12 @@
 <svg width="100%" height="220" viewBox="0 0 1200 220" xmlns="http://www.w3.org/2000/svg">
 
   <defs>
-
     <!-- Background gradient -->
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#080808"/>
       <stop offset="50%" stop-color="#15100f"/>
       <stop offset="100%" stop-color="#050505"/>
     </linearGradient>
-
     <!-- Gold gradient -->
     <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#8a6a2f"/>
@@ -19,7 +17,6 @@
       <stop offset="75%" stop-color="#c9a45c"/>
       <stop offset="100%" stop-color="#806126"/>
     </linearGradient>
-
     <!-- Glow -->
     <filter id="glow">
       <feGaussianBlur stdDeviation="5" result="blur"/>
@@ -28,12 +25,10 @@
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
-
     <!-- Soft glow -->
     <filter id="softGlow">
       <feGaussianBlur stdDeviation="18"/>
     </filter>
-
     <!-- Moving shine -->
     <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="transparent"/>
@@ -41,7 +36,6 @@
       <stop offset="50%" stop-color="#fff8dc"/>
       <stop offset="55%" stop-color="transparent"/>
       <stop offset="100%" stop-color="transparent"/>
-
       <animateTransform
         attributeName="gradientTransform"
         type="translate"
@@ -50,15 +44,11 @@
         dur="3.5s"
         repeatCount="indefinite"/>
     </linearGradient>
-
   </defs>
-
   <!-- Background -->
   <rect width="1200" height="220" fill="url(#bg)" rx="18"/>
-
   <!-- Ambient glow -->
-
-<ellipse
+  <ellipse
     cx="600"
     cy="110"
     rx="430"
@@ -66,16 +56,14 @@
     fill="#c9a45c"
     opacity="0.08"
     filter="url(#softGlow)">
-<animate
+    <animate
       attributeName="opacity"
       values="0.04;0.10;0.04"
       dur="4s"
       repeatCount="indefinite"/>
-</ellipse>
-
+  </ellipse>
   <!-- Floating perfume particles -->
   <g fill="#f4d88f">
-
     <circle cx="150" cy="55" r="2">
       <animate
         attributeName="cy"
@@ -88,7 +76,6 @@
         dur="3s"
         repeatCount="indefinite"/>
     </circle>
-
     <circle cx="240" cy="150" r="1.5">
       <animate
         attributeName="cy"
@@ -101,7 +88,6 @@
         dur="4s"
         repeatCount="indefinite"/>
     </circle>
-
     <circle cx="370" cy="45" r="1.5">
       <animate
         attributeName="cy"
@@ -114,7 +100,6 @@
         dur="3.5s"
         repeatCount="indefinite"/>
     </circle>
-
     <circle cx="820" cy="50" r="2">
       <animate
         attributeName="cy"
@@ -127,7 +112,6 @@
         dur="3.8s"
         repeatCount="indefinite"/>
     </circle>
-
     <circle cx="960" cy="145" r="1.5">
       <animate
         attributeName="cy"
@@ -140,7 +124,6 @@
         dur="4.2s"
         repeatCount="indefinite"/>
     </circle>
-
     <circle cx="1050" cy="65" r="2">
       <animate
         attributeName="cy"
@@ -153,12 +136,9 @@
         dur="3.2s"
         repeatCount="indefinite"/>
     </circle>
-
   </g>
-
   <!-- Decorative lines -->
   <g stroke="url(#gold)" fill="none" opacity="0.35">
-
     <path d="M80 110 C180 40 250 180 350 110">
       <animate
         attributeName="stroke-dasharray"
@@ -166,7 +146,6 @@
         dur="4s"
         repeatCount="indefinite"/>
     </path>
-
     <path d="M850 110 C950 40 1020 180 1120 110">
       <animate
         attributeName="stroke-dasharray"
@@ -176,10 +155,8 @@
     </path>
 
   </g>
-
   <!-- Brand -->
-
-<text
+  <text
     x="600"
     y="92"
     text-anchor="middle"
@@ -189,9 +166,7 @@
     letter-spacing="8"
     font-weight="600"
     filter="url(#glow)">
-
     POÈME
-
     <animate
       attributeName="opacity"
       values="0;1;1;0.92;1"
@@ -199,10 +174,8 @@
       repeatCount="indefinite"/>
 
   </text>
-
   <!-- Subtitle -->
-
-<text
+  <text
     x="600"
     y="128"
     text-anchor="middle"
@@ -210,20 +183,15 @@
     font-family="Arial, Helvetica, sans-serif"
     font-size="14"
     letter-spacing="6">
-
     PERFUMERY
-
     <animate
       attributeName="letter-spacing"
       values="3px;6px;3px"
       dur="4s"
       repeatCount="indefinite"/>
-
   </text>
-
   <!-- Divider -->
-
-<line
+  <line
     x1="450"
     y1="150"
     x2="750"
@@ -231,13 +199,11 @@
     stroke="url(#gold)"
     stroke-width="1"
     opacity="0.7">
-
     <animate
       attributeName="x1"
       values="550;450;550"
       dur="4s"
       repeatCount="indefinite"/>
-
     <animate
       attributeName="x2"
       values="650;750;650"
@@ -245,10 +211,8 @@
       repeatCount="indefinite"/>
 
   </line>
-
   <!-- Tagline -->
-
-<text
+  <text
     x="600"
     y="177"
     text-anchor="middle"
@@ -256,30 +220,23 @@
     font-family="Arial, Helvetica, sans-serif"
     font-size="11"
     letter-spacing="3">
-
     A MULTI-VENDOR FRAGRANCE EXPERIENCE
-
     <animate
       attributeName="opacity"
       values="0.4;1;0.4"
       dur="4s"
       repeatCount="indefinite"/>
-
   </text>
-
   <!-- Animated shine -->
-
-<rect
+  <rect
     x="250"
     y="55"
     width="700"
     height="110"
     fill="url(#shine)"
     opacity="0.25"/>
-
   <!-- Bottom border -->
-
-<rect
+  <rect
     x="1"
     y="1"
     width="1198"
